@@ -3,7 +3,7 @@
 pub mod color {
     const EPSILON: f64 = 0.00001;
 
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy)]
     pub struct Color {
         pub r: f64,
         pub g: f64,
