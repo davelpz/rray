@@ -4,6 +4,7 @@ pub mod matrix {
     pub const EPSILON: f64 = 0.00001;
     use crate::tuple::tuple::Tuple;
 
+    #[derive(Debug, Clone, PartialEq)]
     pub struct Matrix {
         pub rows: usize,
         pub cols: usize,
