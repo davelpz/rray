@@ -83,6 +83,10 @@ pub mod tuple {
                 self.x * other.y - self.y * other.x
             )
         }
+
+        pub fn reflect(&self, normal: &Tuple) -> Tuple {
+            self.subtract(&normal.multiply(2.0 * self.dot(normal)))
+        }
     }
 }
 
@@ -256,5 +260,22 @@ mod tests {
         assert_eq!(result.x, 1.0);
         assert_eq!(result.y, -2.0);
         assert_eq!(result.z, 1.0);
+    }
+
+    #[test]
+    fn test_tuple_reflect() {
+        let v = Tuple::vector(1.0, -1.0, 0.0);
+        let n = Tuple::vector(0.0, 1.0, 0.0);
+        let r = v.reflect(&n);
+        assert_eq!(r.x, 1.0);
+        assert_eq!(r.y, 1.0);
+        assert_eq!(r.z, 0.0);
+
+        let v = Tuple::vector(0.0, -1.0, 0.0);
+        let n = Tuple::vector(2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0);
+        let r = v.reflect(&n);
+        assert_eq!(r.x, 1.0);
+        assert_eq!(r.y, 0.0);
+        assert_eq!(r.z, 0.0);
     }
 }
