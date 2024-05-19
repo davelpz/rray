@@ -55,6 +55,10 @@ mod tests {
     use super::ray::Ray;
     use crate::tuple::tuple::Tuple;
     use crate::shape::shape::Sphere;
+    use crate::color::color::Color;
+    use crate::canvas::canvas::Canvas;
+    use crate::light::light::PointLight;
+    use crate::light::light::lighting;
 
     #[test]
     fn test_ray() {
@@ -145,6 +149,44 @@ mod tests {
                 let r = Ray::new(ray_origin.clone(), position.subtract(&ray_origin).normalize());
                 let xs = s.intersect(&r);
                 if let Some(_i) = super::ray::hit(&xs) {
+                    canvas.write_pixel(x, y, color);
+                }
+            }
+        }
+
+        canvas.write_to_file("canvas.png");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_render2() {
+        let ray_origin = Tuple::point(0.0, 0.0, -5.0);
+        let wall_z = 10.0;
+        let wall_size = 7.0;
+        let canvas_pixels = 300;
+        let pixel_size = wall_size / canvas_pixels as f64;
+        let half = wall_size / 2.0;
+        let mut canvas = Canvas::new(canvas_pixels, canvas_pixels);
+        let mut s = Sphere::new();
+        //s.transform = Matrix::scale(1.0, 0.5, 1.0);
+        s.material.color = Color::new(1.0, 0.2, 1.0);
+
+        let light_position = Tuple::point(-10.0, 10.0, -10.0);
+        let light_color = Color::new(1.0, 1.0, 1.0);
+        let light = PointLight::new(light_color, light_position);
+
+        for y in 0..canvas_pixels {
+            let world_y = half - pixel_size * y as f64;
+            for x in 0..canvas_pixels {
+                let world_x = -half + pixel_size * x as f64;
+                let position = Tuple::point(world_x, world_y, wall_z);
+                let r = Ray::new(ray_origin.clone(), position.subtract(&ray_origin).normalize());
+                let xs = s.intersect(&r);
+                if let Some(hit) = super::ray::hit(&xs) {
+                    let point = r.position(hit.t);
+                    let normal = hit.object.normal_at(&point);
+                    let eye = r.direction.negate();
+                    let color = lighting(&hit.object.material, &light, &point, &eye, &normal, false);
                     canvas.write_pixel(x, y, color);
                 }
             }

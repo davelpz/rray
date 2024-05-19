@@ -4,6 +4,8 @@ mod canvas;
 mod matrix;
 mod ray;
 mod shape;
+mod light;
+mod material;
 
 use crate::canvas::canvas::Canvas;
 use crate::color::color::Color;

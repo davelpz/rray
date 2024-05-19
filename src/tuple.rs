@@ -5,7 +5,7 @@ pub mod tuple {
     const EPSILON: f64 = 0.00001;
 
     // Tuple struct
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy)]
     pub struct Tuple {
         pub x: f64,
         pub y: f64,

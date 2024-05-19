@@ -5,11 +5,13 @@ pub mod shape {
     use crate::tuple::tuple::Tuple;
     use crate::ray::ray::Intersection;
     use crate::ray::ray::Ray;
+    use crate::material::material::Material;
 
     #[derive(Debug, Clone, PartialEq)]
     pub struct Sphere {
         pub center: Tuple,
         pub transform: Matrix,
+        pub material: Material,
     }
 
     impl Sphere {
@@ -17,6 +19,7 @@ pub mod shape {
             Sphere {
                 center: Tuple::point(0.0, 0.0, 0.0),
                 transform: Matrix::identity(4),
+                material: Material::default(),
             }
         }
 
