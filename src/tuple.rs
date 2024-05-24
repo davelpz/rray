@@ -2,6 +2,11 @@
 
 // module for tuples
 pub mod tuple {
+    use std::ops::Sub;
+    use std::ops::Add;
+    use std::ops::Mul;
+    use std::ops::Div;
+
     const EPSILON: f64 = 0.00001;
 
     // Tuple struct
@@ -86,6 +91,38 @@ pub mod tuple {
 
         pub fn reflect(&self, normal: &Tuple) -> Tuple {
             self.subtract(&normal.multiply(2.0 * self.dot(normal)))
+        }
+    }
+
+    impl Sub for Tuple {
+        type Output = Self;
+
+        fn sub(self, other: Self) -> Self {
+            self.subtract(&other)
+        }
+    }
+
+    impl Add for Tuple {
+        type Output = Self;
+
+        fn add(self, other: Self) -> Self {
+            Tuple::new(self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w)
+        }
+    }
+
+    impl Mul<f64> for Tuple {
+        type Output = Self;
+
+        fn mul(self, scalar: f64) -> Self {
+            self.multiply(scalar)
+        }
+    }
+
+    impl Div<f64> for Tuple {
+        type Output = Self;
+
+        fn div(self, scalar: f64) -> Self {
+            self.divide(scalar)
         }
     }
 }

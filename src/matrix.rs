@@ -3,12 +3,19 @@
 pub mod matrix {
     pub const EPSILON: f64 = 0.00001;
     use crate::tuple::tuple::Tuple;
+    use std::ops::Mul;
 
-    #[derive(Debug, Clone, PartialEq)]
+    #[derive(Debug, Clone)]
     pub struct Matrix {
         pub rows: usize,
         pub cols: usize,
         pub data: Vec<f64>,
+    }
+
+    impl PartialEq for Matrix {
+        fn eq(&self, other: &Self) -> bool {
+            self.equals(other)
+        }
     }
 
     impl Matrix {
@@ -188,6 +195,37 @@ pub mod matrix {
             m.set(2, 0, zx);
             m.set(2, 1, zy);
             m
+        }
+
+        pub fn view_transform(from: Tuple, to: Tuple, up: Tuple) -> Matrix {
+            let forward = (to - from).normalize();
+            let left = forward.cross(&up.normalize());
+            let true_up = left.cross(&forward);
+            let mut orientation = Matrix::new(4, 4);
+            orientation.set(0, 0, left.x);
+            orientation.set(0, 1, left.y);
+            orientation.set(0, 2, left.z);
+            orientation.set(1, 0, true_up.x);
+            orientation.set(1, 1, true_up.y);
+            orientation.set(1, 2, true_up.z);
+            orientation.set(2, 0, -forward.x);
+            orientation.set(2, 1, -forward.y);
+            orientation.set(2, 2, -forward.z);
+            orientation.set(3, 0, 0f64);
+            orientation.set(3, 1, 0f64);
+            orientation.set(3, 2, 0f64);
+            orientation.set(3, 3, 1f64);
+
+            let translation = Matrix::translate(-from.x, -from.y, -from.z);
+            orientation.multiply(&translation)
+        }
+    }
+
+    impl Mul for Matrix {
+        type Output = Matrix;
+
+        fn mul(self, other: Matrix) -> Matrix {
+            self.multiply(&other)
         }
     }
 }
@@ -594,5 +632,49 @@ mod tests {
         let p = Tuple::point(2.0, 3.0, 4.0);
         let result = t.multiply_tuple(&p);
         assert_eq!(result, Tuple::point(2.0, 3.0, 7.0));
+    }
+
+    #[test]
+    fn test_matrix_view_transform() {
+        let from = Tuple::point(0.0, 0.0, 0.0);
+        let to = Tuple::point(0.0, 0.0, -1.0);
+        let up = Tuple::vector(0.0, 1.0, 0.0);
+        let t = Matrix::view_transform(from, to, up);
+        assert_eq!(t, Matrix::identity(4));
+
+        let from = Tuple::point(0.0, 0.0, 0.0);
+        let to = Tuple::point(0.0, 0.0, 1.0);
+        let up = Tuple::vector(0.0, 1.0, 0.0);
+        let t = Matrix::view_transform(from, to, up);
+        assert_eq!(t, Matrix::scale(-1.0, 1.0, -1.0));
+
+        let from = Tuple::point(0.0, 0.0, 8.0);
+        let to = Tuple::point(0.0, 0.0, 0.0);
+        let up = Tuple::vector(0.0, 1.0, 0.0);
+        let t = Matrix::view_transform(from, to, up);
+        assert_eq!(t, Matrix::translate(0.0, 0.0, -8.0));
+
+        let from = Tuple::point(1.0, 3.0, 2.0);
+        let to = Tuple::point(4.0, -2.0, 8.0);
+        let up = Tuple::vector(1.0, 1.0, 0.0);
+        let t = Matrix::view_transform(from, to, up);
+        let mut expected = Matrix::new(4, 4);
+        expected.set(0, 0, -0.50709);
+        expected.set(0, 1, 0.50709);
+        expected.set(0, 2, 0.67612);
+        expected.set(0, 3, -2.36643);
+        expected.set(1, 0, 0.76772);
+        expected.set(1, 1, 0.60609);
+        expected.set(1, 2, 0.12122);
+        expected.set(1, 3, -2.82843);
+        expected.set(2, 0, -0.35857);
+        expected.set(2, 1, 0.59761);
+        expected.set(2, 2, -0.71714);
+        expected.set(2, 3, 0.00000);
+        expected.set(3, 0, 0.00000);
+        expected.set(3, 1, 0.00000);
+        expected.set(3, 2, 0.00000);
+        expected.set(3, 3, 1.00000);
+        assert_eq!(t, expected);
     }
 }

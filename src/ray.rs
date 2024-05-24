@@ -12,6 +12,26 @@ pub mod ray {
         pub object: &'a Sphere,
     }
 
+    pub struct Computations<'a> {
+        pub t: f64,
+        pub object: &'a Sphere,
+        pub point: Tuple,
+        pub eyev: Tuple,
+        pub normalv: Tuple,
+        pub inside: bool,
+    }
+
+    impl<'a> Intersection<'a> {
+        pub fn prepare_computations(&self, r: &Ray) -> Computations<'a> {
+            let point = r.position(self.t);
+            let eyev = r.direction.negate();
+            let normalv = self.object.normal_at(&point);
+            let inside = normalv.dot(&eyev) < 0.0;
+            let normalv = if inside { normalv.negate() } else { normalv };
+            Computations { t: self.t, object: self.object, point, eyev, normalv, inside }
+        }
+    }
+
     // Ray struct
     #[derive(Debug, Clone)]
     pub struct Ray {
@@ -193,5 +213,33 @@ mod tests {
         }
 
         canvas.write_to_file("canvas.png");
+    }
+
+    #[test]
+    fn test_prepare_computations() {
+        let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
+        let s = Sphere::new();
+        let i = super::ray::Intersection { t: 4.0, object: &s };
+        let comps = i.prepare_computations(&r);
+        assert_eq!(comps.t, i.t);
+        assert_eq!(comps.object, i.object);
+        assert_eq!(comps.point, Tuple::point(0.0, 0.0, -1.0));
+        assert_eq!(comps.eyev, Tuple::vector(0.0, 0.0, -1.0));
+        assert_eq!(comps.normalv, Tuple::vector(0.0, 0.0, -1.0));
+        assert_eq!(comps.inside, false);
+    }
+
+    #[test]
+    fn test_prepare_computations_inside() {
+        let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
+        let s = Sphere::new();
+        let i = super::ray::Intersection { t: 1.0, object: &s };
+        let comps = i.prepare_computations(&r);
+        assert_eq!(comps.t, i.t);
+        assert_eq!(comps.object, i.object);
+        assert_eq!(comps.point, Tuple::point(0.0, 0.0, 1.0));
+        assert_eq!(comps.eyev, Tuple::vector(0.0, 0.0, -1.0));
+        assert_eq!(comps.normalv, Tuple::vector(0.0, 0.0, -1.0));
+        assert_eq!(comps.inside, true);
     }
 }

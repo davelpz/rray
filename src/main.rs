@@ -6,6 +6,8 @@ mod ray;
 mod shape;
 mod light;
 mod material;
+mod world;
+mod camera;
 
 use crate::canvas::canvas::Canvas;
 use crate::color::color::Color;
