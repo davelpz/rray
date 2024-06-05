@@ -3,18 +3,18 @@
 pub mod ray {
     use crate::tuple::tuple::Tuple;
     use crate::matrix::matrix::Matrix;
-    use crate::shape::shape::Sphere;
+    use crate::shape::shape::Shape;
 
     // Intersection struct
     #[derive(Debug, Clone, PartialEq)]
     pub struct Intersection<'a> {
         pub t: f64,
-        pub object: &'a Sphere,
+        pub object: &'a Shape,
     }
 
     pub struct Computations<'a> {
         pub t: f64,
-        pub object: &'a Sphere,
+        pub object: &'a Shape,
         pub point: Tuple,
         pub eyev: Tuple,
         pub normalv: Tuple,
@@ -74,7 +74,7 @@ mod tests {
     use crate::matrix::matrix::Matrix;
     use super::ray::Ray;
     use crate::tuple::tuple::Tuple;
-    use crate::shape::shape::Sphere;
+    use crate::shape::shape::Shape;
     use crate::color::color::Color;
     use crate::canvas::canvas::Canvas;
     use crate::light::light::PointLight;
@@ -100,7 +100,7 @@ mod tests {
 
     #[test]
     fn test_hit() {
-        let s = Sphere::new();
+        let s = Shape::sphere();
         let i1 = super::ray::Intersection { t: 1.0, object: &s };
         let i2 = super::ray::Intersection { t: 2.0, object: &s };
         let xs = vec![i1, i2];
@@ -158,7 +158,7 @@ mod tests {
         let half = wall_size / 2.0;
         let mut canvas = crate::canvas::canvas::Canvas::new(canvas_pixels, canvas_pixels);
         let color = crate::color::color::Color::new(1.0, 0.0, 0.0);
-        let mut s = Sphere::new();
+        let mut s = Shape::sphere();
         s.transform = Matrix::scale(1.0, 0.5, 1.0);
 
         for y in 0..canvas_pixels {
@@ -187,7 +187,7 @@ mod tests {
         let pixel_size = wall_size / canvas_pixels as f64;
         let half = wall_size / 2.0;
         let mut canvas = Canvas::new(canvas_pixels, canvas_pixels);
-        let mut s = Sphere::new();
+        let mut s = Shape::sphere();
         //s.transform = Matrix::scale(1.0, 0.5, 1.0);
         s.material.color = Color::new(1.0, 0.2, 1.0);
 
@@ -218,7 +218,7 @@ mod tests {
     #[test]
     fn test_prepare_computations() {
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
-        let s = Sphere::new();
+        let s = Shape::sphere();
         let i = super::ray::Intersection { t: 4.0, object: &s };
         let comps = i.prepare_computations(&r);
         assert_eq!(comps.t, i.t);
@@ -232,7 +232,7 @@ mod tests {
     #[test]
     fn test_prepare_computations_inside() {
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
-        let s = Sphere::new();
+        let s = Shape::sphere();
         let i = super::ray::Intersection { t: 1.0, object: &s };
         let comps = i.prepare_computations(&r);
         assert_eq!(comps.t, i.t);

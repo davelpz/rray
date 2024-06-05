@@ -2,7 +2,7 @@
 
 pub mod world {
     use crate::color::color::Color;
-    use crate::shape::shape::Sphere;
+    use crate::shape::shape::Shape;
     use crate::light::light::{lighting, PointLight};
     use crate::matrix::matrix::Matrix;
     use crate::ray::ray::{Computations, Ray};
@@ -11,7 +11,7 @@ pub mod world {
 
     #[derive(Debug, PartialEq, Clone)]
     pub struct World {
-        pub objects: Vec<Sphere>,
+        pub objects: Vec<Shape>,
         pub light: PointLight,
     }
 
@@ -25,11 +25,11 @@ pub mod world {
 
         pub fn default_world() -> World {
             let light = PointLight::new(Color::new(1.0, 1.0, 1.0), Tuple::point(-10.0, 10.0, -10.0));
-            let mut s1 = Sphere::new();
+            let mut s1 = Shape::sphere();
             s1.material.color = Color::new(0.8, 1.0, 0.6);
             s1.material.diffuse = 0.7;
             s1.material.specular = 0.2;
-            let mut s2 = Sphere::new();
+            let mut s2 = Shape::sphere();
             s2.transform = Matrix::scale(0.5, 0.5, 0.5);
             World {
                 light,
@@ -76,7 +76,7 @@ mod tests {
     use crate::matrix::matrix::Matrix;
     use crate::tuple::tuple::Tuple;
     use super::world::World;
-    use crate::shape::shape::Sphere;
+    use crate::shape::shape::Shape;
     use crate::ray::ray::{Intersection, Ray};
 
     #[test]
@@ -89,11 +89,11 @@ mod tests {
     #[test]
     fn the_default_world() {
         let light = PointLight::new(Color::new(1.0, 1.0, 1.0), Tuple::point(-10.0, 10.0, -10.0));
-        let mut s1 = Sphere::new();
+        let mut s1 = Shape::sphere();
         s1.material.color = Color::new(0.8, 1.0, 0.6);
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
-        let mut s2 = Sphere::new();
+        let mut s2 = Shape::sphere();
         s2.transform = Matrix::scale(0.5, 0.5, 0.5);
         let w = World::default_world();
         assert_eq!(w.light, light);
