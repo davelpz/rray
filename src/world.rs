@@ -5,7 +5,7 @@ pub mod world {
     use crate::shape::shape::Shape;
     use crate::light::light::{lighting, PointLight};
     use crate::matrix::matrix::Matrix;
-    use crate::ray::ray::{Computations, Ray};
+    use crate::ray::ray::{Computations, hit, Ray};
     use crate::ray::ray::Intersection;
     use crate::tuple::tuple::Tuple;
 
@@ -64,6 +64,19 @@ pub mod world {
                 self.shade_hit(&comps)
             } else {
                 Color::new(0.0, 0.0, 0.0)
+            }
+        }
+
+        pub fn is_shadowed(&self, point: &Tuple) -> bool {
+            let v = self.light.position - *point;
+            let distance = v.magnitude();
+            let direction = v.normalize();
+            let r = Ray::new(*point, direction);
+            let intersections = self.intersect(&r);
+            let h = hit(&intersections);
+            match h {
+                Some(hit) => hit.t < distance,
+                None => false
             }
         }
     }

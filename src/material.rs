@@ -28,3 +28,24 @@ pub mod material {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::color::color::Color;
+    use crate::tuple::tuple::Tuple;
+    use crate::light::light::PointLight;
+    use crate::light::light::lighting;
+    use crate::material::material::Material;
+
+    #[test]
+    fn surface_in_shadow() {
+        let m = Material::default();
+        let position = Tuple::point(0.0, 0.0, 0.0);
+        let eyev = Tuple::vector(0.0, 0.0, -1.0);
+        let normalv = Tuple::vector(0.0, 0.0, -1.0);
+        let light = PointLight::new(Color::new(1.0, 1.0, 1.0), Tuple::point(0.0, 0.0, -10.0));
+        let in_shadow = true;
+        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow);
+        assert_eq!(result, Color::new(0.1, 0.1, 0.1));
+    }
+}
