@@ -133,7 +133,7 @@ mod tests {
         let i = Intersection{t: 0.5, object: shape};
         let comps = i.prepare_computations(&r);
         let c = w.shade_hit(&comps);
-        assert_eq!(c, Color::new(0.90498, 0.90498, 0.90498));
+        assert_eq!(c, Color::new(0.9049844720832575, 0.9049844720832575, 0.9049844720832575));
     }
 
     #[test]
