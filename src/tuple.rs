@@ -7,7 +7,7 @@ pub mod tuple {
     use std::ops::Mul;
     use std::ops::Div;
 
-    const EPSILON: f64 = 0.00001;
+    pub const EPSILON: f64 = 0.00001;
 
     // Tuple struct
     #[derive(Debug, Clone, Copy)]
@@ -131,6 +131,7 @@ pub mod tuple {
 #[cfg(test)]
 mod tests {
     use super::tuple::Tuple;
+    use super::tuple::EPSILON;
 
     #[test]
     fn test_tuple_is_point() {
@@ -304,15 +305,15 @@ mod tests {
         let v = Tuple::vector(1.0, -1.0, 0.0);
         let n = Tuple::vector(0.0, 1.0, 0.0);
         let r = v.reflect(&n);
-        assert_eq!(r.x, 1.0);
-        assert_eq!(r.y, 1.0);
-        assert_eq!(r.z, 0.0);
+        assert_eq!(true, (r.x - 1.0).abs() < EPSILON);
+        assert_eq!(true, (r.y - 1.0).abs() < EPSILON);
+        assert_eq!(true, (r.z - 0.0).abs() < EPSILON);
 
         let v = Tuple::vector(0.0, -1.0, 0.0);
         let n = Tuple::vector(2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0);
         let r = v.reflect(&n);
-        assert_eq!(r.x, 1.0);
-        assert_eq!(r.y, 0.0);
-        assert_eq!(r.z, 0.0);
+        assert_eq!(true, (r.x - 1.0).abs() < EPSILON);
+        assert_eq!(true, (r.y - 0.0).abs() < EPSILON);
+        assert_eq!(true, (r.z - 0.0).abs() < EPSILON);
     }
 }
