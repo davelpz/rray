@@ -187,7 +187,7 @@ mod tests {
         use crate::shape::shape::Shape;
         use crate::world::world::World;
 
-        let mut c = Camera::new(400, 200, std::f64::consts::PI / 3.0);
+        let mut c = Camera::new(256, 256, std::f64::consts::PI / 3.0);
         let from = Tuple::point(0.0, 1.5, -5.0);
         let to = Tuple::point(0.0, 1.0, 0.0);
         let up = Tuple::vector(0.0, 1.0, 0.0);

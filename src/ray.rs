@@ -5,6 +5,8 @@ pub mod ray {
     use crate::matrix::matrix::Matrix;
     use crate::shape::shape::Shape;
 
+    pub const EPSILON: f64 = 0.00001;
+
     // Intersection struct
     #[derive(Debug, Clone, PartialEq)]
     pub struct Intersection<'a> {
@@ -19,6 +21,7 @@ pub mod ray {
         pub eyev: Tuple,
         pub normalv: Tuple,
         pub inside: bool,
+        pub over_point: Tuple,
     }
 
     impl<'a> Intersection<'a> {
@@ -28,7 +31,8 @@ pub mod ray {
             let normalv = self.object.normal_at(&point);
             let inside = normalv.dot(&eyev) < 0.0;
             let normalv = if inside { normalv.negate() } else { normalv };
-            Computations { t: self.t, object: self.object, point, eyev, normalv, inside }
+            let over_point = point.add(&normalv.multiply(EPSILON));
+            Computations { t: self.t, object: self.object, point, eyev, normalv, inside, over_point }
         }
     }
 
@@ -145,6 +149,17 @@ mod tests {
         let r2 = r.transform(&m);
         assert_eq!(r2.origin, Tuple::point(2.0, 6.0, 12.0));
         assert_eq!(r2.direction, Tuple::vector(0.0, 3.0, 0.0));
+    }
+
+    #[test]
+    fn intersections_the_hit_should_offset_the_point() {
+        let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
+        let mut s = Shape::sphere();
+        s.transform = Matrix::translate(0.0, 0.0, 1.0);
+        let i = super::ray::Intersection { t: 5.0, object: &s };
+        let comps = i.prepare_computations(&r);
+        assert!(comps.over_point.z < -super::ray::EPSILON / 2.0);
+        assert!(comps.point.z > comps.over_point.z);
     }
 
     #[test]

@@ -51,10 +51,10 @@ pub mod world {
             // TODO: support multiple light sources, loop through all lights and sum the results
             lighting(&comps.object.material,
                      &self.light,
-                     &comps.point,
+                     &comps.over_point,
                      &comps.eyev,
                      &comps.normalv,
-                     false)
+                     self.is_shadowed(&comps.over_point))
         }
 
         pub fn color_at(&self, r: &Ray) -> Color {
@@ -147,6 +147,21 @@ mod tests {
         let comps = i.prepare_computations(&r);
         let c = w.shade_hit(&comps);
         assert_eq!(c, Color::new(0.9049844720832575, 0.9049844720832575, 0.9049844720832575));
+    }
+
+    #[test]
+    fn shade_hit_is_given_an_intersection_in_shadow() {
+        let mut w = World::default_world();
+        w.light = PointLight::new(Color::new(1.0, 1.0, 1.0), Tuple::point(0.0, 0.0, -10.0));
+        let s1 = Shape::sphere();
+        let mut s2 = Shape::sphere();
+        s2.transform = Matrix::translate(0.0, 0.0, 10.0);
+        w.objects = vec![s1, s2];
+        let r = Ray::new(Tuple::point(0.0, 0.0, 5.0), Tuple::vector(0.0, 0.0, 1.0));
+        let i = Intersection{t: 4.0, object: &w.objects[1]};
+        let comps = i.prepare_computations(&r);
+        let c = w.shade_hit(&comps);
+        assert_eq!(c, Color::new(0.1, 0.1, 0.1));
     }
 
     #[test]
