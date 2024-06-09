@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 png = "0.17.13"
 indicatif = "0.17.8"
+rayon = "1.10.0"

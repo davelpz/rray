@@ -1,12 +1,16 @@
 #[allow(dead_code)]
 
 pub mod camera {
+    use std::sync::{Arc, Mutex};
     use crate::canvas::canvas::Canvas;
     use crate::matrix::matrix::Matrix;
     use crate::ray::ray::Ray;
     use crate::tuple::tuple::Tuple;
     use crate::world::world::World;
     use indicatif::ProgressBar;
+    use crate::camera::pixel_coordinates;
+    use rayon::iter::ParallelBridge;
+    use rayon::prelude::ParallelIterator;
 
     #[derive(Debug, Clone)]
     pub struct Camera {
@@ -65,20 +69,38 @@ pub mod camera {
         }
 
         pub fn render(&self, world: &World) -> Canvas {
+            let image = Arc::new(Mutex::new(Canvas::new(self.hsize, self.vsize)));
+            let bar = ProgressBar::new((self.vsize * self.hsize) as u64);
+            let iter = pixel_coordinates(self.vsize, self.hsize).par_bridge();
+            iter.for_each(|(x, y)| {
+                let ray = self.ray_for_pixel(x, y);
+                let color = world.color_at(&ray);
+                let mut image = image.lock().unwrap();
+                image.write_pixel(x, y, color);
+                drop(image); // unlock the mutex
+                bar.inc(1);
+            });
+            bar.finish();
+            Arc::try_unwrap(image).unwrap().into_inner().unwrap()
+        }
+
+        pub fn render_sequential(&self, world: &World) -> Canvas {
             let mut image = Canvas::new(self.hsize, self.vsize);
             let bar = ProgressBar::new((self.vsize * self.hsize) as u64);
-            for y in 0..self.vsize {
-                for x in 0..self.hsize {
-                    let ray = self.ray_for_pixel(x, y);
-                    let color = world.color_at(&ray);
-                    image.write_pixel(x, y, color);
-                    bar.inc(1);
-                }
+            for (x, y) in pixel_coordinates(self.vsize, self.hsize) {
+                let ray = self.ray_for_pixel(x, y);
+                let color = world.color_at(&ray);
+                image.write_pixel(x, y, color);
+                bar.inc(1);
             }
             bar.finish();
             image
         }
     }
+}
+
+pub fn pixel_coordinates(vsize: usize, hsize: usize) -> impl Iterator<Item = (usize, usize)> {
+    (0..vsize).flat_map(move |y| (0..hsize).map(move |x| (x, y)))
 }
 
 #[cfg(test)]
@@ -127,6 +149,34 @@ mod tests {
         let r = c.ray_for_pixel(100, 50);
         assert_eq!(r.origin, Tuple::point(0.0, 2.0, -5.0));
         assert_eq!(r.direction, Tuple::vector(2f64.sqrt() / 2.0, 0.0, -2f64.sqrt() / 2.0));
+    }
+
+    #[test]
+    fn test_pixel_coordinates() {
+        let rows = 1;
+        let columns = 1;
+        let pixels = super::pixel_coordinates(rows, columns).collect::<Vec<_>>();
+        assert_eq!(pixels, vec![(0, 0)]);
+
+        let rows = 2;
+        let columns = 1;
+        let pixels = super::pixel_coordinates(rows, columns).collect::<Vec<_>>();
+        assert_eq!(pixels, vec![(0, 0),(0, 1)]);
+
+        let rows = 1;
+        let columns = 2;
+        let pixels = super::pixel_coordinates(rows, columns).collect::<Vec<_>>();
+        assert_eq!(pixels, vec![(0, 0),(1, 0)]);
+
+        let rows = 2;
+        let columns = 2;
+        let pixels = super::pixel_coordinates(rows, columns).collect::<Vec<_>>();
+        assert_eq!(pixels, vec![(0, 0),(1, 0),(0, 1),(1, 1)]);
+
+        let rows = 3;
+        let columns = 2;
+        let pixels = super::pixel_coordinates(rows, columns).collect::<Vec<_>>();
+        assert_eq!(pixels, vec![(0, 0),(1, 0),(0, 1),(1, 1),(0, 2),(1, 2)]);
     }
 
     #[test]
@@ -191,6 +241,7 @@ mod tests {
         w.objects.push(left);
 
         let image = c.render(&w);
+        //let image = c.render_sequential(&w);
         //assert_eq!(image.pixel_at(5, 5), Color::new(0.38066, 0.47583, 0.2855));
 
         image.write_to_file("canvas.png");
