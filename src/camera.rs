@@ -246,4 +246,74 @@ mod tests {
 
         image.write_to_file("canvas.png");
     }
+
+    #[test]
+    #[ignore]
+    fn test_render_chap9() {
+        use crate::color::color::Color;
+        use crate::light::light::PointLight;
+        use crate::shape::shape::Shape;
+        use crate::world::world::World;
+
+        let mut c = Camera::new(256, 256, std::f64::consts::PI / 3.0);
+        let from = Tuple::point(0.0, 1.5, -5.0);
+        let to = Tuple::point(0.0, 1.0, 0.0);
+        let up = Tuple::vector(0.0, 1.0, 0.0);
+        c.transform = Matrix::view_transform(from, to, up);
+
+        let mut w = World::new(PointLight::new(Color::new(1.0, 1.0, 1.0), Tuple::point(-10.0, 10.0, -10.0)));
+
+        let mut floor = Shape::plane();
+        floor.transform = Matrix::translate(0.0, 0.0, 0.0);
+        floor.material.color = Color::new(1.0, 0.9, 0.9);
+        floor.material.specular = 0.0;
+        w.objects.push(floor);
+
+        let mut left_wall = Shape::plane();
+        left_wall.transform = Matrix::identity(4)
+            .multiply(&Matrix::rotate_y(std::f64::consts::PI / -4.0))
+            .multiply(&Matrix::translate(0.0, 0.0, 5.0))
+            .multiply(&Matrix::rotate_x(std::f64::consts::PI / 2.0))
+        ;
+        left_wall.material.color = Color::new(1.0, 0.9, 0.9);
+        left_wall.material.specular = 0.0;
+        w.objects.push(left_wall);
+
+        let mut right_wall = Shape::plane();
+        right_wall.transform = Matrix::identity(4)
+            .multiply(&Matrix::rotate_y(std::f64::consts::PI / 4.0))
+            .multiply(&Matrix::translate(0.0, 0.0, 5.0))
+            .multiply(&Matrix::rotate_x(std::f64::consts::PI / 2.0))
+        ;
+        right_wall.material.color = Color::new(1.0, 0.9, 0.9);
+        right_wall.material.specular = 0.0;
+        w.objects.push(right_wall);
+
+        let mut middle = Shape::sphere();
+        middle.transform = Matrix::translate(-0.5, 1.0, 0.5);
+        middle.material.color = Color::new(0.1, 1.0, 0.5);
+        middle.material.diffuse = 0.7;
+        middle.material.specular = 0.3;
+        w.objects.push(middle);
+
+        let mut right = Shape::sphere();
+        right.transform = Matrix::translate(1.5, 0.5, -0.5).multiply(&Matrix::scale(0.5, 0.5, 0.5));
+        right.material.color = Color::new(0.5, 1.0, 0.1);
+        right.material.diffuse = 0.7;
+        right.material.specular = 0.3;
+        w.objects.push(right);
+
+        let mut left = Shape::sphere();
+        left.transform = Matrix::translate(-1.5, 0.33, -0.75).multiply(&Matrix::scale(0.33, 0.33, 0.33));
+        left.material.color = Color::new(1.0, 0.8, 0.1);
+        left.material.diffuse = 0.7;
+        left.material.specular = 0.3;
+        w.objects.push(left);
+
+        let image = c.render(&w);
+        //let image = c.render_sequential(&w);
+        //assert_eq!(image.pixel_at(5, 5), Color::new(0.38066, 0.47583, 0.2855));
+
+        image.write_to_file("canvas.png");
+    }
 }

@@ -7,6 +7,8 @@ pub mod shape {
     use crate::ray::ray::Ray;
     use crate::material::material::Material;
 
+    pub const EPSILON: f64 = 0.00001;
+
     #[derive(Debug, Clone, PartialEq)]
     pub enum ShapeType {
         Sphere,
@@ -32,18 +34,28 @@ pub mod shape {
             }
         }
 
+        pub fn plane() -> Shape {
+            Shape {
+                shape_type: ShapeType::Plane,
+                center: Tuple::point(0.0, 0.0, 0.0),
+                transform: Matrix::identity(4),
+                material: Material::default(),
+            }
+        }
+
         pub fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
+            let trans_ray = ray.transform(&self.transform.inverse());
             match self.shape_type {
-                ShapeType::Sphere => self.intersect_sphere(ray),
+                ShapeType::Sphere => self.local_intersect_sphere(&trans_ray),
+                ShapeType::Plane => self.local_intersect_plane(&trans_ray),
                 _ => vec![]
             }
         }
 
-        fn intersect_sphere(&self, ray: &Ray) -> Vec<Intersection> {
-            let trans_ray = ray.transform(&self.transform.inverse());
-            let sphere_to_ray = trans_ray.origin.subtract(&self.center);
-            let a = trans_ray.direction.dot(&trans_ray.direction);
-            let b = 2.0 * trans_ray.direction.dot(&sphere_to_ray);
+        fn local_intersect_sphere(&self, ray: &Ray) -> Vec<Intersection> {
+            let sphere_to_ray = ray.origin.subtract(&self.center);
+            let a = ray.direction.dot(&ray.direction);
+            let b = 2.0 * ray.direction.dot(&sphere_to_ray);
             let c = sphere_to_ray.dot(&sphere_to_ray) - 1.0;
             let discriminant = b * b - 4.0 * a * c;
             if discriminant < 0.0 {
@@ -56,19 +68,34 @@ pub mod shape {
             }
         }
 
-        pub fn normal_at(&self, world_point: &Tuple) -> Tuple {
-            match self.shape_type {
-                ShapeType::Sphere => self.normal_at_sphere(world_point),
-                _ => Tuple::vector(0.0, 0.0, 0.0)
+        fn local_intersect_plane(&self, ray: &Ray) -> Vec<Intersection> {
+            if ray.direction.y.abs() < EPSILON {
+                vec![]
+            } else {
+                let t = -ray.origin.y / ray.direction.y;
+                vec![Intersection { t, object: self }]
             }
         }
 
-        fn normal_at_sphere(&self, world_point: &Tuple) -> Tuple {
-            let object_point = self.transform.inverse().multiply_tuple(world_point);
-            let object_normal = object_point.subtract(&Tuple::point(0.0, 0.0, 0.0));
-            let mut world_normal = self.transform.inverse().transpose().multiply_tuple(&object_normal);
+        pub fn normal_at(&self, world_point: &Tuple) -> Tuple {
+            let local_point = self.transform.inverse().multiply_tuple(world_point);
+            let local_normal = match self.shape_type {
+                ShapeType::Sphere => self.local_normal_at_sphere(&local_point),
+                ShapeType::Plane => self.local_normal_at_plane(&local_point),
+                _ => Tuple::vector(0.0, 0.0, 0.0)
+            };
+            let mut world_normal = self.transform.inverse().transpose().multiply_tuple(&local_normal);
             world_normal.w = 0.0;
             world_normal.normalize()
+        }
+
+        fn local_normal_at_sphere(&self, world_point: &Tuple) -> Tuple {
+            world_point.subtract(&Tuple::point(0.0, 0.0, 0.0))
+        }
+
+        #[allow(unused_variables)]
+        fn local_normal_at_plane(&self, world_point: &Tuple) -> Tuple {
+            Tuple::vector(0.0, 1.0, 0.0)
         }
     }
 }
