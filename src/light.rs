@@ -144,11 +144,14 @@ mod tests {
         m.diffuse = 0.0;
         m.specular = 0.0;
         m.pattern = Pattern::Stripe(Color::new(1.0, 1.0, 1.0), Color::new(0.0, 0.0, 0.0));
+        let mut object = Shape::sphere();
+        object.material = m;
+
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let c1 = lighting(&m, &Shape::sphere(),  &light, &Tuple::point(0.9, 0.0, 0.0), &eyev, &normalv, false);
-        let c2 = lighting(&m, &Shape::sphere(),  &light, &Tuple::point(1.1, 0.0, 0.0), &eyev, &normalv, false);
+        let c1 = lighting(&object.material, &object,  &light, &Tuple::point(0.9, 0.0, 0.0), &eyev, &normalv, false);
+        let c2 = lighting(&object.material, &object,  &light, &Tuple::point(1.1, 0.0, 0.0), &eyev, &normalv, false);
         assert_eq!(c1, Color::new(1.0, 1.0, 1.0));
         assert_eq!(c2, Color::new(0.0, 0.0, 0.0));
     }
