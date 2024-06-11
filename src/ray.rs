@@ -83,6 +83,7 @@ mod tests {
     use crate::canvas::canvas::Canvas;
     use crate::light::light::PointLight;
     use crate::light::light::lighting;
+    use crate::material::material::Pattern;
 
     #[test]
     fn test_ray() {
@@ -204,11 +205,11 @@ mod tests {
         let mut canvas = Canvas::new(canvas_pixels, canvas_pixels);
         let mut s = Shape::sphere();
         //s.transform = Matrix::scale(1.0, 0.5, 1.0);
-        s.material.color = Color::new(1.0, 0.2, 1.0);
+        s.material.pattern = Pattern::Solid(Color::new(1.0, 0.2, 1.0));
 
         let light_position = Tuple::point(-10.0, 10.0, -10.0);
         let light_color = Color::new(1.0, 1.0, 1.0);
-        let light = PointLight::new(light_color, light_position);
+        let light = PointLight::new(light_position, light_color);
 
         for y in 0..canvas_pixels {
             let world_y = half - pixel_size * y as f64;
@@ -221,7 +222,7 @@ mod tests {
                     let point = r.position(hit.t);
                     let normal = hit.object.normal_at(&point);
                     let eye = r.direction.negate();
-                    let color = lighting(&hit.object.material, &light, &point, &eye, &normal, false);
+                    let color = lighting(&hit.object.material, &hit.object, &light, &point, &eye, &normal, false);
                     canvas.write_pixel(x, y, color);
                 }
             }

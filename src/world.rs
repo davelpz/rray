@@ -4,6 +4,7 @@ pub mod world {
     use crate::color::color::Color;
     use crate::shape::shape::Shape;
     use crate::light::light::{lighting, PointLight};
+    use crate::material::material::Pattern;
     use crate::matrix::matrix::Matrix;
     use crate::ray::ray::{Computations, hit, Ray};
     use crate::ray::ray::Intersection;
@@ -24,9 +25,9 @@ pub mod world {
         }
 
         pub fn default_world() -> World {
-            let light = PointLight::new(Color::new(1.0, 1.0, 1.0), Tuple::point(-10.0, 10.0, -10.0));
+            let light = PointLight::new(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
             let mut s1 = Shape::sphere();
-            s1.material.color = Color::new(0.8, 1.0, 0.6);
+            s1.material.pattern = Pattern::Solid(Color::new(0.8, 1.0, 0.6));
             s1.material.diffuse = 0.7;
             s1.material.specular = 0.2;
             let mut s2 = Shape::sphere();
@@ -50,6 +51,7 @@ pub mod world {
         pub fn shade_hit(&self, comps: &Computations) -> Color {
             // TODO: support multiple light sources, loop through all lights and sum the results
             lighting(&comps.object.material,
+                     &comps.object,
                      &self.light,
                      &comps.over_point,
                      &comps.eyev,
@@ -86,6 +88,7 @@ pub mod world {
 mod tests {
     use crate::color::color::Color;
     use crate::light::light::PointLight;
+    use crate::material::material::Pattern;
     use crate::matrix::matrix::Matrix;
     use crate::tuple::tuple::Tuple;
     use super::world::World;
@@ -94,16 +97,16 @@ mod tests {
 
     #[test]
     fn creating_a_world() {
-        let w = World::new(PointLight::new(Color::new(1.0, 1.0, 1.0), Tuple::point(0.0, 0.0, 0.0)));
+        let w = World::new(PointLight::new(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
         assert_eq!(w.objects.len(), 0);
-        assert_eq!(w.light, PointLight::new(Color::new(1.0, 1.0, 1.0), Tuple::point(0.0, 0.0, 0.0)));
+        assert_eq!(w.light, PointLight::new(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
     }
 
     #[test]
     fn the_default_world() {
-        let light = PointLight::new(Color::new(1.0, 1.0, 1.0), Tuple::point(-10.0, 10.0, -10.0));
+        let light = PointLight::new(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let mut s1 = Shape::sphere();
-        s1.material.color = Color::new(0.8, 1.0, 0.6);
+        s1.material.pattern = Pattern::Solid(Color::new(0.8, 1.0, 0.6));
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
         let mut s2 = Shape::sphere();
@@ -140,7 +143,7 @@ mod tests {
     #[test]
     fn shading_an_intersection_from_the_inside() {
         let mut w = World::default_world();
-        w.light = PointLight::new(Color::new(1.0, 1.0, 1.0), Tuple::point(0.0, 0.25, 0.0));
+        w.light = PointLight::new(Tuple::point(0.0, 0.25, 0.0), Color::new(1.0, 1.0, 1.0));
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
         let shape = &w.objects[1];
         let i = Intersection{t: 0.5, object: shape};
@@ -152,7 +155,7 @@ mod tests {
     #[test]
     fn shade_hit_is_given_an_intersection_in_shadow() {
         let mut w = World::default_world();
-        w.light = PointLight::new(Color::new(1.0, 1.0, 1.0), Tuple::point(0.0, 0.0, -10.0));
+        w.light = PointLight::new(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let s1 = Shape::sphere();
         let mut s2 = Shape::sphere();
         s2.transform = Matrix::translate(0.0, 0.0, 10.0);
@@ -187,7 +190,11 @@ mod tests {
         w.objects[1].material.ambient = 1.0;
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.75), Tuple::vector(0.0, 0.0, -1.0));
         let c = w.color_at(&r);
-        assert_eq!(c, w.objects[1].material.color);
+        let obj_color = match w.objects[1].material.pattern {
+            Pattern::Solid(c) => c,
+            _ => Color::new(0.0, 0.0, 0.0)
+        };
+        assert_eq!(c, obj_color);
     }
 
     #[test]
