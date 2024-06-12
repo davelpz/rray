@@ -8,6 +8,7 @@ mod light;
 mod material;
 mod world;
 mod camera;
+mod scene;
 
 #[allow(unused_variables)]
 fn main() {

@@ -9,3 +9,4 @@ edition = "2021"
 png = "0.17.13"
 indicatif = "0.17.8"
 rayon = "1.10.0"
+serde = { version = "1.0.203", features = ["derive"] }
