@@ -151,13 +151,19 @@ fn render_scene(scene: Scene, file: &str) {
 #[allow(unused_variables)]
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    if args.len() > 2 {
-        let scene = create_scene_from_file(&args[1]);
+    if args.len() > 4 {
+        let width: usize = args[1].parse().expect("Failed to parse width");
+        let height: usize = args[2].parse().expect("Failed to parse height");
+        let scene = create_scene_from_file(&args[3]);
         match scene {
-            Some(s) => render_scene(s,&args[2]),
+            Some(mut s) => {
+                s.camera.rows = height;
+                s.camera.cols = width;
+                render_scene(s, &args[4])
+            },
             None => println!("Failed to create scene from file"),
         }
     } else {
-        println!("Usage: cargo run -r -- <scene.json> <output.png>");
+        println!("Usage: cargo run -- <width> <height> <scene.json> <output.png>");
     }
 }
