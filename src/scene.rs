@@ -14,8 +14,6 @@ pub mod scene {
 
     #[derive(Deserialize)]
     pub struct Camera {
-        pub rows: usize,
-        pub cols: usize,
         pub fov: f64,
         pub from: Vec<f64>,
         pub to: Vec<f64>,
@@ -101,8 +99,6 @@ mod tests {
         let json_string = r#"
             {
                 "camera": {
-                    "rows": 100,
-                    "cols": 100,
                     "fov": 90,
                     "from": [0.0, 0.0, 0.0],
                     "to": [0.0, 0.0, 1.0],

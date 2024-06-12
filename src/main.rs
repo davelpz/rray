@@ -40,10 +40,10 @@ fn color_from_vec(v: &Vec<f64>) -> Color {
     Color::new(v[0], v[1], v[2])
 }
 
-fn create_camera(scene: &Scene) -> Camera {
+fn create_camera(scene: &Scene, width: usize, height: usize) -> Camera {
     let mut c = Camera::new(
-        scene.camera.cols,
-        scene.camera.rows,
+        width,
+        height,
         degrees_to_radians(scene.camera.fov));
     let from = point_from_vec(&scene.camera.from);
     let to = point_from_vec(&scene.camera.to);
@@ -131,8 +131,8 @@ fn create_shape(scene_object: &SceneObject) -> Shape {
     s
 }
 
-fn render_scene(scene: Scene, file: &str) {
-    let c = create_camera(&scene);
+fn render_scene(scene: Scene, width: usize, height: usize, file: &str) {
+    let c = create_camera(&scene, width, height);
 
     //right now, only one light is supported
     let mut w = World::new(Light::new_point_light(
@@ -156,10 +156,8 @@ fn main() {
         let height: usize = args[2].parse().expect("Failed to parse height");
         let scene = create_scene_from_file(&args[3]);
         match scene {
-            Some(mut s) => {
-                s.camera.rows = height;
-                s.camera.cols = width;
-                render_scene(s, &args[4])
+            Some(s) => {
+                render_scene(s,  width, height, &args[4])
             },
             None => println!("Failed to create scene from file"),
         }
