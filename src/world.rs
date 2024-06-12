@@ -3,7 +3,7 @@
 pub mod world {
     use crate::color::color::Color;
     use crate::shape::shape::Shape;
-    use crate::light::light::{lighting, PointLight};
+    use crate::light::light::{lighting, Light};
     use crate::material::material::Pattern;
     use crate::matrix::matrix::Matrix;
     use crate::ray::ray::{Computations, hit, Ray};
@@ -13,11 +13,11 @@ pub mod world {
     #[derive(Debug, PartialEq, Clone)]
     pub struct World {
         pub objects: Vec<Shape>,
-        pub light: PointLight,
+        pub light: Light,
     }
 
     impl World {
-        pub fn new(light: PointLight) -> World {
+        pub fn new(light: Light) -> World {
             World {
                 objects: Vec::new(),
                 light,
@@ -25,7 +25,7 @@ pub mod world {
         }
 
         pub fn default_world() -> World {
-            let light = PointLight::new(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
+            let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
             let mut s1 = Shape::sphere();
             s1.material.pattern = Pattern::Solid(Color::new(0.8, 1.0, 0.6));
             s1.material.diffuse = 0.7;
@@ -87,7 +87,7 @@ pub mod world {
 #[cfg(test)]
 mod tests {
     use crate::color::color::Color;
-    use crate::light::light::PointLight;
+    use crate::light::light::Light;
     use crate::material::material::Pattern;
     use crate::matrix::matrix::Matrix;
     use crate::tuple::tuple::Tuple;
@@ -97,14 +97,14 @@ mod tests {
 
     #[test]
     fn creating_a_world() {
-        let w = World::new(PointLight::new(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
+        let w = World::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
         assert_eq!(w.objects.len(), 0);
-        assert_eq!(w.light, PointLight::new(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
+        assert_eq!(w.light, Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
     }
 
     #[test]
     fn the_default_world() {
-        let light = PointLight::new(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let mut s1 = Shape::sphere();
         s1.material.pattern = Pattern::Solid(Color::new(0.8, 1.0, 0.6));
         s1.material.diffuse = 0.7;
@@ -143,7 +143,7 @@ mod tests {
     #[test]
     fn shading_an_intersection_from_the_inside() {
         let mut w = World::default_world();
-        w.light = PointLight::new(Tuple::point(0.0, 0.25, 0.0), Color::new(1.0, 1.0, 1.0));
+        w.light = Light::new_point_light(Tuple::point(0.0, 0.25, 0.0), Color::new(1.0, 1.0, 1.0));
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
         let shape = &w.objects[1];
         let i = Intersection{t: 0.5, object: shape};
@@ -155,7 +155,7 @@ mod tests {
     #[test]
     fn shade_hit_is_given_an_intersection_in_shadow() {
         let mut w = World::default_world();
-        w.light = PointLight::new(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        w.light = Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let s1 = Shape::sphere();
         let mut s2 = Shape::sphere();
         s2.transform = Matrix::translate(0.0, 0.0, 10.0);

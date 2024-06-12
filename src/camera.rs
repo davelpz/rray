@@ -184,7 +184,7 @@ mod tests {
     #[ignore]
     fn test_render_chap7() {
         use crate::color::color::Color;
-        use crate::light::light::PointLight;
+        use crate::light::light::Light;
         use crate::shape::shape::Shape;
         use crate::world::world::World;
 
@@ -194,7 +194,7 @@ mod tests {
         let up = Tuple::vector(0.0, 1.0, 0.0);
         c.transform = Matrix::view_transform(from, to, up);
 
-        let mut w = World::new(PointLight::new(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = World::new(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
 
         let mut floor = Shape::sphere();
         floor.transform = Matrix::scale(10.0, 0.01, 10.0);
@@ -252,7 +252,7 @@ mod tests {
     #[ignore]
     fn test_render_chap9() {
         use crate::color::color::Color;
-        use crate::light::light::PointLight;
+        use crate::light::light::Light;
         use crate::shape::shape::Shape;
         use crate::world::world::World;
 
@@ -262,7 +262,7 @@ mod tests {
         let up = Tuple::vector(0.0, 1.0, 0.0);
         c.transform = Matrix::view_transform(from, to, up);
 
-        let mut w = World::new(PointLight::new(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = World::new(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
 
         let mut floor = Shape::plane();
         floor.transform = Matrix::translate(0.0, 0.0, 0.0);

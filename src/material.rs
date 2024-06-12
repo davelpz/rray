@@ -69,7 +69,7 @@ pub mod material {
 mod tests {
     use crate::color::color::Color;
     use crate::tuple::tuple::Tuple;
-    use crate::light::light::PointLight;
+    use crate::light::light::Light;
     use crate::light::light::lighting;
     use crate::material::material::{Material, Pattern};
     use crate::matrix::matrix::Matrix;
@@ -81,7 +81,7 @@ mod tests {
         let position = Tuple::point(0.0, 0.0, 0.0);
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
-        let light = PointLight::new(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let light = Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let in_shadow = true;
         let result = lighting(&m, &Shape::sphere(),  &light, &position, &eyev, &normalv, in_shadow);
         assert_eq!(result, Color::new(0.1, 0.1, 0.1));

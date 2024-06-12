@@ -1,7 +1,7 @@
 {
   "camera": {
-    "rows": 400,
-    "cols": 200,
+    "cols": 400,
+    "rows": 200,
     "fov": 60,
     "from": [
       0,

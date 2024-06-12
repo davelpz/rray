@@ -81,7 +81,7 @@ mod tests {
     use crate::shape::shape::Shape;
     use crate::color::color::Color;
     use crate::canvas::canvas::Canvas;
-    use crate::light::light::PointLight;
+    use crate::light::light::Light;
     use crate::light::light::lighting;
     use crate::material::material::Pattern;
 
@@ -209,7 +209,7 @@ mod tests {
 
         let light_position = Tuple::point(-10.0, 10.0, -10.0);
         let light_color = Color::new(1.0, 1.0, 1.0);
-        let light = PointLight::new(light_position, light_color);
+        let light = Light::new_point_light(light_position, light_color);
 
         for y in 0..canvas_pixels {
             let world_y = half - pixel_size * y as f64;
