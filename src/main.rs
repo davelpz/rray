@@ -158,6 +158,6 @@ fn main() {
             None => println!("Failed to create scene from file"),
         }
     } else {
-        println!("Please provide a json file and output png file as a command line arguments");
+        println!("Usage: cargo run -r -- <scene.json> <output.png>");
     }
 }
