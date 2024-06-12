@@ -11,6 +11,8 @@ pub mod material {
         Stripe(Color, Color),
         Solid(Color),
         Gradient(Color, Color),
+        Ring(Color, Color),
+        Checker(Color, Color),
     }
 
     #[derive(Debug, Clone, PartialEq)]
@@ -53,7 +55,21 @@ pub mod material {
                     let distance = b.subtract(&a);
                     let fraction = point.x - point.x.floor();
                     a.add(&distance.multiply(fraction))
-                }
+                },
+                Pattern::Ring(a, b) => {
+                    if (point.x.powi(2) + point.z.powi(2)).sqrt().floor() as i32 % 2 == 0 {
+                        a.clone()
+                    } else {
+                        b.clone()
+                    }
+                },
+                Pattern::Checker(a, b) => {
+                    if (point.x.floor() + point.y.floor() + point.z.floor()) as i32 % 2 == 0 {
+                        a.clone()
+                    } else {
+                        b.clone()
+                    }
+                },
             }
         }
 

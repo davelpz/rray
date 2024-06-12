@@ -45,16 +45,16 @@
       ],
       "material": {
         "pattern": {
-          "type": "stripe",
+          "type": "checker",
           "color_a": [
-            1.0,
-            0.5,
-            0.5
+            0.25,
+            0.25,
+            1.0
           ],
           "color_b": [
             0.5,
-            1.0,
-            0.5
+            0.5,
+            1.0
           ]
         },
         "transforms": [
@@ -65,9 +65,9 @@
           },
           {
             "type": "scale",
-            "x": 0.1,
-            "y": 0.1,
-            "z": 0.1
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
           }
         ],
         "ambient": 0.1,
@@ -98,7 +98,7 @@
       ],
       "material": {
         "pattern": {
-          "type": "gradient",
+          "type": "stripe",
           "color_a": [
             1.0,
             0.5,
@@ -113,15 +113,15 @@
         "transforms": [
           {
             "type": "scale",
-            "x": 7,
-            "y": 7,
-            "z": 7
+            "x": 1,
+            "y": 1,
+            "z": 1
           },
           {
             "type": "translate",
-            "x": 124,
-            "y": 124,
-            "z": 124
+            "x": 0,
+            "y": 0,
+            "z": 0
           }
         ],
         "ambient": 0.1,
@@ -152,11 +152,16 @@
       ],
       "material": {
         "pattern": {
-          "type": "solid",
-          "color": [
+          "type": "ring",
+          "color_a": [
+            0.5,
+            0.75,
+            0.5
+          ],
+          "color_b": [
+            0.5,
             1.0,
-            0.9,
-            0.9
+            0.5
           ]
         },
         "transforms": [
@@ -179,14 +184,24 @@
       ],
       "material": {
         "pattern": {
-          "type": "solid",
-          "color": [
-            0.1,
+          "type": "gradient",
+          "color_a": [
+            1.0,
+            0.5,
+            0.5
+          ],
+          "color_b": [
+            0.5,
             1.0,
             0.5
           ]
         },
         "transforms": [
+          {
+            "type": "rotate",
+            "axis": "y",
+            "angle": 75
+          }
         ],
         "ambient": 0.1,
         "diffuse": 0.7,
