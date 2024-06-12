@@ -33,7 +33,7 @@ cargo build --release
 ## Usage
 
 ```bash
-cargo run -r -- <scene.json> <output.png>
+cargo run -r -- <width> <height> <scene.json> <output.png>
 ```
 
 ## Contributing
