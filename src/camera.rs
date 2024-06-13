@@ -266,13 +266,13 @@ mod tests {
 
         let mut floor = Shape::plane();
         floor.transform = Matrix::translate(0.0, 0.0, 0.0);
-        floor.material.pattern = Pattern::Stripe(Color::new(1.0, 0.5, 0.5), Color::new(0.5, 1.0, 0.5));
+        floor.material.pattern = Pattern::Stripe(Box::new(Pattern::Solid(Color::new(1.0, 0.5, 0.5))), Box::new(Pattern::Solid(Color::new(0.5, 1.0, 0.5))));
         floor.material.transform = Matrix::scale(0.1, 0.1, 0.1).multiply(&Matrix::rotate_y(std::f64::consts::PI / 4.0));
         floor.material.specular = 0.0;
         w.objects.push(floor);
 
         let mut left_wall = Shape::plane();
-        left_wall.material.pattern = Pattern::Gradient(Color::new(1.0, 0.5, 0.5), Color::new(0.5, 1.0, 0.5));
+        left_wall.material.pattern = Pattern::Gradient(Box::new(Pattern::Solid(Color::new(1.0, 0.5, 0.5))), Box::new(Pattern::Solid(Color::new(0.5, 1.0, 0.5))));
         left_wall.material.transform = Matrix::identity(4)
             .multiply(&Matrix::translate(124.0, 124.0, 124.0)
             .multiply(&Matrix::scale(7.0, 7.0, 7.0))

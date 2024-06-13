@@ -103,10 +103,10 @@ fn create_pattern(pattern: &scene::scene::Pattern) -> Pattern {
     let color_b = color_from_vec(&(pattern.color_b.unwrap_or(vec![0.0, 0.0, 0.0])));
     match pattern.pattern_type.as_str() {
         "solid" => Pattern::Solid(color),
-        "stripe" => Pattern::Stripe(color_a, color_b),
-        "gradient" => Pattern::Gradient(color_a, color_b),
-        "ring" => Pattern::Ring(color_a, color_b),
-        "checker" => Pattern::Checker(color_a, color_b),
+        "stripe" => Pattern::Stripe(Box::new(Pattern::Solid(color_a)), Box::new(Pattern::Solid(color_b))),
+        "gradient" => Pattern::Gradient(Box::new(Pattern::Solid(color_a)), Box::new(Pattern::Solid(color_b))),
+        "ring" => Pattern::Ring(Box::new(Pattern::Solid(color_a)), Box::new(Pattern::Solid(color_b))),
+        "checker" => Pattern::Checker(Box::new(Pattern::Solid(color_a)), Box::new(Pattern::Solid(color_b))),
         _ => Pattern::Solid(Color::new(0.0, 0.0, 0.0)),
     }
 }

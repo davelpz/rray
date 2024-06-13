@@ -149,7 +149,7 @@ mod tests {
         m.ambient = 1.0;
         m.diffuse = 0.0;
         m.specular = 0.0;
-        m.pattern = Pattern::Stripe(Color::new(1.0, 1.0, 1.0), Color::new(0.0, 0.0, 0.0));
+        m.pattern = Pattern::Stripe(Box::new(Pattern::Solid(Color::new(1.0, 1.0, 1.0))), Box::new(Pattern::Solid(Color::new(0.0, 0.0, 0.0))));
         let mut object = Shape::sphere();
         object.material = m;
 
