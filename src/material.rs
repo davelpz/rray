@@ -7,40 +7,40 @@ pub mod material {
     use crate::tuple::tuple::Tuple;
 
     #[derive(Debug, Clone, PartialEq)]
-    pub enum Pattern {
+    pub enum PatternType {
         Solid(Color),
-        Stripe(Box<Pattern>, Box<Pattern>),
-        Gradient(Box<Pattern>, Box<Pattern>),
-        Ring(Box<Pattern>, Box<Pattern>),
-        Checker(Box<Pattern>, Box<Pattern>),
+        Stripe(Box<PatternType>, Box<PatternType>),
+        Gradient(Box<PatternType>, Box<PatternType>),
+        Ring(Box<PatternType>, Box<PatternType>),
+        Checker(Box<PatternType>, Box<PatternType>),
     }
 
-    impl Pattern {
+    impl PatternType {
         pub fn pattern_at(&self, point: &Tuple) -> Color {
             match self {
-                Pattern::Stripe(a, b) => {
+                PatternType::Stripe(a, b) => {
                     if (point.x.floor() as i32) % 2 == 0 {
                         (**a).pattern_at(point)
                     } else {
                         (**b).pattern_at(point)
                     }
                 },
-                Pattern::Solid(color) => color.clone(),
-                Pattern::Gradient(a, b) => {
+                PatternType::Solid(color) => color.clone(),
+                PatternType::Gradient(a, b) => {
                     let a = (**a).pattern_at(point);
                     let b = (**b).pattern_at(point);
                     let distance = b.subtract(&a);
                     let fraction = point.x - point.x.floor();
                     a.add(&distance.multiply(fraction))
                 },
-                Pattern::Ring(a, b) => {
+                PatternType::Ring(a, b) => {
                     if (point.x.powi(2) + point.z.powi(2)).sqrt().floor() as i32 % 2 == 0 {
                         (**a).pattern_at(point)
                     } else {
                         (**b).pattern_at(point)
                     }
                 },
-                Pattern::Checker(a, b) => {
+                PatternType::Checker(a, b) => {
                     if (point.x.floor() + point.y.floor() + point.z.floor()) as i32 % 2 == 0 {
                         (**a).pattern_at(point)
                     } else {
@@ -53,7 +53,7 @@ pub mod material {
 
     #[derive(Debug, Clone, PartialEq)]
     pub struct Material {
-        pub pattern: Pattern,
+        pub pattern: PatternType,
         pub transform: Matrix,
         pub ambient: f64,
         pub diffuse: f64,
@@ -62,13 +62,13 @@ pub mod material {
     }
 
     impl Material {
-        pub fn new(pattern: Pattern, transform: Matrix, ambient: f64, diffuse: f64, specular: f64, shininess: f64) -> Material {
+        pub fn new(pattern: PatternType, transform: Matrix, ambient: f64, diffuse: f64, specular: f64, shininess: f64) -> Material {
             Material { pattern, transform, ambient, diffuse, specular, shininess }
         }
 
         pub fn default() -> Material {
             Material {
-                pattern: Pattern::Solid(Color::new(1.0, 1.0, 1.0)),
+                pattern: PatternType::Solid(Color::new(1.0, 1.0, 1.0)),
                 transform: Matrix::identity(4),
                 ambient: 0.1,
                 diffuse: 0.9,
@@ -95,7 +95,7 @@ mod tests {
     use crate::tuple::tuple::Tuple;
     use crate::light::light::Light;
     use crate::light::light::lighting;
-    use crate::material::material::{Material, Pattern};
+    use crate::material::material::{Material, PatternType};
     use crate::matrix::matrix::Matrix;
     use crate::shape::shape::Shape;
 
@@ -114,9 +114,9 @@ mod tests {
     #[test]
     fn stripe_pattern_is_constant_in_y() {
         let m = Material::new(
-            Pattern::Stripe(
-                Box::new(Pattern::Solid(Color::new(1.0, 1.0, 1.0))),
-                Box::new(Pattern::Solid(Color::new(0.0, 0.0, 0.0)))),
+            PatternType::Stripe(
+                Box::new(PatternType::Solid(Color::new(1.0, 1.0, 1.0))),
+                Box::new(PatternType::Solid(Color::new(0.0, 0.0, 0.0)))),
             Matrix::identity(4),
             1.0,
             0.0,
@@ -129,7 +129,7 @@ mod tests {
 
     #[test]
     fn stripe_pattern_is_constant_in_z() {
-        let m = Material::new(Pattern::Stripe(Box::new(Pattern::Solid(Color::new(1.0, 1.0, 1.0))), Box::new(Pattern::Solid(Color::new(0.0, 0.0, 0.0)))), Matrix::identity(4), 1.0, 0.0, 0.0, 0.0);
+        let m = Material::new(PatternType::Stripe(Box::new(PatternType::Solid(Color::new(1.0, 1.0, 1.0))), Box::new(PatternType::Solid(Color::new(0.0, 0.0, 0.0)))), Matrix::identity(4), 1.0, 0.0, 0.0, 0.0);
         assert_eq!(m.pattern_at(&Tuple::point(0.0, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
         assert_eq!(m.pattern_at(&Tuple::point(0.0, 0.0, 1.0)), Color::new(1.0, 1.0, 1.0));
         assert_eq!(m.pattern_at(&Tuple::point(0.0, 0.0, 2.0)), Color::new(1.0, 1.0, 1.0));
@@ -137,7 +137,7 @@ mod tests {
 
     #[test]
     fn stripe_pattern_alternates_in_x() {
-        let m = Material::new(Pattern::Stripe(Box::new(Pattern::Solid(Color::new(1.0, 1.0, 1.0))), Box::new(Pattern::Solid(Color::new(0.0, 0.0, 0.0)))), Matrix::identity(4), 1.0, 0.0, 0.0, 0.0);
+        let m = Material::new(PatternType::Stripe(Box::new(PatternType::Solid(Color::new(1.0, 1.0, 1.0))), Box::new(PatternType::Solid(Color::new(0.0, 0.0, 0.0)))), Matrix::identity(4), 1.0, 0.0, 0.0, 0.0);
         assert_eq!(m.pattern_at(&Tuple::point(0.0, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
         assert_eq!(m.pattern_at(&Tuple::point(0.9, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
         assert_eq!(m.pattern_at(&Tuple::point(1.0, 0.0, 0.0)), Color::new(0.0, 0.0, 0.0));
@@ -148,7 +148,7 @@ mod tests {
 
     #[test]
     fn gradient_pattern_linearly_interpolates_between_colors() {
-        let m = Material::new(Pattern::Gradient(Box::new(Pattern::Solid(Color::new(1.0, 1.0, 1.0))), Box::new(Pattern::Solid(Color::new(0.0, 0.0, 0.0)))), Matrix::identity(4), 1.0, 0.0, 0.0, 0.0);
+        let m = Material::new(PatternType::Gradient(Box::new(PatternType::Solid(Color::new(1.0, 1.0, 1.0))), Box::new(PatternType::Solid(Color::new(0.0, 0.0, 0.0)))), Matrix::identity(4), 1.0, 0.0, 0.0, 0.0);
         assert_eq!(m.pattern_at(&Tuple::point(0.0, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
         assert_eq!(m.pattern_at(&Tuple::point(0.25, 0.0, 0.0)), Color::new(0.75, 0.75, 0.75));
         assert_eq!(m.pattern_at(&Tuple::point(0.5, 0.0, 0.0)), Color::new(0.5, 0.5, 0.5));
