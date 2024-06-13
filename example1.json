@@ -46,16 +46,14 @@
       "material": {
         "pattern": {
           "type": "checker",
-          "color_a": [
-            0.25,
-            0.25,
-            1.0
-          ],
-          "color_b": [
-            0.5,
-            0.5,
-            1.0
-          ]
+          "pattern_a": {
+            "type" : "solid",
+            "color" : [0.25, 0.25, 1.0]
+          },
+          "pattern_b": {
+            "type" : "solid",
+            "color" : [0.5, 0.5, 1.0]
+          }
         },
         "transforms": [
           {
@@ -99,16 +97,28 @@
       "material": {
         "pattern": {
           "type": "stripe",
-          "color_a": [
-            1.0,
-            0.5,
-            0.5
-          ],
-          "color_b": [
-            0.5,
-            1.0,
-            0.5
-          ]
+          "pattern_a": {
+            "type": "checker",
+            "pattern_a": {
+              "type" : "solid",
+              "color" : [0.25, 0.5, 1.0]
+            },
+            "pattern_b": {
+              "type" : "solid",
+              "color" : [0.5, 1.0, 1.0]
+            }
+          },
+          "pattern_b": {
+            "type": "ring",
+            "pattern_a": {
+              "type" : "solid",
+              "color" : [1.0, 1.0, 0.0]
+            },
+            "pattern_b": {
+              "type" : "solid",
+              "color" : [0.75, 0.75, 0.5]
+            }
+          }
         },
         "transforms": [
           {
@@ -153,16 +163,28 @@
       "material": {
         "pattern": {
           "type": "ring",
-          "color_a": [
-            0.5,
-            0.75,
-            0.5
-          ],
-          "color_b": [
-            0.5,
-            1.0,
-            0.5
-          ]
+          "pattern_a": {
+            "type": "checker",
+            "pattern_a": {
+              "type": "solid",
+              "color": [0.25, 0.25, 1.0]
+            },
+            "pattern_b": {
+              "type": "solid",
+              "color": [0.5, 0.5, 1.0]
+            }
+          },
+          "pattern_b": {
+            "type": "checker",
+            "pattern_a": {
+              "type": "solid",
+              "color": [0.5, 0.5, 1.0]
+            },
+            "pattern_b": {
+              "type": "solid",
+              "color": [0.25, 0.25, 1.0]
+            }
+          }
         },
         "transforms": [
         ],
@@ -185,16 +207,14 @@
       "material": {
         "pattern": {
           "type": "gradient",
-          "color_a": [
-            1.0,
-            0.5,
-            0.5
-          ],
-          "color_b": [
-            0.5,
-            1.0,
-            0.5
-          ]
+          "pattern_a": {
+            "type" : "solid",
+            "color" : [1.0, 0.5, 0.5]
+          },
+          "pattern_b": {
+            "type" : "solid",
+            "color" : [0.5, 1.0, 0.5]
+          }
         },
         "transforms": [
           {

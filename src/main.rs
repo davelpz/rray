@@ -96,18 +96,21 @@ fn create_transforms(transforms: &Vec<Transform>) -> Matrix {
     m
 }
 
+#[allow(dead_code)]
 fn create_pattern(pattern: &scene::scene::Pattern) -> Pattern {
     let pattern = pattern.clone();
-    let color = color_from_vec(&(pattern.color.unwrap_or(vec![0.0, 0.0, 0.0])));
-    let color_a = color_from_vec(&(pattern.color_a.unwrap_or(vec![0.0, 0.0, 0.0])));
-    let color_b = color_from_vec(&(pattern.color_b.unwrap_or(vec![0.0, 0.0, 0.0])));
-    match pattern.pattern_type.as_str() {
-        "solid" => Pattern::Solid(color),
-        "stripe" => Pattern::Stripe(Box::new(Pattern::Solid(color_a)), Box::new(Pattern::Solid(color_b))),
-        "gradient" => Pattern::Gradient(Box::new(Pattern::Solid(color_a)), Box::new(Pattern::Solid(color_b))),
-        "ring" => Pattern::Ring(Box::new(Pattern::Solid(color_a)), Box::new(Pattern::Solid(color_b))),
-        "checker" => Pattern::Checker(Box::new(Pattern::Solid(color_a)), Box::new(Pattern::Solid(color_b))),
-        _ => Pattern::Solid(Color::new(0.0, 0.0, 0.0)),
+    if pattern.pattern_type == "solid" {
+        return Pattern::Solid(color_from_vec(&(pattern.color.unwrap_or(vec![0.0, 0.0, 0.0]))));
+    } else {
+        let pattern_a = create_pattern(&(pattern.pattern_a.unwrap_or(Box::new(scene::scene::Pattern { pattern_type: "solid".to_string(), color: Some(vec![0.0, 0.0, 0.0]), pattern_a: None, pattern_b: None }))));
+        let pattern_b = create_pattern(&(pattern.pattern_b.unwrap_or(Box::new(scene::scene::Pattern { pattern_type: "solid".to_string(), color: Some(vec![0.0, 0.0, 0.0]), pattern_a: None, pattern_b: None }))));
+        match pattern.pattern_type.as_str() {
+            "stripe" => Pattern::Stripe(Box::new(pattern_a), Box::new(pattern_b)),
+            "gradient" => Pattern::Gradient(Box::new(pattern_a), Box::new(pattern_b)),
+            "ring" => Pattern::Ring(Box::new(pattern_a), Box::new(pattern_b)),
+            "checker" => Pattern::Checker(Box::new(pattern_a), Box::new(pattern_b)),
+            _ => Pattern::Solid(Color::new(0.0, 0.0, 0.0)),
+        }
     }
 }
 

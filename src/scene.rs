@@ -68,8 +68,8 @@ pub mod scene {
         #[serde(rename = "type")]
         pub pattern_type: String,
         pub color: Option<Vec<f64>>,
-        pub color_a: Option<Vec<f64>>,
-        pub color_b: Option<Vec<f64>>,
+        pub pattern_a: Option<Box<Pattern>>,
+        pub pattern_b: Option<Box<Pattern>>,
     }
 
     pub fn create_scene_from_json_str(json_string: &str) -> Option<Scene> {
@@ -117,15 +117,22 @@ mod tests {
                         "transforms": [
                             {
                                 "type": "translate",
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
+                                "x": 1.0,
+                                "y": 2.0,
+                                "z": 3.0
                             }
                         ],
                         "material": {
                             "pattern": {
-                                "type": "solid",
-                                "color": [1.0, 0.0, 0.0]
+                                "type": "stripe",
+                                "pattern_a": {
+                                   "type": "solid",
+                                   "color": [1.0, 0.0, 0.0]
+                                },
+                                "pattern_b": {
+                                   "type": "solid",
+                                   "color": [0.0, 1.0, 0.0]
+                                }
                             },
                             "transforms": [],
                             "ambient": 0.1,
