@@ -1,35 +1,15 @@
 {
   "camera": {
     "fov": 60,
-    "from": [
-      0,
-      1.5,
-      -5
-    ],
-    "to": [
-      0,
-      1,
-      0
-    ],
-    "up": [
-      0,
-      1,
-      0
-    ]
+    "from": [0, 1.5, -5],
+    "to": [0, 1, 0],
+    "up": [0, 1, 0]
   },
   "lights": [
     {
       "type": "point",
-      "color": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "position": [
-        -10,
-        10,
-        -10
-      ]
+      "color": [1.0, 1.0, 1.0],
+      "position": [-10, 10, -10]
     }
   ],
   "scene": [
@@ -47,12 +27,12 @@
         "pattern": {
           "type": "checker",
           "pattern_a": {
-            "type" : "solid",
-            "color" : [0.25, 0.25, 1.0]
+            "type": "solid",
+            "color": [0.25, 0.25, 1.0]
           },
           "pattern_b": {
-            "type" : "solid",
-            "color" : [0.5, 0.5, 1.0]
+            "type": "solid",
+            "color": [0.5, 0.5, 1.0]
           }
         },
         "transforms": [
@@ -100,23 +80,23 @@
           "pattern_a": {
             "type": "checker",
             "pattern_a": {
-              "type" : "solid",
-              "color" : [0.25, 0.5, 1.0]
+              "type": "solid",
+              "color": [0.25, 0.5, 1.0]
             },
             "pattern_b": {
-              "type" : "solid",
-              "color" : [0.5, 1.0, 1.0]
+              "type": "solid",
+              "color": [0.5, 1.0, 1.0]
             }
           },
           "pattern_b": {
             "type": "ring",
             "pattern_a": {
-              "type" : "solid",
-              "color" : [1.0, 1.0, 0.0]
+              "type": "solid",
+              "color": [1.0, 1.0, 0.0]
             },
             "pattern_b": {
-              "type" : "solid",
-              "color" : [0.75, 0.75, 0.5]
+              "type": "solid",
+              "color": [0.75, 0.75, 0.5]
             }
           }
         },
@@ -208,12 +188,12 @@
         "pattern": {
           "type": "gradient",
           "pattern_a": {
-            "type" : "solid",
-            "color" : [1.0, 0.5, 0.5]
+            "type": "solid",
+            "color": [1.0, 0.5, 0.5]
           },
           "pattern_b": {
-            "type" : "solid",
-            "color" : [0.5, 1.0, 0.5]
+            "type": "solid",
+            "color": [0.5, 1.0, 0.5]
           }
         },
         "transforms": [
@@ -248,14 +228,8 @@
       "material": {
         "pattern": {
           "type": "solid",
-          "color": [
-            0.5,
-            1.0,
-            0.1
-          ]
+          "color": [0.5, 1.0, 0.1]
         },
-        "transforms": [
-        ],
         "ambient": 0.1,
         "diffuse": 0.7,
         "specular": 0.3,
@@ -281,14 +255,8 @@
       "material": {
         "pattern": {
           "type": "solid",
-          "color": [
-            1.0,
-            0.8,
-            0.1
-          ]
+          "color": [1.0, 0.8, 0.1]
         },
-        "transforms": [
-        ],
         "ambient": 0.1,
         "diffuse": 0.7,
         "specular": 0.3,
