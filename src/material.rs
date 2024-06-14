@@ -77,8 +77,8 @@ pub mod material {
             }
         }
 
-        pub fn pattern_at(&self, point: &Tuple) -> Color {
-            self.pattern.pattern_at(point)
+        pub fn pattern_at(&self, pattern_point: &Tuple) -> Color {
+            self.pattern.pattern_at(pattern_point)
         }
 
         pub fn pattern_at_object(&self, shape: &Shape, world_point: &Tuple) -> Color {

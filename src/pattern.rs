@@ -66,63 +66,64 @@ pub mod pattern {
             }
         }
 
-        pub fn pattern_at(&self, point: &Tuple) -> Color {
+        pub fn pattern_at(&self, object_point: &Tuple) -> Color {
+            let pattern_point = self.transform.inverse().multiply_tuple(object_point);
             match &self.pattern_type {
                 PatternType::Solid => {
                     match &self.details {
                         PatternDetails::Color(color) => color.clone(),
-                        PatternDetails::Composite(a, _) => a.pattern_at(point),
+                        PatternDetails::Composite(a, _) => a.pattern_at(&pattern_point),
                     }
                 },
                 PatternType::Stripe => {
-                    if (point.x.floor() as i32) % 2 == 0 {
+                    if (pattern_point.x.floor() as i32) % 2 == 0 {
                         match &self.details {
                             PatternDetails::Color(color) => color.clone(),
-                            PatternDetails::Composite(a, _) => a.pattern_at(point),
+                            PatternDetails::Composite(a, _) => a.pattern_at(&pattern_point),
                         }
                     } else {
                         match &self.details {
                             PatternDetails::Color(color) => color.clone(),
-                            PatternDetails::Composite(_, b) => b.pattern_at(point),
+                            PatternDetails::Composite(_, b) => b.pattern_at(&pattern_point),
                         }
                     }
                 },
                 PatternType::Gradient => {
                     let a = match &self.details {
                         PatternDetails::Color(color) => color.clone(),
-                        PatternDetails::Composite(a, _) => a.pattern_at(point),
+                        PatternDetails::Composite(a, _) => a.pattern_at(&pattern_point),
                     };
                     let b = match &self.details {
                         PatternDetails::Color(color) => color.clone(),
-                        PatternDetails::Composite(_, b) => b.pattern_at(point),
+                        PatternDetails::Composite(_, b) => b.pattern_at(&pattern_point),
                     };
                     let distance = b.subtract(&a);
-                    let fraction = point.x - point.x.floor();
+                    let fraction = pattern_point.x - pattern_point.x.floor();
                     a.add(&distance.multiply(fraction))
                 },
                 PatternType::Ring => {
-                    if (point.x.powi(2) + point.z.powi(2)).sqrt().floor() as i32 % 2 == 0 {
+                    if (pattern_point.x.powi(2) + pattern_point.z.powi(2)).sqrt().floor() as i32 % 2 == 0 {
                         match &self.details {
                             PatternDetails::Color(color) => color.clone(),
-                            PatternDetails::Composite(a, _) => a.pattern_at(point),
+                            PatternDetails::Composite(a, _) => a.pattern_at(&pattern_point),
                         }
                     } else {
                         match &self.details {
                             PatternDetails::Color(color) => color.clone(),
-                            PatternDetails::Composite(_, b) => b.pattern_at(point),
+                            PatternDetails::Composite(_, b) => b.pattern_at(&pattern_point),
                         }
                     }
                 },
                 PatternType::Checker => {
-                    if (point.x.floor() + point.y.floor() + point.z.floor()) as i32 % 2 == 0 {
+                    if (pattern_point.x.floor() + pattern_point.y.floor() + pattern_point.z.floor()) as i32 % 2 == 0 {
                         match &self.details {
                             PatternDetails::Color(color) => color.clone(),
-                            PatternDetails::Composite(a, _) => a.pattern_at(point),
+                            PatternDetails::Composite(a, _) => a.pattern_at(&pattern_point),
                         }
                     } else {
                         match &self.details {
                             PatternDetails::Color(color) => color.clone(),
-                            PatternDetails::Composite(_, b) => b.pattern_at(point),
+                            PatternDetails::Composite(_, b) => b.pattern_at(&pattern_point),
                         }
                     }
                 },
@@ -180,5 +181,46 @@ mod tests {
         assert_eq!(p.pattern_at(&Tuple::point(0.25, 0.0, 0.0)), Color::new(0.75, 0.75, 0.75));
         assert_eq!(p.pattern_at(&Tuple::point(0.5, 0.0, 0.0)), Color::new(0.5, 0.5, 0.5));
         assert_eq!(p.pattern_at(&Tuple::point(0.75, 0.0, 0.0)), Color::new(0.25, 0.25, 0.25));
+    }
+
+    #[test]
+    fn ring_should_extend_in_both_x_and_z() {
+        let p = Pattern::ring(Pattern::solid(Color::new(1.0,1.0,1.0), Matrix::identity(4)),
+                              Pattern::solid(Color::new(0.0,0.0,0.0), Matrix::identity(4)),
+                              Matrix::identity(4));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(1.0, 0.0, 0.0)), Color::new(0.0, 0.0, 0.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 1.0)), Color::new(0.0, 0.0, 0.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.708, 0.0, 0.708)), Color::new(0.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn checkers_repeat_in_x() {
+        let p = Pattern::checker(Pattern::solid(Color::new(1.0,1.0,1.0), Matrix::identity(4)),
+                                 Pattern::solid(Color::new(0.0,0.0,0.0), Matrix::identity(4)),
+                                 Matrix::identity(4));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.99, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(1.01, 0.0, 0.0)), Color::new(0.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn checkers_repeat_in_y() {
+        let p = Pattern::checker(Pattern::solid(Color::new(1.0,1.0,1.0), Matrix::identity(4)),
+                                 Pattern::solid(Color::new(0.0,0.0,0.0), Matrix::identity(4)),
+                                 Matrix::identity(4));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.99, 0.0)), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 1.01, 0.0)), Color::new(0.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn checkers_repeat_in_z() {
+        let p = Pattern::checker(Pattern::solid(Color::new(1.0,1.0,1.0), Matrix::identity(4)),
+                                 Pattern::solid(Color::new(0.0,0.0,0.0), Matrix::identity(4)),
+                                 Matrix::identity(4));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.99)), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 1.01)), Color::new(0.0, 0.0, 0.0));
     }
 }
