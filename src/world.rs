@@ -50,7 +50,7 @@ pub mod world {
 
         pub fn shade_hit(&self, comps: &Computations) -> Color {
             // TODO: support multiple light sources, loop through all lights and sum the results
-            lighting(&comps.object.material,
+            lighting(
                      &comps.object,
                      &self.light,
                      &comps.over_point,

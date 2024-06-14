@@ -30,16 +30,13 @@ pub mod material {
                 shininess: 200.0,
             }
         }
-
-        pub fn pattern_at(&self, object_point: &Tuple) -> Color {
-            self.pattern.pattern_at(object_point)
-        }
-
-        pub fn pattern_at_object(&self, shape: &Shape, world_point: &Tuple) -> Color {
-            let object_point = shape.transform.inverse().multiply_tuple(world_point);
-            shape.material.pattern_at(&object_point)
-        }
     }
+
+    pub fn pattern_at_object(shape: &Shape, world_point: &Tuple) -> Color {
+        let object_point = shape.transform.inverse().multiply_tuple(world_point);
+        shape.material.pattern.pattern_at(&object_point)
+    }
+
 }
 
 #[cfg(test)]
@@ -59,7 +56,9 @@ mod tests {
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let in_shadow = true;
-        let result = lighting(&m, &Shape::sphere(),  &light, &position, &eyev, &normalv, in_shadow);
+        let mut shape = Shape::sphere();
+        shape.material = m;
+        let result = lighting(&shape,  &light, &position, &eyev, &normalv, in_shadow);
         assert_eq!(result, Color::new(0.1, 0.1, 0.1));
     }
 }
