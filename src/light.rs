@@ -76,7 +76,9 @@ mod tests {
     use crate::tuple::tuple::Tuple;
     use super::light::Light;
     use super::light::lighting;
-    use crate::material::material::{Material, PatternType};
+    use crate::material::material::{Material};
+    use crate::matrix::matrix::Matrix;
+    use crate::pattern::pattern::Pattern;
     use crate::shape::shape::Shape;
 
     #[test]
@@ -149,7 +151,9 @@ mod tests {
         m.ambient = 1.0;
         m.diffuse = 0.0;
         m.specular = 0.0;
-        m.pattern = PatternType::Stripe(Box::new(PatternType::Solid(Color::new(1.0, 1.0, 1.0))), Box::new(PatternType::Solid(Color::new(0.0, 0.0, 0.0))));
+        m.pattern = Pattern::stripe(Pattern::solid(Color::new(1.0, 1.0, 1.0), Matrix::identity(4)),
+                                    Pattern::solid(Color::new(0.0, 0.0, 0.0), Matrix::identity(4)),
+                                    Matrix::identity(4));
         let mut object = Shape::sphere();
         object.material = m;
 

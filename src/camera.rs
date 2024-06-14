@@ -107,8 +107,8 @@ pub fn pixel_coordinates(vsize: usize, hsize: usize) -> impl Iterator<Item = (us
 mod tests {
     pub const EPSILON: f64 = 0.00001;
 
-    use crate::material::material::PatternType;
     use crate::matrix::matrix::Matrix;
+    use crate::pattern::pattern::Pattern;
     use super::camera::Camera;
     use crate::tuple::tuple::Tuple;
 
@@ -198,7 +198,7 @@ mod tests {
 
         let mut floor = Shape::sphere();
         floor.transform = Matrix::scale(10.0, 0.01, 10.0);
-        floor.material.pattern = PatternType::Solid(Color::new(1.0, 0.9, 0.9));
+        floor.material.pattern = Pattern::solid(Color::new(1.0, 0.9, 0.9), Matrix::identity(4));
         floor.material.specular = 0.0;
         w.objects.push(floor);
 
@@ -207,7 +207,7 @@ mod tests {
             .multiply(&Matrix::rotate_y(-std::f64::consts::PI / 4.0))
             .multiply(&Matrix::rotate_x(std::f64::consts::PI / 2.0))
             .multiply(&Matrix::scale(10.0, 0.01, 10.0));
-        left_wall.material.pattern = PatternType::Solid(Color::new(1.0, 0.9, 0.9));
+        left_wall.material.pattern = Pattern::solid(Color::new(1.0, 0.9, 0.9), Matrix::identity(4));
         left_wall.material.specular = 0.0;
         w.objects.push(left_wall);
 
@@ -216,27 +216,27 @@ mod tests {
             .multiply(&Matrix::rotate_y(std::f64::consts::PI / 4.0))
             .multiply(&Matrix::rotate_x(std::f64::consts::PI / 2.0))
             .multiply(&Matrix::scale(10.0, 0.01, 10.0));
-        right_wall.material.pattern = PatternType::Solid(Color::new(1.0, 0.9, 0.9));
+        right_wall.material.pattern = Pattern::solid(Color::new(1.0, 0.9, 0.9), Matrix::identity(4));
         right_wall.material.specular = 0.0;
         w.objects.push(right_wall);
 
         let mut middle = Shape::sphere();
         middle.transform = Matrix::translate(-0.5, 1.0, 0.5);
-        middle.material.pattern = PatternType::Solid(Color::new(0.1, 1.0, 0.5));
+        middle.material.pattern = Pattern::solid(Color::new(0.1, 1.0, 0.5), Matrix::identity(4));
         middle.material.diffuse = 0.7;
         middle.material.specular = 0.3;
         w.objects.push(middle);
 
         let mut right = Shape::sphere();
         right.transform = Matrix::translate(1.5, 0.5, -0.5).multiply(&Matrix::scale(0.5, 0.5, 0.5));
-        right.material.pattern = PatternType::Solid(Color::new(0.5, 1.0, 0.1));
+        right.material.pattern = Pattern::solid(Color::new(0.5, 1.0, 0.1), Matrix::identity(4));
         right.material.diffuse = 0.7;
         right.material.specular = 0.3;
         w.objects.push(right);
 
         let mut left = Shape::sphere();
         left.transform = Matrix::translate(-1.5, 0.33, -0.75).multiply(&Matrix::scale(0.33, 0.33, 0.33));
-        left.material.pattern = PatternType::Solid(Color::new(1.0, 0.8, 0.1));
+        left.material.pattern = Pattern::solid(Color::new(1.0, 0.8, 0.1), Matrix::identity(4));
         left.material.diffuse = 0.7;
         left.material.specular = 0.3;
         w.objects.push(left);
@@ -266,17 +266,19 @@ mod tests {
 
         let mut floor = Shape::plane();
         floor.transform = Matrix::translate(0.0, 0.0, 0.0);
-        floor.material.pattern = PatternType::Stripe(Box::new(PatternType::Solid(Color::new(1.0, 0.5, 0.5))), Box::new(PatternType::Solid(Color::new(0.5, 1.0, 0.5))));
-        floor.material.transform = Matrix::scale(0.1, 0.1, 0.1).multiply(&Matrix::rotate_y(std::f64::consts::PI / 4.0));
+        floor.material.pattern = Pattern::stripe(Pattern::solid(Color::new(1.0, 0.5, 0.5), Matrix::identity(4)),
+                                                 Pattern::solid(Color::new(0.5, 1.0, 0.5), Matrix::identity(4)),
+                                                 Matrix::scale(0.1, 0.1, 0.1).multiply(&Matrix::rotate_y(std::f64::consts::PI / 4.0)));
         floor.material.specular = 0.0;
         w.objects.push(floor);
 
         let mut left_wall = Shape::plane();
-        left_wall.material.pattern = PatternType::Gradient(Box::new(PatternType::Solid(Color::new(1.0, 0.5, 0.5))), Box::new(PatternType::Solid(Color::new(0.5, 1.0, 0.5))));
-        left_wall.material.transform = Matrix::identity(4)
-            .multiply(&Matrix::translate(124.0, 124.0, 124.0)
-            .multiply(&Matrix::scale(7.0, 7.0, 7.0))
-            );
+        left_wall.material.pattern = Pattern::gradient(Pattern::solid(Color::new(1.0, 0.5, 0.5), Matrix::identity(4)),
+                                                       Pattern::solid(Color::new(0.5, 1.0, 0.5), Matrix::identity(4)),
+                                                       Matrix::identity(4)
+                                                           .multiply(&Matrix::translate(124.0, 124.0, 124.0)
+                                                           .multiply(&Matrix::scale(7.0, 7.0, 7.0))
+                                                           ));
         left_wall.transform = Matrix::identity(4)
             .multiply(&Matrix::rotate_y(std::f64::consts::PI / -4.0))
             .multiply(&Matrix::translate(0.0, 0.0, 5.0))
@@ -291,27 +293,27 @@ mod tests {
             .multiply(&Matrix::translate(0.0, 0.0, 5.0))
             .multiply(&Matrix::rotate_x(std::f64::consts::PI / 2.0))
         ;
-        right_wall.material.pattern = PatternType::Solid(Color::new(1.0, 0.9, 0.9));
+        right_wall.material.pattern = Pattern::solid(Color::new(1.0, 0.9, 0.9), Matrix::identity(4));
         right_wall.material.specular = 0.0;
         w.objects.push(right_wall);
 
         let mut middle = Shape::sphere();
         middle.transform = Matrix::translate(-0.5, 1.0, 0.5);
-        middle.material.pattern = PatternType::Solid(Color::new(0.1, 1.0, 0.5));
+        middle.material.pattern = Pattern::solid(Color::new(0.1, 1.0, 0.5), Matrix::identity(4));
         middle.material.diffuse = 0.7;
         middle.material.specular = 0.3;
         w.objects.push(middle);
 
         let mut right = Shape::sphere();
         right.transform = Matrix::translate(1.5, 0.5, -0.5).multiply(&Matrix::scale(0.5, 0.5, 0.5));
-        right.material.pattern = PatternType::Solid(Color::new(0.5, 1.0, 0.1));
+        right.material.pattern = Pattern::solid(Color::new(0.5, 1.0, 0.1), Matrix::identity(4));
         right.material.diffuse = 0.7;
         right.material.specular = 0.3;
         w.objects.push(right);
 
         let mut left = Shape::sphere();
         left.transform = Matrix::translate(-1.5, 0.33, -0.75).multiply(&Matrix::scale(0.33, 0.33, 0.33));
-        left.material.pattern = PatternType::Solid(Color::new(1.0, 0.8, 0.1));
+        left.material.pattern = Pattern::solid(Color::new(1.0, 0.8, 0.1), Matrix::identity(4));
         left.material.diffuse = 0.7;
         left.material.specular = 0.3;
         w.objects.push(left);

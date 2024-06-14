@@ -22,8 +22,8 @@ use crate::world::world::World;
 use crate::color::color::Color;
 use crate::light::light::Light;
 use crate::shape::shape::Shape;
-use crate::material::material::PatternType;
 use crate::material::material::Material;
+use crate::pattern::pattern::Pattern;
 
 fn degrees_to_radians(degrees: f64) -> f64 {
     degrees * std::f64::consts::PI / 180.0
@@ -98,19 +98,19 @@ fn create_transforms(transforms: &Vec<Transform>) -> Matrix {
 }
 
 #[allow(dead_code)]
-fn create_pattern(pattern: &scene::scene::Pattern) -> PatternType {
+fn create_pattern(pattern: &scene::scene::Pattern, transform: Matrix) -> Pattern {
     let pattern = pattern.clone();
     if pattern.pattern_type == "solid" {
-        return PatternType::Solid(color_from_vec(&(pattern.color.unwrap_or(vec![0.0, 0.0, 0.0]))));
+        return Pattern::solid(color_from_vec(&pattern.color.unwrap_or(vec![0.0, 0.0, 0.0])), transform.clone());
     } else {
-        let pattern_a = create_pattern(&(pattern.pattern_a.unwrap_or(Box::new(scene::scene::Pattern { pattern_type: "solid".to_string(), color: Some(vec![0.0, 0.0, 0.0]), pattern_a: None, pattern_b: None }))));
-        let pattern_b = create_pattern(&(pattern.pattern_b.unwrap_or(Box::new(scene::scene::Pattern { pattern_type: "solid".to_string(), color: Some(vec![0.0, 0.0, 0.0]), pattern_a: None, pattern_b: None }))));
+        let pattern_a = create_pattern(&pattern.pattern_a.unwrap_or_default(), transform.clone());
+        let pattern_b = create_pattern(&pattern.pattern_b.unwrap_or_default(), transform.clone());
         match pattern.pattern_type.as_str() {
-            "stripe" => PatternType::Stripe(Box::new(pattern_a), Box::new(pattern_b)),
-            "gradient" => PatternType::Gradient(Box::new(pattern_a), Box::new(pattern_b)),
-            "ring" => PatternType::Ring(Box::new(pattern_a), Box::new(pattern_b)),
-            "checker" => PatternType::Checker(Box::new(pattern_a), Box::new(pattern_b)),
-            _ => PatternType::Solid(Color::new(0.0, 0.0, 0.0)),
+            "stripe" => Pattern::stripe(pattern_a, pattern_b, transform.clone()),
+            "gradient" => Pattern::gradient(pattern_a, pattern_b, transform.clone()),
+            "ring" => Pattern::ring(pattern_a, pattern_b, transform.clone()),
+            "checker" => Pattern::checker(pattern_a, pattern_b, transform.clone()),
+            _ => Pattern::solid(Color::new(0.0, 0.0, 0.0), transform.clone()),
         }
     }
 }
@@ -121,8 +121,7 @@ fn create_material(material: &scene::scene::Material) -> Material {
     m.diffuse = material.diffuse.unwrap_or(0.9);
     m.specular = material.specular.unwrap_or(0.9);
     m.shininess = material.shininess.unwrap_or(200.0);
-    m.pattern = create_pattern(&material.pattern);
-    m.transform = create_transforms(&material.transforms);
+    m.pattern = create_pattern(&material.pattern, create_transforms(&material.transforms));
     m
 }
 

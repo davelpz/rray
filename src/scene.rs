@@ -72,6 +72,17 @@ pub mod scene {
         pub pattern_b: Option<Box<Pattern>>,
     }
 
+    impl Default for Pattern {
+        fn default() -> Self {
+            Pattern {
+                pattern_type: "solid".to_string(),
+                color: Some(vec![0.0, 0.0, 0.0]),
+                pattern_a: None,
+                pattern_b: None,
+            }
+        }
+    }
+
     pub fn create_scene_from_json_str(json_string: &str) -> Option<Scene> {
         let scene: Result<Scene, _> = serde_json::from_str(json_string);
         match scene {

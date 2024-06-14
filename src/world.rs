@@ -4,8 +4,8 @@ pub mod world {
     use crate::color::color::Color;
     use crate::shape::shape::Shape;
     use crate::light::light::{lighting, Light};
-    use crate::material::material::PatternType;
     use crate::matrix::matrix::Matrix;
+    use crate::pattern::pattern::Pattern;
     use crate::ray::ray::{Computations, hit, Ray};
     use crate::ray::ray::Intersection;
     use crate::tuple::tuple::Tuple;
@@ -27,7 +27,7 @@ pub mod world {
         pub fn default_world() -> World {
             let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
             let mut s1 = Shape::sphere();
-            s1.material.pattern = PatternType::Solid(Color::new(0.8, 1.0, 0.6));
+            s1.material.pattern = Pattern::solid(Color::new(0.8, 1.0, 0.6), Matrix::identity(4));
             s1.material.diffuse = 0.7;
             s1.material.specular = 0.2;
             let mut s2 = Shape::sphere();
@@ -88,8 +88,8 @@ pub mod world {
 mod tests {
     use crate::color::color::Color;
     use crate::light::light::Light;
-    use crate::material::material::PatternType;
     use crate::matrix::matrix::Matrix;
+    use crate::pattern::pattern::{Pattern, PatternDetails, PatternType};
     use crate::tuple::tuple::Tuple;
     use super::world::World;
     use crate::shape::shape::Shape;
@@ -106,7 +106,7 @@ mod tests {
     fn the_default_world() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let mut s1 = Shape::sphere();
-        s1.material.pattern = PatternType::Solid(Color::new(0.8, 1.0, 0.6));
+        s1.material.pattern = Pattern::solid(Color::new(0.8, 1.0, 0.6), Matrix::identity(4));
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
         let mut s2 = Shape::sphere();
@@ -190,8 +190,16 @@ mod tests {
         w.objects[1].material.ambient = 1.0;
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.75), Tuple::vector(0.0, 0.0, -1.0));
         let c = w.color_at(&r);
-        let obj_color = match w.objects[1].material.pattern {
-            PatternType::Solid(c) => c,
+        let obj_color = match w.objects[1].material.pattern.pattern_type {
+            PatternType::Solid => {
+                let m = &w.objects[1].material;
+                let p = &m.pattern.details;
+                if let PatternDetails::Color(c) = p {
+                    *c
+                } else {
+                    Color::new(0.0, 0.0, 0.0)
+                }
+            },
             _ => Color::new(0.0, 0.0, 0.0)
         };
         assert_eq!(c, obj_color);

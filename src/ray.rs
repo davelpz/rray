@@ -83,7 +83,7 @@ mod tests {
     use crate::canvas::canvas::Canvas;
     use crate::light::light::Light;
     use crate::light::light::lighting;
-    use crate::material::material::PatternType;
+    use crate::pattern::pattern::Pattern;
 
     #[test]
     fn test_ray() {
@@ -205,7 +205,7 @@ mod tests {
         let mut canvas = Canvas::new(canvas_pixels, canvas_pixels);
         let mut s = Shape::sphere();
         //s.transform = Matrix::scale(1.0, 0.5, 1.0);
-        s.material.pattern = PatternType::Solid(Color::new(1.0, 0.2, 1.0));
+        s.material.pattern = Pattern::solid(Color::new(1.0, 0.2, 1.0), Matrix::identity(4));
 
         let light_position = Tuple::point(-10.0, 10.0, -10.0);
         let light_color = Color::new(1.0, 1.0, 1.0);
