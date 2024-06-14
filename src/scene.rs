@@ -56,7 +56,6 @@ pub mod scene {
     #[derive(Deserialize)]
     pub struct Material {
         pub pattern: Pattern,
-        pub transforms: Vec<Transform>,
         pub ambient: Option<f64>,
         pub diffuse: Option<f64>,
         pub specular: Option<f64>,
@@ -70,6 +69,7 @@ pub mod scene {
         pub color: Option<Vec<f64>>,
         pub pattern_a: Option<Box<Pattern>>,
         pub pattern_b: Option<Box<Pattern>>,
+        pub transforms: Vec<Transform>,
     }
 
     impl Default for Pattern {
@@ -79,6 +79,7 @@ pub mod scene {
                 color: Some(vec![0.0, 0.0, 0.0]),
                 pattern_a: None,
                 pattern_b: None,
+                transforms: Vec::new(),
             }
         }
     }
@@ -138,14 +139,16 @@ mod tests {
                                 "type": "stripe",
                                 "pattern_a": {
                                    "type": "solid",
-                                   "color": [1.0, 0.0, 0.0]
+                                   "color": [1.0, 0.0, 0.0],
+                                   "transforms": []
                                 },
                                 "pattern_b": {
                                    "type": "solid",
-                                   "color": [0.0, 1.0, 0.0]
-                                }
+                                   "color": [0.0, 1.0, 0.0],
+                                   "transforms": []
+                                },
+                                "transforms": []
                             },
-                            "transforms": [],
                             "ambient": 0.1,
                             "diffuse": 0.9,
                             "specular": 0.9,

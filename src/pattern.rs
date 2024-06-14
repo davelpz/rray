@@ -5,63 +5,51 @@ pub mod pattern {
 
     #[derive(Debug, Clone, PartialEq)]
     pub enum PatternType {
-        Solid,
-        Stripe,
-        Gradient,
-        Ring,
-        Checker,
-    }
-
-    #[derive(Debug, Clone, PartialEq)]
-    pub enum PatternDetails {
-        Color(Color),
-        Composite(Box<Pattern>, Box<Pattern>),
+        Solid(Color),
+        Stripe(Box<Pattern>, Box<Pattern>),
+        Gradient(Box<Pattern>, Box<Pattern>),
+        Ring(Box<Pattern>, Box<Pattern>),
+        Checker(Box<Pattern>, Box<Pattern>),
     }
 
     #[derive(Debug, Clone, PartialEq)]
     pub struct Pattern {
         pub pattern_type: PatternType,
-        pub details: PatternDetails,
         pub transform: Matrix,
     }
 
     impl Pattern {
         pub fn solid(color: Color, transform: Matrix) -> Pattern {
             Pattern {
-                pattern_type: PatternType::Solid,
-                details: PatternDetails::Color(color),
+                pattern_type: PatternType::Solid(color),
                 transform,
             }
         }
 
         pub fn stripe(a: Pattern, b: Pattern, transform: Matrix) -> Pattern {
             Pattern {
-                pattern_type: PatternType::Stripe,
-                details: PatternDetails::Composite(Box::new(a), Box::new(b)),
+                pattern_type: PatternType::Stripe(Box::new(a), Box::new(b)),
                 transform,
             }
         }
 
         pub fn gradient(a: Pattern, b: Pattern, transform: Matrix) -> Pattern {
             Pattern {
-                pattern_type: PatternType::Gradient,
-                details: PatternDetails::Composite(Box::new(a), Box::new(b)),
+                pattern_type: PatternType::Gradient(Box::new(a), Box::new(b)),
                 transform,
             }
         }
 
         pub fn ring(a: Pattern, b: Pattern, transform: Matrix) -> Pattern {
             Pattern {
-                pattern_type: PatternType::Ring,
-                details: PatternDetails::Composite(Box::new(a), Box::new(b)),
+                pattern_type: PatternType::Ring(Box::new(a), Box::new(b)),
                 transform,
             }
         }
 
         pub fn checker(a: Pattern, b: Pattern, transform: Matrix) -> Pattern {
             Pattern {
-                pattern_type: PatternType::Checker,
-                details: PatternDetails::Composite(Box::new(a), Box::new(b)),
+                pattern_type: PatternType::Checker(Box::new(a), Box::new(b)),
                 transform,
             }
         }
@@ -69,62 +57,35 @@ pub mod pattern {
         pub fn pattern_at(&self, object_point: &Tuple) -> Color {
             let pattern_point = self.transform.inverse().multiply_tuple(object_point);
             match &self.pattern_type {
-                PatternType::Solid => {
-                    match &self.details {
-                        PatternDetails::Color(color) => color.clone(),
-                        PatternDetails::Composite(a, _) => a.pattern_at(&pattern_point),
-                    }
+                PatternType::Solid(color) => {
+                    color.clone()
                 },
-                PatternType::Stripe => {
+                PatternType::Stripe(a,b) => {
                     if (pattern_point.x.floor() as i32) % 2 == 0 {
-                        match &self.details {
-                            PatternDetails::Color(color) => color.clone(),
-                            PatternDetails::Composite(a, _) => a.pattern_at(&pattern_point),
-                        }
+                        a.pattern_at(&pattern_point)
                     } else {
-                        match &self.details {
-                            PatternDetails::Color(color) => color.clone(),
-                            PatternDetails::Composite(_, b) => b.pattern_at(&pattern_point),
-                        }
+                        b.pattern_at(&pattern_point)
                     }
                 },
-                PatternType::Gradient => {
-                    let a = match &self.details {
-                        PatternDetails::Color(color) => color.clone(),
-                        PatternDetails::Composite(a, _) => a.pattern_at(&pattern_point),
-                    };
-                    let b = match &self.details {
-                        PatternDetails::Color(color) => color.clone(),
-                        PatternDetails::Composite(_, b) => b.pattern_at(&pattern_point),
-                    };
+                PatternType::Gradient(a,b) => {
+                    let a = a.pattern_at(&pattern_point);
+                    let b = b.pattern_at(&pattern_point);
                     let distance = b.subtract(&a);
                     let fraction = pattern_point.x - pattern_point.x.floor();
                     a.add(&distance.multiply(fraction))
                 },
-                PatternType::Ring => {
+                PatternType::Ring(a,b) => {
                     if (pattern_point.x.powi(2) + pattern_point.z.powi(2)).sqrt().floor() as i32 % 2 == 0 {
-                        match &self.details {
-                            PatternDetails::Color(color) => color.clone(),
-                            PatternDetails::Composite(a, _) => a.pattern_at(&pattern_point),
-                        }
+                        a.pattern_at(&pattern_point)
                     } else {
-                        match &self.details {
-                            PatternDetails::Color(color) => color.clone(),
-                            PatternDetails::Composite(_, b) => b.pattern_at(&pattern_point),
-                        }
+                        b.pattern_at(&pattern_point)
                     }
                 },
-                PatternType::Checker => {
+                PatternType::Checker(a,b) => {
                     if (pattern_point.x.floor() + pattern_point.y.floor() + pattern_point.z.floor()) as i32 % 2 == 0 {
-                        match &self.details {
-                            PatternDetails::Color(color) => color.clone(),
-                            PatternDetails::Composite(a, _) => a.pattern_at(&pattern_point),
-                        }
+                        a.pattern_at(&pattern_point)
                     } else {
-                        match &self.details {
-                            PatternDetails::Color(color) => color.clone(),
-                            PatternDetails::Composite(_, b) => b.pattern_at(&pattern_point),
-                        }
+                        b.pattern_at(&pattern_point)
                     }
                 },
             }

@@ -89,7 +89,7 @@ mod tests {
     use crate::color::color::Color;
     use crate::light::light::Light;
     use crate::matrix::matrix::Matrix;
-    use crate::pattern::pattern::{Pattern, PatternDetails, PatternType};
+    use crate::pattern::pattern::{Pattern, PatternType};
     use crate::tuple::tuple::Tuple;
     use super::world::World;
     use crate::shape::shape::Shape;
@@ -191,15 +191,7 @@ mod tests {
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.75), Tuple::vector(0.0, 0.0, -1.0));
         let c = w.color_at(&r);
         let obj_color = match w.objects[1].material.pattern.pattern_type {
-            PatternType::Solid => {
-                let m = &w.objects[1].material;
-                let p = &m.pattern.details;
-                if let PatternDetails::Color(c) = p {
-                    *c
-                } else {
-                    Color::new(0.0, 0.0, 0.0)
-                }
-            },
+            PatternType::Solid(c) => c,
             _ => Color::new(0.0, 0.0, 0.0)
         };
         assert_eq!(c, obj_color);

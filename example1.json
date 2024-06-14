@@ -28,26 +28,28 @@
           "type": "checker",
           "pattern_a": {
             "type": "solid",
-            "color": [0.25, 0.25, 1.0]
+            "color": [0.25, 0.25, 1.0],
+            "transforms": []
           },
           "pattern_b": {
             "type": "solid",
-            "color": [0.5, 0.5, 1.0]
-          }
-        },
-        "transforms": [
-          {
-            "type": "rotate",
-            "axis": "y",
-            "angle": 45
+            "color": [0.5, 0.5, 1.0],
+            "transforms": []
           },
-          {
-            "type": "scale",
-            "x": 1.0,
-            "y": 1.0,
-            "z": 1.0
-          }
-        ],
+          "transforms": [
+            {
+              "type": "rotate",
+              "axis": "y",
+              "angle": 45
+            },
+            {
+              "type": "scale",
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            }
+          ]
+        },
         "ambient": 0.1,
         "diffuse": 0.9,
         "specular": 0,
@@ -81,39 +83,45 @@
             "type": "checker",
             "pattern_a": {
               "type": "solid",
-              "color": [0.25, 0.5, 1.0]
+              "color": [0.25, 0.5, 1.0],
+              "transforms": []
             },
             "pattern_b": {
               "type": "solid",
-              "color": [0.5, 1.0, 1.0]
-            }
+              "color": [0.5, 1.0, 1.0],
+              "transforms": []
+            },
+            "transforms": []
           },
           "pattern_b": {
             "type": "ring",
             "pattern_a": {
               "type": "solid",
-              "color": [1.0, 1.0, 0.0]
+              "color": [1.0, 1.0, 0.0],
+              "transforms": []
             },
             "pattern_b": {
               "type": "solid",
-              "color": [0.75, 0.75, 0.5]
-            }
-          }
-        },
-        "transforms": [
-          {
-            "type": "scale",
-            "x": 1,
-            "y": 1,
-            "z": 1
+              "color": [0.75, 0.75, 0.5],
+              "transforms": []
+            },
+            "transforms": []
           },
-          {
-            "type": "translate",
-            "x": 0,
-            "y": 0,
-            "z": 0
-          }
-        ],
+          "transforms": [
+            {
+              "type": "scale",
+              "x": 1,
+              "y": 1,
+              "z": 1
+            },
+            {
+              "type": "translate",
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          ]
+        },
         "ambient": 0.1,
         "diffuse": 0.9,
         "specular": 0.0,
@@ -147,26 +155,39 @@
             "type": "checker",
             "pattern_a": {
               "type": "solid",
-              "color": [0.25, 0.25, 1.0]
+              "color": [0.25, 0.25, 1.0],
+              "transforms": []
             },
             "pattern_b": {
               "type": "solid",
-              "color": [0.5, 0.5, 1.0]
-            }
+              "color": [0.5, 0.5, 1.0],
+              "transforms": []
+            },
+            "transforms": []
           },
           "pattern_b": {
             "type": "checker",
             "pattern_a": {
               "type": "solid",
-              "color": [0.5, 0.5, 1.0]
+              "color": [0.5, 0.5, 1.0],
+              "transforms": []
             },
             "pattern_b": {
               "type": "solid",
-              "color": [0.25, 0.25, 1.0]
-            }
-          }
+              "color": [0.25, 0.25, 1.0],
+              "transforms": []
+            },
+            "transforms": [
+              {
+                "type": "scale",
+                "x": 0.25,
+                "y": 0.25,
+                "z": 0.25
+              }
+            ]
+          },
+          "transforms": []
         },
-        "transforms": [],
         "ambient": 0.1,
         "diffuse": 0.9,
         "specular": 0.0,
@@ -188,20 +209,22 @@
           "type": "gradient",
           "pattern_a": {
             "type": "solid",
-            "color": [1.0, 0.5, 0.5]
+            "color": [1.0, 0.5, 0.5],
+            "transforms": []
           },
           "pattern_b": {
             "type": "solid",
-            "color": [0.5, 1.0, 0.5]
-          }
+            "color": [0.5, 1.0, 0.5],
+            "transforms": []
+          },
+          "transforms": [
+            {
+              "type": "rotate",
+              "axis": "y",
+              "angle": 75
+            }
+          ]
         },
-        "transforms": [
-          {
-            "type": "rotate",
-            "axis": "y",
-            "angle": 75
-          }
-        ],
         "ambient": 0.1,
         "diffuse": 0.7,
         "specular": 0.3,
@@ -227,9 +250,9 @@
       "material": {
         "pattern": {
           "type": "solid",
-          "color": [0.5, 1.0, 0.1]
+          "color": [0.5, 1.0, 0.1],
+          "transforms": []
         },
-        "transforms": [],
         "ambient": 0.1,
         "diffuse": 0.7,
         "specular": 0.3,
@@ -255,9 +278,9 @@
       "material": {
         "pattern": {
           "type": "solid",
-          "color": [1.0, 0.8, 0.1]
+          "color": [1.0, 0.8, 0.1],
+          "transforms": []
         },
-        "transforms": [],
         "ambient": 0.1,
         "diffuse": 0.7,
         "specular": 0.3,

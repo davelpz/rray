@@ -98,13 +98,14 @@ fn create_transforms(transforms: &Vec<Transform>) -> Matrix {
 }
 
 #[allow(dead_code)]
-fn create_pattern(pattern: &scene::scene::Pattern, transform: Matrix) -> Pattern {
+fn create_pattern(pattern: &scene::scene::Pattern) -> Pattern {
+    let transform = create_transforms(&pattern.transforms);
     let pattern = pattern.clone();
     if pattern.pattern_type == "solid" {
         return Pattern::solid(color_from_vec(&pattern.color.unwrap_or(vec![0.0, 0.0, 0.0])), transform.clone());
     } else {
-        let pattern_a = create_pattern(&pattern.pattern_a.unwrap_or_default(), transform.clone());
-        let pattern_b = create_pattern(&pattern.pattern_b.unwrap_or_default(), transform.clone());
+        let pattern_a = create_pattern(&pattern.pattern_a.unwrap_or_default());
+        let pattern_b = create_pattern(&pattern.pattern_b.unwrap_or_default());
         match pattern.pattern_type.as_str() {
             "stripe" => Pattern::stripe(pattern_a, pattern_b, transform.clone()),
             "gradient" => Pattern::gradient(pattern_a, pattern_b, transform.clone()),
@@ -121,7 +122,7 @@ fn create_material(material: &scene::scene::Material) -> Material {
     m.diffuse = material.diffuse.unwrap_or(0.9);
     m.specular = material.specular.unwrap_or(0.9);
     m.shininess = material.shininess.unwrap_or(200.0);
-    m.pattern = create_pattern(&material.pattern, create_transforms(&material.transforms));
+    m.pattern = create_pattern(&material.pattern);
     m
 }
 
