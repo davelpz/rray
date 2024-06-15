@@ -52,6 +52,10 @@ pub mod tuple {
             Tuple::new(self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w)
         }
 
+        pub fn add_float(&self, other: f64) -> Tuple {
+            Tuple::new(self.x + other, self.y + other, self.z + other, self.w + other)
+        }
+
         pub fn subtract(&self, other: &Tuple) -> Tuple {
             Tuple::new(self.x - other.x, self.y - other.y, self.z - other.z, self.w - other.w)
         }
@@ -107,6 +111,14 @@ pub mod tuple {
 
         fn add(self, other: Self) -> Self {
             Tuple::new(self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w)
+        }
+    }
+
+    impl Add<f64> for Tuple {
+        type Output = Self;
+
+        fn add(self, scalar: f64) -> Self {
+            Tuple::new(self.x + scalar, self.y + scalar, self.z + scalar, self.w + scalar)
         }
     }
 

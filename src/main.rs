@@ -111,6 +111,11 @@ fn create_pattern(pattern: &scene::scene::Pattern) -> Pattern {
             "gradient" => Pattern::gradient(pattern_a, pattern_b, transform.clone()),
             "ring" => Pattern::ring(pattern_a, pattern_b, transform.clone()),
             "checker" => Pattern::checker(pattern_a, pattern_b, transform.clone()),
+            "blend" => Pattern::blend(pattern_a, pattern_b, transform.clone()),
+            "perturbed" => {
+                let scale = pattern.scale.unwrap_or(0.2);
+                Pattern::perturbed(pattern_a, scale, transform.clone())
+            },
             _ => Pattern::solid(Color::new(0.0, 0.0, 0.0), transform.clone()),
         }
     }

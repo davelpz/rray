@@ -70,6 +70,7 @@ pub mod scene {
         pub pattern_a: Option<Box<Pattern>>,
         pub pattern_b: Option<Box<Pattern>>,
         pub transforms: Vec<Transform>,
+        pub scale: Option<f64>,
     }
 
     impl Default for Pattern {
@@ -80,6 +81,7 @@ pub mod scene {
                 pattern_a: None,
                 pattern_b: None,
                 transforms: Vec::new(),
+                scale: None,
             }
         }
     }
