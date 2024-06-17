@@ -21,6 +21,7 @@ pub mod scene {
     }
 
     #[derive(Deserialize)]
+    #[allow(dead_code)]
     pub struct Light {
         #[serde(rename = "type")]
         pub light_type: String,

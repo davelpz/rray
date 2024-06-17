@@ -11,6 +11,7 @@ mod camera;
 mod scene;
 mod pattern;
 
+extern crate lazy_static;
 use crate::camera::camera::Camera;
 use crate::scene::scene::Scene;
 use crate::scene::scene::SceneObject;
@@ -115,6 +116,10 @@ fn create_pattern(pattern: &scene::scene::Pattern) -> Pattern {
             "perturbed" => {
                 let scale = pattern.scale.unwrap_or(0.2);
                 Pattern::perturbed(pattern_a, scale, transform.clone())
+            },
+            "noise" => {
+                let scale = pattern.scale.unwrap_or(1.0);
+                Pattern::noise(pattern_a, pattern_b, scale, transform.clone())
             },
             _ => Pattern::solid(Color::new(0.0, 0.0, 0.0), transform.clone()),
         }
