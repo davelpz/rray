@@ -271,7 +271,7 @@ mod tests {
     #[test]
     fn test_fastnoise() {
         // Create and configure the FastNoise object
-        let mut noise = &crate::pattern::noise::NOISE_GENERATOR;
+        let noise = &crate::pattern::noise::NOISE_GENERATOR;
         for _i in 0..100 {
             let random_x = 1.0 + (100.0 - 1.0) * rand::random::<f64>();
             let random_y = 1.0 + (100.0 - 1.0) * rand::random::<f64>();
