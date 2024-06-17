@@ -119,30 +119,23 @@ pub mod pattern {
                     a.add(&b).multiply(0.5)
                 },
                 PatternType::Perturbed(a, scale) => {
-                    let pscale = 1.0;
-                    let x = pattern_point.x * pscale;
-                    let y = pattern_point.y * pscale;
-                    let z = pattern_point.z * pscale;
+                    let x = pattern_point.x;
+                    let y = pattern_point.y;
+                    let z = pattern_point.z;
                     let noise_x = (NOISE_GENERATOR.get_noise_3d(x, y, z) as f64) * scale;
                     let noise_y = (NOISE_GENERATOR.get_noise_3d(x, y, z + 1.0) as f64) * scale;
                     let noise_z = (NOISE_GENERATOR.get_noise_3d(x, y, z + 2.0) as f64) * scale;
-                    println!("pattern_point: {:.10},{:.10},{:.10}", pattern_point.x,pattern_point.y,pattern_point.z);
-                    println!("noise_x: {:.10}, noise_y: {:.10}, noise_z: {:.10}", noise_x, noise_y, noise_z);
                     let new_x = pattern_point.x + noise_x;
                     let new_y = pattern_point.y + noise_y;
                     let new_z = pattern_point.z + noise_z;
                     let new_point = Tuple::new(new_x, new_y, new_z, pattern_point.w);
-                    let o = (pattern_point.x.floor() + pattern_point.y.floor() + pattern_point.z.floor()) as i32 % 2;
-                    let n = (new_point.x.floor() + new_point.y.floor() + new_point.z.floor()) as i32 % 2;
-                    println!("new_point: {:.10},{:.10},{:.10}\to: {}\tn: {}", new_point.x,new_point.y,new_point.z,o,n);
                     a.pattern_at(&new_point)
                 },
                 PatternType::Noise(a,b, scale) => {
                     let noise = NOISE_GENERATOR.get_noise_3d(pattern_point.x, pattern_point.y, pattern_point.z);
                     let noise = noise as f64 * scale;
                     if noise <= 0.0 {
-                        let noise = -noise;
-                        a.pattern_at(&pattern_point).multiply(noise)
+                        a.pattern_at(&pattern_point).multiply(-noise)
                     } else {
                         b.pattern_at(&pattern_point).multiply(noise)
                     }
