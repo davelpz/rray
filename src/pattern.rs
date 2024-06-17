@@ -11,7 +11,7 @@ pub mod pattern {
         Gradient(Box<Pattern>, Box<Pattern>),
         Ring(Box<Pattern>, Box<Pattern>),
         Checker(Box<Pattern>, Box<Pattern>),
-        Blend(Box<Pattern>, Box<Pattern>),
+        Blend(Box<Pattern>, Box<Pattern>, f64),
         Perturbed(Box<Pattern>, f64),
         Noise(Box<Pattern>,Box<Pattern>, f64)
     }
@@ -58,9 +58,9 @@ pub mod pattern {
             }
         }
 
-        pub fn blend(a: Pattern, b: Pattern, transform: Matrix) -> Pattern {
+        pub fn blend(a: Pattern, b: Pattern, scale: f64, transform: Matrix) -> Pattern {
             Pattern {
-                pattern_type: PatternType::Blend(Box::new(a), Box::new(b)),
+                pattern_type: PatternType::Blend(Box::new(a), Box::new(b), scale),
                 transform,
             }
         }
@@ -113,10 +113,10 @@ pub mod pattern {
                         b.pattern_at(&pattern_point)
                     }
                 },
-                PatternType::Blend(a,b) => {
+                PatternType::Blend(a,b, scale) => {
                     let a = a.pattern_at(&pattern_point);
                     let b = b.pattern_at(&pattern_point);
-                    a.add(&b).multiply(0.5)
+                    a.multiply(1.0-scale).add(&b.multiply(*scale))
                 },
                 PatternType::Perturbed(a, scale) => {
                     let x = pattern_point.x;
