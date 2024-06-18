@@ -61,6 +61,7 @@ pub mod scene {
         pub diffuse: Option<f64>,
         pub specular: Option<f64>,
         pub shininess: Option<f64>,
+        pub reflective: Option<f64>,
     }
 
     #[derive(Deserialize, Clone)]
