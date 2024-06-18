@@ -33,7 +33,7 @@ pub mod scene {
     pub struct SceneObject {
         #[serde(rename = "type")]
         pub object_type: String,
-        pub transforms: Vec<Transform>,
+        pub transforms: Option<Vec<Transform>>,
         pub material: Material,
     }
 
@@ -68,6 +68,8 @@ pub mod scene {
         #[serde(rename = "type")]
         pub pattern_type: String,
         pub color: Option<Vec<f64>>,
+        pub color_a: Option<Vec<f64>>,
+        pub color_b: Option<Vec<f64>>,
         pub pattern_a: Option<Box<Pattern>>,
         pub pattern_b: Option<Box<Pattern>>,
         pub transforms: Option<Vec<Transform>>,
@@ -81,6 +83,8 @@ pub mod scene {
             Pattern {
                 pattern_type: "solid".to_string(),
                 color: Some(vec![0.0, 0.0, 0.0]),
+                color_a: None,
+                color_b: None,
                 pattern_a: None,
                 pattern_b: None,
                 transforms: Some(Vec::new()),

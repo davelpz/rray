@@ -105,8 +105,16 @@ fn create_pattern(pattern: &scene::scene::Pattern) -> Pattern {
     if pattern.pattern_type == "solid" {
         return Pattern::solid(color_from_vec(&pattern.color.unwrap_or(vec![0.0, 0.0, 0.0])), transform.clone());
     } else {
-        let pattern_a = create_pattern(&pattern.pattern_a.unwrap_or_default());
-        let pattern_b = create_pattern(&pattern.pattern_b.unwrap_or_default());
+        let pattern_a = if pattern.color_a.is_some() {
+            Pattern::solid(color_from_vec(&pattern.color_a.unwrap()), transform.clone())
+        } else {
+            create_pattern(&pattern.pattern_a.unwrap_or_default())
+        };
+        let pattern_b = if pattern.color_b.is_some() {
+            Pattern::solid(color_from_vec(&pattern.color_b.unwrap()), transform.clone())
+        } else {
+            create_pattern(&pattern.pattern_b.unwrap_or_default())
+        };
         match pattern.pattern_type.as_str() {
             "stripe" => Pattern::stripe(pattern_a, pattern_b, transform.clone()),
             "gradient" => Pattern::gradient(pattern_a, pattern_b, transform.clone()),
@@ -123,8 +131,10 @@ fn create_pattern(pattern: &scene::scene::Pattern) -> Pattern {
                 Pattern::perturbed(pattern_a, scale, octaves as usize, persistence, transform.clone())
             },
             "noise" => {
+                let octaves = pattern.octaves.unwrap_or(1);
+                let persistence = pattern.persistence.unwrap_or(1.0);
                 let scale = pattern.scale.unwrap_or(1.0);
-                Pattern::noise(pattern_a, pattern_b, scale, transform.clone())
+                Pattern::noise(pattern_a, pattern_b, scale, octaves as usize, persistence, transform.clone())
             },
             _ => Pattern::solid(Color::new(0.0, 0.0, 0.0), transform.clone()),
         }
@@ -147,7 +157,7 @@ fn create_shape(scene_object: &SceneObject) -> Shape {
         "plane" => Shape::plane(),
         _ => Shape::sphere(),
     };
-    s.transform = create_transforms(&scene_object.transforms);
+    s.transform = create_transforms(&scene_object.transforms.clone().unwrap_or(vec![]));
     s.material = create_material(&scene_object.material);
     s
 }

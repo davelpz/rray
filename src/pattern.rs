@@ -12,8 +12,8 @@ pub mod pattern {
         Ring(Box<Pattern>, Box<Pattern>),
         Checker(Box<Pattern>, Box<Pattern>),
         Blend(Box<Pattern>, Box<Pattern>, f64),
-        Perturbed(Box<Pattern>, f64,usize,f64),
-        Noise(Box<Pattern>,Box<Pattern>, f64)
+        Perturbed(Box<Pattern>, f64, usize, f64),
+        Noise(Box<Pattern>,Box<Pattern>, f64, usize, f64)
     }
 
     #[derive(Debug, Clone, PartialEq)]
@@ -72,9 +72,9 @@ pub mod pattern {
             }
         }
 
-        pub fn noise(a: Pattern, b: Pattern, scale: f64, transform: Matrix) -> Pattern {
+        pub fn noise(a: Pattern, b: Pattern, scale: f64, octaves: usize, persistence: f64, transform: Matrix) -> Pattern {
             Pattern {
-                pattern_type: PatternType::Noise(Box::new(a), Box::new(b), scale),
+                pattern_type: PatternType::Noise(Box::new(a), Box::new(b), scale, octaves, persistence),
                 transform,
             }
         }
@@ -134,10 +134,9 @@ pub mod pattern {
                     let new_point = Tuple::new(new_x, new_y, new_z, pattern_point.w);
                     a.pattern_at(&new_point)
                 },
-                PatternType::Noise(a,b, scale) => {
-                    //let noise = NOISE_GENERATOR.get_noise_3d(pattern_point.x, pattern_point.y, pattern_point.z);
-                    let noise = noise::octave_perlin(pattern_point.x, pattern_point.y, pattern_point.z, 3, 0.8);
-                    let noise = noise as f64 * scale;
+                PatternType::Noise(a,b, scale, octaves, persistence) => {
+                    let noise = noise::octave_perlin(pattern_point.x, pattern_point.y, pattern_point.z, *octaves, *persistence);
+                    let noise = noise * scale;
                     if noise <= 0.0 {
                         a.pattern_at(&pattern_point).multiply(-noise)
                     } else {
