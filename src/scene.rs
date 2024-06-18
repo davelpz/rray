@@ -70,8 +70,10 @@ pub mod scene {
         pub color: Option<Vec<f64>>,
         pub pattern_a: Option<Box<Pattern>>,
         pub pattern_b: Option<Box<Pattern>>,
-        pub transforms: Vec<Transform>,
+        pub transforms: Option<Vec<Transform>>,
         pub scale: Option<f64>,
+        pub octaves: Option<i32>,
+        pub persistence: Option<f64>,
     }
 
     impl Default for Pattern {
@@ -81,8 +83,10 @@ pub mod scene {
                 color: Some(vec![0.0, 0.0, 0.0]),
                 pattern_a: None,
                 pattern_b: None,
-                transforms: Vec::new(),
+                transforms: Some(Vec::new()),
                 scale: None,
+                octaves: None,
+                persistence: None,
             }
         }
     }

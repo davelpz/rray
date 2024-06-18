@@ -1,7 +1,7 @@
 pub mod pattern {
-    use crate::pattern::noise::NOISE_GENERATOR;
     use crate::color::color::Color;
     use crate::matrix::matrix::Matrix;
+    use crate::pattern::noise;
     use crate::tuple::tuple::Tuple;
 
     #[derive(Debug, Clone, PartialEq)]
@@ -12,7 +12,7 @@ pub mod pattern {
         Ring(Box<Pattern>, Box<Pattern>),
         Checker(Box<Pattern>, Box<Pattern>),
         Blend(Box<Pattern>, Box<Pattern>, f64),
-        Perturbed(Box<Pattern>, f64),
+        Perturbed(Box<Pattern>, f64,usize,f64),
         Noise(Box<Pattern>,Box<Pattern>, f64)
     }
 
@@ -65,9 +65,9 @@ pub mod pattern {
             }
         }
 
-        pub fn perturbed(a: Pattern, scale: f64, transform: Matrix) -> Pattern {
+        pub fn perturbed(a: Pattern, scale: f64, octaves: usize, persistence: f64, transform: Matrix) -> Pattern {
             Pattern {
-                pattern_type: PatternType::Perturbed(Box::new(a), scale),
+                pattern_type: PatternType::Perturbed(Box::new(a), scale, octaves, persistence),
                 transform,
             }
         }
@@ -118,13 +118,16 @@ pub mod pattern {
                     let b = b.pattern_at(&pattern_point);
                     a.multiply(1.0-scale).add(&b.multiply(*scale))
                 },
-                PatternType::Perturbed(a, scale) => {
+                PatternType::Perturbed(a, scale, octaves, persistence) => {
                     let x = pattern_point.x;
                     let y = pattern_point.y;
                     let z = pattern_point.z;
-                    let noise_x = (NOISE_GENERATOR.get_noise_3d(x, y, z) as f64) * scale;
-                    let noise_y = (NOISE_GENERATOR.get_noise_3d(x, y, z + 1.0) as f64) * scale;
-                    let noise_z = (NOISE_GENERATOR.get_noise_3d(x, y, z + 2.0) as f64) * scale;
+                    //let noise_x = (NOISE_GENERATOR.get_noise_3d(x, y, z) as f64) * scale;
+                    //let noise_y = (NOISE_GENERATOR.get_noise_3d(x, y, z + 1.0) as f64) * scale;
+                    //let noise_z = (NOISE_GENERATOR.get_noise_3d(x, y, z + 2.0) as f64) * scale;
+                    let noise_x = noise::octave_perlin(x, y, z, *octaves, *persistence) * scale;
+                    let noise_y = noise::octave_perlin(x, y, z + 1.0, *octaves, *persistence) * scale;
+                    let noise_z = noise::octave_perlin(x, y, z + 2.0, *octaves, *persistence) * scale;
                     let new_x = pattern_point.x + noise_x;
                     let new_y = pattern_point.y + noise_y;
                     let new_z = pattern_point.z + noise_z;
@@ -132,7 +135,8 @@ pub mod pattern {
                     a.pattern_at(&new_point)
                 },
                 PatternType::Noise(a,b, scale) => {
-                    let noise = NOISE_GENERATOR.get_noise_3d(pattern_point.x, pattern_point.y, pattern_point.z);
+                    //let noise = NOISE_GENERATOR.get_noise_3d(pattern_point.x, pattern_point.y, pattern_point.z);
+                    let noise = noise::octave_perlin(pattern_point.x, pattern_point.y, pattern_point.z, 3, 0.8);
                     let noise = noise as f64 * scale;
                     if noise <= 0.0 {
                         a.pattern_at(&pattern_point).multiply(-noise)
@@ -142,21 +146,6 @@ pub mod pattern {
                 }
             }
         }
-    }
-
-    #[allow(dead_code)]
-    fn turb(p: Tuple, depth: i32) -> f64 {
-        let mut accum = 0.0;
-        let mut temp_p = p;
-        let mut weight = 1.0;
-        for _i in 0..depth {
-            let n = NOISE_GENERATOR.get_noise_3d(temp_p.x, temp_p.y, temp_p.z);
-            accum += weight * n;
-            weight *= 0.5;
-            temp_p = temp_p.multiply(2.0);
-        }
-
-        accum.abs() as f64
     }
 }
 
@@ -168,6 +157,21 @@ pub mod noise {
         let mut noise = FastNoiseLite::new();
         noise.set_noise_type(Some(NoiseType::Perlin));
         noise
+    }
+
+    pub fn octave_perlin(x: f64, y: f64, z: f64, octaves: usize, persistence: f64) -> f64 {
+        let mut total: f64 = 0.0;
+        let mut frequency = 1.0;
+        let mut amplitude = 1.0;
+        let mut max_value = 0.0; // Used for normalizing result to 0.0 - 1.0
+        for _ in 0..octaves {
+            total += NOISE_GENERATOR.get_noise_3d(x * frequency, y * frequency, z * frequency) as f64 * amplitude;
+            max_value += amplitude;
+            amplitude *= persistence;
+            frequency *= 2.0;
+        }
+
+        total / max_value
     }
 
     lazy_static! {

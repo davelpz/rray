@@ -100,7 +100,7 @@ fn create_transforms(transforms: &Vec<Transform>) -> Matrix {
 
 #[allow(dead_code)]
 fn create_pattern(pattern: &scene::scene::Pattern) -> Pattern {
-    let transform = create_transforms(&pattern.transforms);
+    let transform = create_transforms(&pattern.transforms.clone().unwrap_or(vec![]));
     let pattern = pattern.clone();
     if pattern.pattern_type == "solid" {
         return Pattern::solid(color_from_vec(&pattern.color.unwrap_or(vec![0.0, 0.0, 0.0])), transform.clone());
@@ -118,7 +118,9 @@ fn create_pattern(pattern: &scene::scene::Pattern) -> Pattern {
             },
             "perturbed" => {
                 let scale = pattern.scale.unwrap_or(0.2);
-                Pattern::perturbed(pattern_a, scale, transform.clone())
+                let octaves = pattern.octaves.unwrap_or(3);
+                let persistence = pattern.persistence.unwrap_or(0.5);
+                Pattern::perturbed(pattern_a, scale, octaves as usize, persistence, transform.clone())
             },
             "noise" => {
                 let scale = pattern.scale.unwrap_or(1.0);
