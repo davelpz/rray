@@ -15,20 +15,11 @@
   "scene": [
     {
       "type": "plane",
-      "transforms": [],
       "material": {
         "pattern": {
           "type": "noise",
-          "pattern_a": {
-            "type": "solid",
-            "color": [0.5, 0.5, 0.0],
-            "transforms": []
-          },
-          "pattern_b": {
-            "type": "solid",
-            "color": [0.0, 0.0, 0.5],
-            "transforms": []
-          },
+          "color_a" : [0.5, 0.5, 0.0],
+          "color_b" : [0.0, 0.0, 0.5],
           "transforms": [
             {
               "type": "scale",
@@ -37,7 +28,9 @@
               "z": 0.01
             }
           ],
-          "scale": 4.00
+          "scale": 4.00,
+          "octaves": 2,
+          "persistence": 0.5
         },
         "ambient": 0.1,
         "diffuse": 0.9,

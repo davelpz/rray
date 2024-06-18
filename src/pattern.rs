@@ -122,9 +122,6 @@ pub mod pattern {
                     let x = pattern_point.x;
                     let y = pattern_point.y;
                     let z = pattern_point.z;
-                    //let noise_x = (NOISE_GENERATOR.get_noise_3d(x, y, z) as f64) * scale;
-                    //let noise_y = (NOISE_GENERATOR.get_noise_3d(x, y, z + 1.0) as f64) * scale;
-                    //let noise_z = (NOISE_GENERATOR.get_noise_3d(x, y, z + 2.0) as f64) * scale;
                     let noise_x = noise::octave_perlin(x, y, z, *octaves, *persistence) * scale;
                     let noise_y = noise::octave_perlin(x, y, z + 1.0, *octaves, *persistence) * scale;
                     let noise_z = noise::octave_perlin(x, y, z + 2.0, *octaves, *persistence) * scale;
@@ -158,13 +155,22 @@ pub mod noise {
         noise
     }
 
+    pub fn get_noise_3d(x: f64, y: f64, z: f64) -> f64 {
+        let raw_noise = NOISE_GENERATOR.get_noise_3d(x, y, z) as f64;
+        raw_noise
+        // let min_noise = -0.9999828338623047;
+        // let max_noise = -0.11478698253631592;
+        // let normalized_noise = 2.0 * ((raw_noise - min_noise) / (max_noise - min_noise)) - 1.0;
+        // normalized_noise
+    }
+
     pub fn octave_perlin(x: f64, y: f64, z: f64, octaves: usize, persistence: f64) -> f64 {
         let mut total: f64 = 0.0;
         let mut frequency = 1.0;
         let mut amplitude = 1.0;
         let mut max_value = 0.0; // Used for normalizing result to 0.0 - 1.0
         for _ in 0..octaves {
-            total += NOISE_GENERATOR.get_noise_3d(x * frequency, y * frequency, z * frequency) as f64 * amplitude;
+            total += get_noise_3d(x * frequency, y * frequency, z * frequency) * amplitude;
             max_value += amplitude;
             amplitude *= persistence;
             frequency *= 2.0;
@@ -271,16 +277,27 @@ mod tests {
         assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 1.01)), Color::new(0.0, 0.0, 0.0));
     }
 
+    use crate::pattern::noise::get_noise_3d;
+
     #[test]
+    #[ignore]
     fn test_fastnoise() {
         // Create and configure the FastNoise object
-        let noise = &crate::pattern::noise::NOISE_GENERATOR;
-        for _i in 0..100 {
-            let random_x = 1.0 + (100.0 - 1.0) * rand::random::<f64>();
-            let random_y = 1.0 + (100.0 - 1.0) * rand::random::<f64>();
-            let random_z = 1.0 + (100.0 - 1.0) * rand::random::<f64>();
-            let value = noise.get_noise_3d(random_x, random_y, random_z);
-            println!("value: {}", value);
+        let mut min = f64::MAX;
+        let mut max = f64::MIN;
+        for _i in 0..1000000 {
+            let random_x = (1000.0) * rand::random::<f64>();
+            let random_y = (1000.0) * rand::random::<f64>();
+            let random_z = (1000.0) * rand::random::<f64>();
+            let value = get_noise_3d(random_x, random_y, random_z);
+            if value < min {
+                min = value;
+            }
+            if value > max {
+                max = value;
+            }
         }
+        println!("min: {}, max {}", min, max);
+
     }
 }
