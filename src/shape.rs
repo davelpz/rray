@@ -34,6 +34,18 @@ pub mod shape {
             }
         }
 
+        pub fn glass_sphere() -> Shape {
+            let mut m = Material::default();
+            m.transparency = 1.0;
+            m.refractive_index = 1.5;
+            Shape {
+                shape_type: ShapeType::Sphere,
+                center: Tuple::point(0.0, 0.0, 0.0),
+                transform: Matrix::identity(4),
+                material: m,
+            }
+        }
+
         pub fn plane() -> Shape {
             Shape {
                 shape_type: ShapeType::Plane,

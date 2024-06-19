@@ -148,6 +148,8 @@ fn create_material(material: &scene::scene::Material) -> Material {
     m.specular = material.specular.unwrap_or(0.9);
     m.shininess = material.shininess.unwrap_or(200.0);
     m.reflective = material.reflective.unwrap_or(0.0);
+    m.transparency = material.transparency.unwrap_or(0.0);
+    m.refractive_index = material.refractive_index.unwrap_or(1.0);
     m.pattern = create_pattern(&material.pattern);
     m
 }

@@ -15,11 +15,13 @@ pub mod material {
         pub specular: f64,
         pub shininess: f64,
         pub reflective: f64,
+        pub transparency: f64,
+        pub refractive_index: f64,
     }
 
     impl Material {
-        pub fn new(pattern: Pattern, ambient: f64, diffuse: f64, specular: f64, shininess: f64, reflective: f64) -> Material {
-            Material { pattern, ambient, diffuse, specular, shininess, reflective }
+        pub fn new(pattern: Pattern, ambient: f64, diffuse: f64, specular: f64, shininess: f64, reflective: f64, transparency: f64, refractive_index: f64) -> Material {
+            Material { pattern, ambient, diffuse, specular, shininess, reflective, transparency, refractive_index}
         }
 
         pub fn default() -> Material {
@@ -30,6 +32,8 @@ pub mod material {
                 specular: 0.9,
                 shininess: 200.0,
                 reflective: 0.0,
+                transparency: 0.0,
+                refractive_index: 1.0,
             }
         }
     }
@@ -47,7 +51,10 @@ mod tests {
     use crate::tuple::tuple::Tuple;
     use crate::light::light::Light;
     use crate::light::light::lighting;
+    use crate::material::material;
     use crate::material::material::{Material};
+    use crate::matrix::matrix::Matrix;
+    use crate::pattern::pattern::Pattern;
     use crate::shape::shape::Shape;
 
     #[test]
@@ -62,5 +69,17 @@ mod tests {
         shape.material = m;
         let result = lighting(&shape,  &light, &position, &eyev, &normalv, in_shadow);
         assert_eq!(result, Color::new(0.1, 0.1, 0.1));
+    }
+
+    #[test]
+    fn test_pattern() {
+        let mut shape = Shape::sphere();
+        shape.transform = Matrix::scale(2.0, 2.0, 2.0);
+        let mut m = Material::default();
+        m.pattern = Pattern::test();
+        m.pattern.transform = Matrix::translate(0.5, 1.0, 1.5);
+        shape.material = m;
+        let c = material::pattern_at_object(&shape, &Tuple::point(2.5, 3.0, 3.5));
+        assert_eq!(c, Color::new(0.75, 0.5, 0.25));
     }
 }

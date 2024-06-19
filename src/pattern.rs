@@ -6,6 +6,7 @@ pub mod pattern {
 
     #[derive(Debug, Clone, PartialEq)]
     pub enum PatternType {
+        Test,
         Solid(Color),
         Stripe(Box<Pattern>, Box<Pattern>),
         Gradient(Box<Pattern>, Box<Pattern>),
@@ -23,6 +24,13 @@ pub mod pattern {
     }
 
     impl Pattern {
+        pub fn test() -> Pattern {
+            Pattern {
+                pattern_type: PatternType::Test,
+                transform: Matrix::identity(4),
+            }
+        }
+
         pub fn solid(color: Color, transform: Matrix) -> Pattern {
             Pattern {
                 pattern_type: PatternType::Solid(color),
@@ -82,6 +90,9 @@ pub mod pattern {
         pub fn pattern_at(&self, object_point: &Tuple) -> Color {
             let pattern_point = self.transform.inverse().multiply_tuple(object_point);
             match &self.pattern_type {
+                PatternType::Test => {
+                    Color::new(pattern_point.x, pattern_point.y, pattern_point.z)
+                },
                 PatternType::Solid(color) => {
                     color.clone()
                 },

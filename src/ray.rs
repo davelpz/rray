@@ -22,19 +22,53 @@ pub mod ray {
         pub normalv: Tuple,
         pub inside: bool,
         pub over_point: Tuple,
+        pub under_point: Tuple,
         pub reflectv: Tuple,
+        pub n1: f64,
+        pub n2: f64,
     }
 
     impl<'a> Intersection<'a> {
-        pub fn prepare_computations(&self, r: &Ray) -> Computations<'a> {
+        pub fn prepare_computations(&self, r: &Ray, xs: &Vec<Intersection>) -> Computations<'a> {
             let point = r.position(self.t);
             let eyev = r.direction.negate();
             let normalv = self.object.normal_at(&point);
             let inside = normalv.dot(&eyev) < 0.0;
             let normalv = if inside { normalv.negate() } else { normalv };
             let over_point = point.add(&normalv.multiply(EPSILON));
+            let under_point = point.subtract(&normalv.multiply(EPSILON));
             let reflectv = r.direction.reflect(&normalv);
-            Computations { t: self.t, object: self.object, point, eyev, normalv, inside, over_point, reflectv }
+
+            let mut n1 = 1.0;
+            let mut n2 = 1.0;
+            let mut containers: Vec<&Shape> = vec![];
+            for i in xs {
+                if *i == *self {
+                    if containers.is_empty() {
+                        n1 = 1.0;
+                    } else {
+                        n1 = containers.last().unwrap().material.refractive_index;
+                    }
+                }
+
+                if containers.contains(&i.object) {
+                    if let Some(index) = containers.iter().position(|shape| shape == &i.object) {
+                        containers.remove(index);
+                    }
+                } else {
+                    containers.push(i.object);
+                }
+
+                if *i == *self {
+                    if containers.is_empty() {
+                        n2 = 1.0;
+                    } else {
+                        n2 = containers.last().unwrap().material.refractive_index;
+                    }
+                }
+            }
+
+            Computations { t: self.t, object: self.object, point, eyev, normalv, inside, over_point, under_point, reflectv, n1, n2 }
         }
     }
 
@@ -66,7 +100,7 @@ pub mod ray {
         let mut result = None;
         let mut t = f64::MAX;
         for x in xs {
-            if x.t >= 0.0 && x.t < t {
+            if x.t >= 0.0 && x.t < t { //maybe take out check for t >= 0.0
                 t = x.t;
                 result = Some(x);
             }
@@ -160,7 +194,8 @@ mod tests {
         let mut s = Shape::sphere();
         s.transform = Matrix::translate(0.0, 0.0, 1.0);
         let i = super::ray::Intersection { t: 5.0, object: &s };
-        let comps = i.prepare_computations(&r);
+        let xs = vec![i];
+        let comps = xs[0].prepare_computations(&r, &xs);
         assert!(comps.over_point.z < -super::ray::EPSILON / 2.0);
         assert!(comps.point.z > comps.over_point.z);
     }
@@ -238,9 +273,10 @@ mod tests {
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
         let s = Shape::sphere();
         let i = super::ray::Intersection { t: 4.0, object: &s };
-        let comps = i.prepare_computations(&r);
-        assert_eq!(comps.t, i.t);
-        assert_eq!(comps.object, i.object);
+        let xs = vec![i];
+        let comps = xs[0].prepare_computations(&r, &xs);
+        assert_eq!(comps.t, xs[0].t);
+        assert_eq!(comps.object, xs[0].object);
         assert_eq!(comps.point, Tuple::point(0.0, 0.0, -1.0));
         assert_eq!(comps.eyev, Tuple::vector(0.0, 0.0, -1.0));
         assert_eq!(comps.normalv, Tuple::vector(0.0, 0.0, -1.0));
@@ -251,10 +287,10 @@ mod tests {
     fn test_prepare_computations_inside() {
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
         let s = Shape::sphere();
-        let i = super::ray::Intersection { t: 1.0, object: &s };
-        let comps = i.prepare_computations(&r);
-        assert_eq!(comps.t, i.t);
-        assert_eq!(comps.object, i.object);
+        let xs = vec![super::ray::Intersection { t: 1.0, object: &s }];
+        let comps = xs[0].prepare_computations(&r, &xs);
+        assert_eq!(comps.t, xs[0].t);
+        assert_eq!(comps.object, xs[0].object);
         assert_eq!(comps.point, Tuple::point(0.0, 0.0, 1.0));
         assert_eq!(comps.eyev, Tuple::vector(0.0, 0.0, -1.0));
         assert_eq!(comps.normalv, Tuple::vector(0.0, 0.0, -1.0));
@@ -265,8 +301,54 @@ mod tests {
     fn precomputing_the_reflection_vector() {
         let s = Shape::plane();
         let r = Ray::new(Tuple::point(0.0, 1.0, -1.0), Tuple::vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0));
-        let i = super::ray::Intersection { t: 2.0_f64.sqrt(), object: &s };
-        let comps = i.prepare_computations(&r);
+        let xs = vec![super::ray::Intersection { t: 2.0_f64.sqrt(), object: &s }];
+        let comps = xs[0].prepare_computations(&r, &xs);
         assert_eq!(comps.reflectv, Tuple::vector(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0));
+    }
+
+    #[test]
+    fn finding_n1_and_n2_at_various_intersections() {
+        let mut a = Shape::glass_sphere();
+        a.transform = Matrix::scale(2.0, 2.0, 2.0);
+        a.material.refractive_index = 1.5;
+
+        let mut b = Shape::glass_sphere();
+        b.transform = Matrix::translate(0.0, 0.0, -0.25);
+        b.material.refractive_index = 2.0;
+
+        let mut c = Shape::glass_sphere();
+        c.transform = Matrix::translate(0.0, 0.0, 0.25);
+        c.material.refractive_index = 2.5;
+
+        let r = Ray::new(Tuple::point(0.0, 0.0, -4.0), Tuple::vector(0.0, 0.0, 1.0));
+        let xs = vec![
+            super::ray::Intersection { t: 2.0, object: &a },
+            super::ray::Intersection { t: 2.75, object: &b },
+            super::ray::Intersection { t: 3.25, object: &c },
+            super::ray::Intersection { t: 4.75, object: &b },
+            super::ray::Intersection { t: 5.25, object: &c },
+            super::ray::Intersection { t: 6.0, object: &a },
+        ];
+
+        let expected_n1 = vec![1.0, 1.5, 2.0, 2.5, 2.5, 1.5];
+        let expected_n2 = vec![1.5, 2.0, 2.5, 2.5, 1.5, 1.0];
+
+        for i in 0..xs.len() {
+            let comps = xs[i].prepare_computations(&r, &xs);
+            assert_eq!(comps.n1, expected_n1[i]);
+            assert_eq!(comps.n2, expected_n2[i]);
+        }
+    }
+
+    #[test]
+    fn underpoint_is_offset_below_the_surface() {
+        let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
+        let mut s = Shape::glass_sphere();
+        s.transform = Matrix::translate(0.0, 0.0, 1.0);
+        let i = super::ray::Intersection { t: 5.0, object: &s };
+        let xs = vec![i];
+        let comps = xs[0].prepare_computations(&r, &xs);
+        assert!(comps.under_point.z > super::ray::EPSILON / 2.0);
+        assert!(comps.point.z < comps.under_point.z);
     }
 }
