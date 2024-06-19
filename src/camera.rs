@@ -74,7 +74,7 @@ pub mod camera {
             let iter = pixel_coordinates(self.vsize, self.hsize).par_bridge();
             iter.for_each(|(x, y)| {
                 let ray = self.ray_for_pixel(x, y);
-                let color = world.color_at(&ray);
+                let color = world.color_at(&ray, 5);
                 let mut image = image.lock().unwrap();
                 image.write_pixel(x, y, color);
                 drop(image); // unlock the mutex
@@ -89,7 +89,7 @@ pub mod camera {
             let bar = ProgressBar::new((self.vsize * self.hsize) as u64);
             for (x, y) in pixel_coordinates(self.vsize, self.hsize) {
                 let ray = self.ray_for_pixel(x, y);
-                let color = world.color_at(&ray);
+                let color = world.color_at(&ray, 5);
                 image.write_pixel(x, y, color);
                 bar.inc(1);
             }

@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 
 pub mod color {
+    use std::ops::Mul;
+
     const EPSILON: f64 = 0.00001;
 
     #[derive(Debug, Clone, Copy)]
@@ -39,6 +41,15 @@ pub mod color {
             Color::new(self.r * other.r, self.g * other.g, self.b * other.b)
         }
     }
+
+    impl Mul<f64> for Color {
+        type Output = Color;
+
+        fn mul(self, rhs: f64) -> Self::Output {
+            Color::new(self.r * rhs, self.g * rhs, self.b * rhs)
+        }
+    }
+
 }
 
 #[cfg(test)]

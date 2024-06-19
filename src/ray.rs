@@ -22,6 +22,7 @@ pub mod ray {
         pub normalv: Tuple,
         pub inside: bool,
         pub over_point: Tuple,
+        pub reflectv: Tuple,
     }
 
     impl<'a> Intersection<'a> {
@@ -32,7 +33,8 @@ pub mod ray {
             let inside = normalv.dot(&eyev) < 0.0;
             let normalv = if inside { normalv.negate() } else { normalv };
             let over_point = point.add(&normalv.multiply(EPSILON));
-            Computations { t: self.t, object: self.object, point, eyev, normalv, inside, over_point }
+            let reflectv = r.direction.reflect(&normalv);
+            Computations { t: self.t, object: self.object, point, eyev, normalv, inside, over_point, reflectv }
         }
     }
 
@@ -257,5 +259,14 @@ mod tests {
         assert_eq!(comps.eyev, Tuple::vector(0.0, 0.0, -1.0));
         assert_eq!(comps.normalv, Tuple::vector(0.0, 0.0, -1.0));
         assert_eq!(comps.inside, true);
+    }
+
+    #[test]
+    fn precomputing_the_reflection_vector() {
+        let s = Shape::plane();
+        let r = Ray::new(Tuple::point(0.0, 1.0, -1.0), Tuple::vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0));
+        let i = super::ray::Intersection { t: 2.0_f64.sqrt(), object: &s };
+        let comps = i.prepare_computations(&r);
+        assert_eq!(comps.reflectv, Tuple::vector(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0));
     }
 }
