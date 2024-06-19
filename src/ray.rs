@@ -28,7 +28,7 @@ pub mod ray {
         pub n2: f64,
     }
 
-    impl Computations {
+    impl Computations<'_> {
         pub fn schlick(&self) -> f64 {
             let mut cos = self.eyev.dot(&self.normalv);
             if self.n1 > self.n2 {

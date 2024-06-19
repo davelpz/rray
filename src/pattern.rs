@@ -5,6 +5,7 @@ pub mod pattern {
     use crate::tuple::tuple::Tuple;
 
     #[derive(Debug, Clone, PartialEq)]
+    #[allow(dead_code)]
     pub enum PatternType {
         Test,
         Solid(Color),
@@ -24,6 +25,7 @@ pub mod pattern {
     }
 
     impl Pattern {
+        #[allow(dead_code)]
         pub fn test() -> Pattern {
             Pattern {
                 pattern_type: PatternType::Test,
