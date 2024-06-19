@@ -28,6 +28,25 @@ pub mod ray {
         pub n2: f64,
     }
 
+    impl Computations {
+        pub fn schlick(&self) -> f64 {
+            let mut cos = self.eyev.dot(&self.normalv);
+            if self.n1 > self.n2 {
+                let n = self.n1 / self.n2;
+                let sin2_t = n * n * (1.0 - cos * cos);
+                if sin2_t > 1.0 {
+                    return 1.0;
+                }
+
+                let cos_t = (1.0 - sin2_t).sqrt();
+                cos = cos_t;
+            }
+
+            let r0 = ((self.n1 - self.n2) / (self.n1 + self.n2)).powi(2);
+            r0 + (1.0 - r0) * (1.0 - cos).powi(5)
+        }
+    }
+
     impl<'a> Intersection<'a> {
         pub fn prepare_computations(&self, r: &Ray, xs: &Vec<Intersection>) -> Computations<'a> {
             let point = r.position(self.t);
