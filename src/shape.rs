@@ -69,7 +69,7 @@ pub mod shape {
             match self.shape_type {
                 ShapeType::Sphere => self.local_intersect_sphere(&trans_ray),
                 ShapeType::Plane => self.local_intersect_plane(&trans_ray),
-                _ => vec![]
+                ShapeType::Cube => crate::shape::cube::local_intersect(&self, &trans_ray),
             }
         }
 
@@ -117,6 +117,41 @@ pub mod shape {
         #[allow(unused_variables)]
         fn local_normal_at_plane(&self, world_point: &Tuple) -> Tuple {
             Tuple::vector(0.0, 1.0, 0.0)
+        }
+    }
+}
+
+mod cube {
+    use crate::ray::ray::{Intersection, Ray};
+    use crate::tuple::tuple::EPSILON;
+    use crate::shape::shape::Shape;
+
+    pub fn local_intersect<'a>(cube: &'a Shape, ray: &Ray) -> Vec<Intersection<'a>> {
+        let (xtmin, xtmax) = check_axis(ray.origin.x, ray.direction.x);
+        let (ytmin, ytmax) = check_axis(ray.origin.y, ray.direction.y);
+        let (ztmin, ztmax) = check_axis(ray.origin.z, ray.direction.z);
+        let tmin = xtmin.max(ytmin).max(ztmin);
+        let tmax = xtmax.min(ytmax).min(ztmax);
+        if tmin > tmax {
+            vec![]
+        } else {
+            vec![Intersection { t: tmin, object: cube },
+                 Intersection { t: tmax, object: cube }]
+        }
+    }
+
+    pub fn check_axis(origin: f64, direction: f64) -> (f64, f64) {
+        let tmin_numerator = -1.0 - origin;
+        let tmax_numerator = 1.0 - origin;
+        let (tmin, tmax) = if direction.abs() >= EPSILON {
+            (tmin_numerator / direction, tmax_numerator / direction)
+        } else {
+            (tmin_numerator * f64::INFINITY, tmax_numerator * f64::INFINITY)
+        };
+        if tmin > tmax {
+            (tmax, tmin)
+        } else {
+            (tmin, tmax)
         }
     }
 }
