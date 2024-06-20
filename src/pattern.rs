@@ -311,6 +311,47 @@ mod tests {
             }
         }
         println!("min: {}, max {}", min, max);
+    }
 
+    use crate::shape::shape::Shape;
+    use crate::ray::ray::Ray;
+    use crate::ray::ray::Intersection;
+
+    #[test]
+    fn schlick_reflectance_under_total_internal_reflection() {
+        let shape = Shape::glass_sphere();
+        let r = Ray::new(Tuple::point(0.0, 0.0, 2_f64.sqrt()/2.0), Tuple::vector(0.0, 1.0, 0.0));
+        let xs = vec![
+            Intersection::new(-2.0_f64.sqrt() / 2.0, &shape),
+            Intersection::new(2.0_f64.sqrt() / 2.0, &shape)
+        ];
+        let comps = xs[1].prepare_computations(&r, &xs);
+        let reflectance = comps.schlick();
+        assert_eq!(reflectance, 1.0);
+    }
+
+    #[test]
+    fn schlick_reflectance_with_perpendicular_viewing_angle() {
+        let shape = Shape::glass_sphere();
+        let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 1.0, 0.0));
+        let xs = vec![
+            Intersection::new(-1.0, &shape),
+            Intersection::new(1.0, &shape)
+        ];
+        let comps = xs[1].prepare_computations(&r, &xs);
+        let reflectance = comps.schlick();
+        assert!((reflectance - 0.04).abs() < crate::ray::ray::EPSILON);
+    }
+
+    #[test]
+    fn schlick_approximation_with_small_angle_and_n2_greater_than_n1() {
+        let shape = Shape::glass_sphere();
+        let r = Ray::new(Tuple::point(0.0, 0.99, -2.0), Tuple::vector(0.0, 0.0, 1.0));
+        let xs = vec![
+            Intersection::new(1.8589, &shape)
+        ];
+        let comps = xs[0].prepare_computations(&r, &xs);
+        let reflectance = comps.schlick();
+        assert!((reflectance - 0.48873).abs() < crate::ray::ray::EPSILON);
     }
 }

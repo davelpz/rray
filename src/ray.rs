@@ -48,6 +48,10 @@ pub mod ray {
     }
 
     impl<'a> Intersection<'a> {
+        pub fn new(t: f64, object: &'a Shape) -> Intersection<'a> {
+            Intersection { t, object }
+        }
+
         pub fn prepare_computations(&self, r: &Ray, xs: &Vec<Intersection>) -> Computations<'a> {
             let point = r.position(self.t);
             let eyev = r.direction.negate();
