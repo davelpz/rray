@@ -55,6 +55,15 @@ pub mod shape {
             }
         }
 
+        pub fn cube() -> Shape {
+            Shape {
+                shape_type: ShapeType::Cube,
+                center: Tuple::point(0.0, 0.0, 0.0),
+                transform: Matrix::identity(4),
+                material: Material::default(),
+            }
+        }
+
         pub fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
             let trans_ray = ray.transform(&self.transform.inverse());
             match self.shape_type {
