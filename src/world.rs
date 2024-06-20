@@ -1,14 +1,14 @@
 #[allow(dead_code)]
 
 pub mod world {
-    use crate::color::color::Color;
+    use crate::color::Color;
     use crate::shape::Shape;
-    use crate::light::light::{lighting, Light};
-    use crate::matrix::matrix::Matrix;
-    use crate::pattern::pattern::Pattern;
-    use crate::ray::ray::{Computations, hit, Ray};
-    use crate::ray::ray::Intersection;
-    use crate::tuple::tuple::Tuple;
+    use crate::light::{lighting, Light};
+    use crate::matrix::Matrix;
+    use crate::pattern::Pattern;
+    use crate::ray::{Computations, hit, Ray};
+    use crate::ray::Intersection;
+    use crate::tuple::Tuple;
 
     #[derive(Debug, PartialEq, Clone)]
     pub struct World {
@@ -135,14 +135,14 @@ pub mod world {
 
 #[cfg(test)]
 mod tests {
-    use crate::color::color::Color;
-    use crate::light::light::Light;
-    use crate::matrix::matrix::Matrix;
-    use crate::pattern::pattern::{Pattern, PatternType};
-    use crate::tuple::tuple::Tuple;
+    use crate::color::Color;
+    use crate::light::Light;
+    use crate::matrix::Matrix;
+    use crate::pattern::{Pattern, PatternType};
+    use crate::tuple::Tuple;
     use super::world::World;
     use crate::shape::Shape;
-    use crate::ray::ray::{Intersection, Ray};
+    use crate::ray::{Intersection, Ray};
 
     #[test]
     fn creating_a_world() {

@@ -1,85 +1,84 @@
 #[allow(dead_code)]
 
-pub mod light {
-    use crate::color::color::Color;
-    use crate::tuple::tuple::Tuple;
-    use crate::shape::Shape;
-    use crate::material::material::pattern_at_object;
+use crate::color::Color;
+use crate::tuple::Tuple;
+use crate::shape::Shape;
+use crate::material::pattern_at_object;
 
-    #[derive(Debug, Clone, PartialEq, Copy)]
-    pub enum LightType {
-        Point,
-    }
+#[derive(Debug, Clone, PartialEq, Copy)]
+pub enum LightType {
+    Point,
+}
 
-    #[derive(Debug, Clone, PartialEq, Copy)]
-    pub struct Light {
-        pub light_type: LightType,
-        pub intensity: Color,
-        pub position: Tuple,
-    }
+#[derive(Debug, Clone, PartialEq, Copy)]
+pub struct Light {
+    pub light_type: LightType,
+    pub intensity: Color,
+    pub position: Tuple,
+}
 
-    impl Light {
-        pub fn new_point_light(position: Tuple, intensity: Color) -> Light {
-            Light { light_type: LightType::Point, intensity, position }
-        }
-    }
-
-    pub fn lighting(object: &Shape, light: &Light, point: &Tuple, eyev: &Tuple, normalv: &Tuple, in_shadow: bool) -> Color {
-        let material = &object.material;
-        // Combine the surface color with the light's color/intensity
-        let color = pattern_at_object(object, point);
-
-        let effective_color = color.product(&light.intensity);
-        // Find the direction to the light source
-        let lightv = (light.position.subtract(point)).normalize();
-        // Compute the ambient contribution
-        let ambient = effective_color.multiply(material.ambient);
-
-        if in_shadow {
-            return ambient;
-        }
-
-        // Light_dot_normal represents the cosine of the angle between
-        // the light vector and the normal vector.
-        // A negative number means the light is on the other side of the surface.
-        let light_dot_normal = lightv.dot(normalv);
-
-
-        let diffuse;
-        let specular;
-        if light_dot_normal < 0.0 {
-            diffuse = Color::new(0.0, 0.0, 0.0);
-            specular = Color::new(0.0, 0.0, 0.0);
-        } else {
-            // Compute the diffuse contribution
-            diffuse = effective_color.multiply(material.diffuse).multiply(light_dot_normal);
-            let reflectv = lightv.negate().reflect(&normalv);
-            // reflect_dot_eye represents the cosine of the angle between the
-            // reflection vector and the eye vector. A negative number means the
-            // light reflects away from the eye.
-            let reflect_dot_eye = reflectv.dot(eyev);
-            if reflect_dot_eye <= 0.0 {
-                specular = Color::new(0.0, 0.0, 0.0);
-            } else {
-                // Compute the specular contribution
-                let factor = reflect_dot_eye.powf(material.shininess);
-                specular = light.intensity.multiply(material.specular).multiply(factor);
-            }
-        }
-        // Add the three contributions together to get the final shading
-        ambient.add(&diffuse).add(&specular)
+impl Light {
+    pub fn new_point_light(position: Tuple, intensity: Color) -> Light {
+        Light { light_type: LightType::Point, intensity, position }
     }
 }
 
+pub fn lighting(object: &Shape, light: &Light, point: &Tuple, eyev: &Tuple, normalv: &Tuple, in_shadow: bool) -> Color {
+    let material = &object.material;
+    // Combine the surface color with the light's color/intensity
+    let color = pattern_at_object(object, point);
+
+    let effective_color = color.product(&light.intensity);
+    // Find the direction to the light source
+    let lightv = (light.position.subtract(point)).normalize();
+    // Compute the ambient contribution
+    let ambient = effective_color.multiply(material.ambient);
+
+    if in_shadow {
+        return ambient;
+    }
+
+    // Light_dot_normal represents the cosine of the angle between
+    // the light vector and the normal vector.
+    // A negative number means the light is on the other side of the surface.
+    let light_dot_normal = lightv.dot(normalv);
+
+
+    let diffuse;
+    let specular;
+    if light_dot_normal < 0.0 {
+        diffuse = Color::new(0.0, 0.0, 0.0);
+        specular = Color::new(0.0, 0.0, 0.0);
+    } else {
+        // Compute the diffuse contribution
+        diffuse = effective_color.multiply(material.diffuse).multiply(light_dot_normal);
+        let reflectv = lightv.negate().reflect(&normalv);
+        // reflect_dot_eye represents the cosine of the angle between the
+        // reflection vector and the eye vector. A negative number means the
+        // light reflects away from the eye.
+        let reflect_dot_eye = reflectv.dot(eyev);
+        if reflect_dot_eye <= 0.0 {
+            specular = Color::new(0.0, 0.0, 0.0);
+        } else {
+            // Compute the specular contribution
+            let factor = reflect_dot_eye.powf(material.shininess);
+            specular = light.intensity.multiply(material.specular).multiply(factor);
+        }
+    }
+    // Add the three contributions together to get the final shading
+    ambient.add(&diffuse).add(&specular)
+}
+
+
 #[cfg(test)]
 mod tests {
-    use crate::color::color::Color;
-    use crate::tuple::tuple::Tuple;
-    use super::light::Light;
-    use super::light::lighting;
-    use crate::material::material::{Material};
-    use crate::matrix::matrix::Matrix;
-    use crate::pattern::pattern::Pattern;
+    use crate::color::Color;
+    use crate::tuple::Tuple;
+    use super::Light;
+    use super::lighting;
+    use crate::material::{Material};
+    use crate::matrix::Matrix;
+    use crate::pattern::Pattern;
     use crate::shape::Shape;
 
     #[test]

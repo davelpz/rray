@@ -1,60 +1,58 @@
 #![allow(dead_code)]
 
-pub mod color {
-    use std::ops::Mul;
+use std::ops::Mul;
 
-    const EPSILON: f64 = 0.00001;
+const EPSILON: f64 = 0.00001;
 
-    #[derive(Debug, Clone, Copy)]
-    pub struct Color {
-        pub r: f64,
-        pub g: f64,
-        pub b: f64,
-    }
-
-    impl PartialEq for Color {
-        fn eq(&self, other: &Self) -> bool {
-            (self.r - other.r).abs() < EPSILON
-                && (self.g - other.g).abs() < EPSILON
-                && (self.b - other.b).abs() < EPSILON
-        }
-    }
-
-    impl Color {
-        pub fn new(r: f64, g: f64, b: f64) -> Color {
-            Color { r, g, b }
-        }
-
-        pub fn add(&self, other: &Color) -> Color {
-            Color::new(self.r + other.r, self.g + other.g, self.b + other.b)
-        }
-
-        pub fn subtract(&self, other: &Color) -> Color {
-            Color::new(self.r - other.r, self.g - other.g, self.b - other.b)
-        }
-
-        pub fn multiply(&self, scalar: f64) -> Color {
-            Color::new(self.r * scalar, self.g * scalar, self.b * scalar)
-        }
-
-        pub fn product(&self, other: &Color) -> Color {
-            Color::new(self.r * other.r, self.g * other.g, self.b * other.b)
-        }
-    }
-
-    impl Mul<f64> for Color {
-        type Output = Color;
-
-        fn mul(self, rhs: f64) -> Self::Output {
-            Color::new(self.r * rhs, self.g * rhs, self.b * rhs)
-        }
-    }
-
+#[derive(Debug, Clone, Copy)]
+pub struct Color {
+    pub r: f64,
+    pub g: f64,
+    pub b: f64,
 }
+
+impl PartialEq for Color {
+    fn eq(&self, other: &Self) -> bool {
+        (self.r - other.r).abs() < EPSILON
+            && (self.g - other.g).abs() < EPSILON
+            && (self.b - other.b).abs() < EPSILON
+    }
+}
+
+impl Color {
+    pub fn new(r: f64, g: f64, b: f64) -> Color {
+        Color { r, g, b }
+    }
+
+    pub fn add(&self, other: &Color) -> Color {
+        Color::new(self.r + other.r, self.g + other.g, self.b + other.b)
+    }
+
+    pub fn subtract(&self, other: &Color) -> Color {
+        Color::new(self.r - other.r, self.g - other.g, self.b - other.b)
+    }
+
+    pub fn multiply(&self, scalar: f64) -> Color {
+        Color::new(self.r * scalar, self.g * scalar, self.b * scalar)
+    }
+
+    pub fn product(&self, other: &Color) -> Color {
+        Color::new(self.r * other.r, self.g * other.g, self.b * other.b)
+    }
+}
+
+impl Mul<f64> for Color {
+    type Output = Color;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        Color::new(self.r * rhs, self.g * rhs, self.b * rhs)
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
-    use super::color::Color;
+    use super::Color;
 
     #[test]
     fn test_color() {

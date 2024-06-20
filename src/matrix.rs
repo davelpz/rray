@@ -1,240 +1,239 @@
 #![allow(dead_code)]
 
-pub mod matrix {
-    pub const EPSILON: f64 = 0.00001;
-    use crate::tuple::tuple::Tuple;
-    use std::ops::Mul;
+pub const EPSILON: f64 = 0.00001;
+use crate::tuple::Tuple;
+use std::ops::Mul;
 
-    #[derive(Debug, Clone)]
-    pub struct Matrix {
-        pub rows: usize,
-        pub cols: usize,
-        pub data: Vec<f64>,
-    }
+#[derive(Debug, Clone)]
+pub struct Matrix {
+    pub rows: usize,
+    pub cols: usize,
+    pub data: Vec<f64>,
+}
 
-    impl PartialEq for Matrix {
-        fn eq(&self, other: &Self) -> bool {
-            self.equals(other)
-        }
-    }
-
-    impl Matrix {
-        pub fn new(rows: usize, cols: usize) -> Matrix {
-            let data = vec![0.0; rows * cols];
-            Matrix { rows, cols, data }
-        }
-
-        pub fn get(&self, row: usize, col: usize) -> f64 {
-            self.data[row * self.cols + col]
-        }
-
-        pub fn set(&mut self, row: usize, col: usize, value: f64) {
-            self.data[row * self.cols + col] = value;
-        }
-
-        pub fn equals(&self, other: &Matrix) -> bool {
-            if self.rows != other.rows || self.cols != other.cols {
-                return false;
-            }
-            for i in 0..self.rows {
-                for j in 0..self.cols {
-                    if (self.get(i, j) - other.get(i, j)).abs() > EPSILON {
-                        return false;
-                    }
-                }
-            }
-            true
-        }
-
-        pub fn multiply(&self, other: &Matrix) -> Matrix {
-            let mut result = Matrix::new(self.rows, other.cols);
-            for i in 0..self.rows {
-                for j in 0..other.cols {
-                    let mut sum = 0.0;
-                    for k in 0..self.cols {
-                        sum += self.get(i, k) * other.get(k, j);
-                    }
-                    result.set(i, j, sum);
-                }
-            }
-            result
-        }
-
-        pub fn multiply_tuple(&self, other: &Tuple) -> Tuple {
-            let x = self.get(0, 0) * other.x + self.get(0, 1) * other.y + self.get(0, 2) * other.z + self.get(0, 3) * other.w;
-            let y = self.get(1, 0) * other.x + self.get(1, 1) * other.y + self.get(1, 2) * other.z + self.get(1, 3) * other.w;
-            let z = self.get(2, 0) * other.x + self.get(2, 1) * other.y + self.get(2, 2) * other.z + self.get(2, 3) * other.w;
-            let w = self.get(3, 0) * other.x + self.get(3, 1) * other.y + self.get(3, 2) * other.z + self.get(3, 3) * other.w;
-            Tuple::new(x, y, z, w)
-        }
-
-        pub fn identity(size: usize) -> Matrix {
-            let mut m = Matrix::new(size, size);
-            for i in 0..size {
-                m.set(i, i, 1.0);
-            }
-            m
-        }
-
-        pub fn transpose(&self) -> Matrix {
-            let mut result = Matrix::new(self.cols, self.rows);
-            for i in 0..self.rows {
-                for j in 0..self.cols {
-                    result.set(j, i, self.get(i, j));
-                }
-            }
-            result
-        }
-
-        pub fn determinant(&self) -> f64 {
-            if self.rows == 2 && self.cols == 2 {
-                self.get(0, 0) * self.get(1, 1) - self.get(0, 1) * self.get(1, 0)
-            } else {
-                let mut det = 0.0;
-                for i in 0..self.cols {
-                    det += self.get(0, i) * self.cofactor(0, i);
-                }
-                det
-            }
-        }
-
-        pub fn submatrix(&self, row: usize, col: usize) -> Matrix {
-            let mut result = Matrix::new(self.rows - 1, self.cols - 1);
-            let mut r = 0;
-            for i in 0..self.rows {
-                if i == row {
-                    continue;
-                }
-                let mut c = 0;
-                for j in 0..self.cols {
-                    if j == col {
-                        continue;
-                    }
-                    result.set(r, c, self.get(i, j));
-                    c += 1;
-                }
-                r += 1;
-            }
-            result
-        }
-
-        pub fn minor(&self, row: usize, col: usize) -> f64 {
-            self.submatrix(row, col).determinant()
-        }
-
-        pub fn cofactor(&self, row: usize, col: usize) -> f64 {
-            let minor = self.minor(row, col);
-            if (row + col) % 2 == 0 {
-                minor
-            } else {
-                -minor
-            }
-        }
-
-        pub fn inverse(&self) -> Matrix {
-            let det = self.determinant();
-            let mut result = Matrix::new(self.rows, self.cols);
-            for i in 0..self.rows {
-                for j in 0..self.cols {
-                    let c = self.cofactor(i, j);
-                    result.set(j, i, c / det);
-                }
-            }
-            result
-        }
-
-        pub fn translate(x: f64, y: f64, z: f64) -> Matrix {
-            let mut m = Matrix::identity(4);
-            m.set(0, 3, x);
-            m.set(1, 3, y);
-            m.set(2, 3, z);
-            m
-        }
-
-        pub fn scale(x: f64, y: f64, z: f64) -> Matrix {
-            let mut m = Matrix::identity(4);
-            m.set(0, 0, x);
-            m.set(1, 1, y);
-            m.set(2, 2, z);
-            m
-        }
-
-        pub fn rotate_x(r: f64) -> Matrix {
-            let mut m = Matrix::identity(4);
-            m.set(1, 1, r.cos());
-            m.set(1, 2, -r.sin());
-            m.set(2, 1, r.sin());
-            m.set(2, 2, r.cos());
-            m
-        }
-
-        pub fn rotate_y(r: f64) -> Matrix {
-            let mut m = Matrix::identity(4);
-            m.set(0, 0, r.cos());
-            m.set(0, 2, r.sin());
-            m.set(2, 0, -r.sin());
-            m.set(2, 2, r.cos());
-            m
-        }
-
-        pub fn rotate_z(r: f64) -> Matrix {
-            let mut m = Matrix::identity(4);
-            m.set(0, 0, r.cos());
-            m.set(0, 1, -r.sin());
-            m.set(1, 0, r.sin());
-            m.set(1, 1, r.cos());
-            m
-        }
-
-        pub fn shear(xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Matrix {
-            let mut m = Matrix::identity(4);
-            m.set(0, 1, xy);
-            m.set(0, 2, xz);
-            m.set(1, 0, yx);
-            m.set(1, 2, yz);
-            m.set(2, 0, zx);
-            m.set(2, 1, zy);
-            m
-        }
-
-        pub fn view_transform(from: Tuple, to: Tuple, up: Tuple) -> Matrix {
-            let forward = (to - from).normalize();
-            let left = forward.cross(&up.normalize());
-            let true_up = left.cross(&forward);
-            let mut orientation = Matrix::new(4, 4);
-            orientation.set(0, 0, left.x);
-            orientation.set(0, 1, left.y);
-            orientation.set(0, 2, left.z);
-            orientation.set(1, 0, true_up.x);
-            orientation.set(1, 1, true_up.y);
-            orientation.set(1, 2, true_up.z);
-            orientation.set(2, 0, -forward.x);
-            orientation.set(2, 1, -forward.y);
-            orientation.set(2, 2, -forward.z);
-            orientation.set(3, 0, 0f64);
-            orientation.set(3, 1, 0f64);
-            orientation.set(3, 2, 0f64);
-            orientation.set(3, 3, 1f64);
-
-            let translation = Matrix::translate(-from.x, -from.y, -from.z);
-            orientation.multiply(&translation)
-        }
-    }
-
-    impl Mul for Matrix {
-        type Output = Matrix;
-
-        fn mul(self, other: Matrix) -> Matrix {
-            self.multiply(&other)
-        }
+impl PartialEq for Matrix {
+    fn eq(&self, other: &Self) -> bool {
+        self.equals(other)
     }
 }
 
+impl Matrix {
+    pub fn new(rows: usize, cols: usize) -> Matrix {
+        let data = vec![0.0; rows * cols];
+        Matrix { rows, cols, data }
+    }
+
+    pub fn get(&self, row: usize, col: usize) -> f64 {
+        self.data[row * self.cols + col]
+    }
+
+    pub fn set(&mut self, row: usize, col: usize, value: f64) {
+        self.data[row * self.cols + col] = value;
+    }
+
+    pub fn equals(&self, other: &Matrix) -> bool {
+        if self.rows != other.rows || self.cols != other.cols {
+            return false;
+        }
+        for i in 0..self.rows {
+            for j in 0..self.cols {
+                if (self.get(i, j) - other.get(i, j)).abs() > EPSILON {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+
+    pub fn multiply(&self, other: &Matrix) -> Matrix {
+        let mut result = Matrix::new(self.rows, other.cols);
+        for i in 0..self.rows {
+            for j in 0..other.cols {
+                let mut sum = 0.0;
+                for k in 0..self.cols {
+                    sum += self.get(i, k) * other.get(k, j);
+                }
+                result.set(i, j, sum);
+            }
+        }
+        result
+    }
+
+    pub fn multiply_tuple(&self, other: &Tuple) -> Tuple {
+        let x = self.get(0, 0) * other.x + self.get(0, 1) * other.y + self.get(0, 2) * other.z + self.get(0, 3) * other.w;
+        let y = self.get(1, 0) * other.x + self.get(1, 1) * other.y + self.get(1, 2) * other.z + self.get(1, 3) * other.w;
+        let z = self.get(2, 0) * other.x + self.get(2, 1) * other.y + self.get(2, 2) * other.z + self.get(2, 3) * other.w;
+        let w = self.get(3, 0) * other.x + self.get(3, 1) * other.y + self.get(3, 2) * other.z + self.get(3, 3) * other.w;
+        Tuple::new(x, y, z, w)
+    }
+
+    pub fn identity(size: usize) -> Matrix {
+        let mut m = Matrix::new(size, size);
+        for i in 0..size {
+            m.set(i, i, 1.0);
+        }
+        m
+    }
+
+    pub fn transpose(&self) -> Matrix {
+        let mut result = Matrix::new(self.cols, self.rows);
+        for i in 0..self.rows {
+            for j in 0..self.cols {
+                result.set(j, i, self.get(i, j));
+            }
+        }
+        result
+    }
+
+    pub fn determinant(&self) -> f64 {
+        if self.rows == 2 && self.cols == 2 {
+            self.get(0, 0) * self.get(1, 1) - self.get(0, 1) * self.get(1, 0)
+        } else {
+            let mut det = 0.0;
+            for i in 0..self.cols {
+                det += self.get(0, i) * self.cofactor(0, i);
+            }
+            det
+        }
+    }
+
+    pub fn submatrix(&self, row: usize, col: usize) -> Matrix {
+        let mut result = Matrix::new(self.rows - 1, self.cols - 1);
+        let mut r = 0;
+        for i in 0..self.rows {
+            if i == row {
+                continue;
+            }
+            let mut c = 0;
+            for j in 0..self.cols {
+                if j == col {
+                    continue;
+                }
+                result.set(r, c, self.get(i, j));
+                c += 1;
+            }
+            r += 1;
+        }
+        result
+    }
+
+    pub fn minor(&self, row: usize, col: usize) -> f64 {
+        self.submatrix(row, col).determinant()
+    }
+
+    pub fn cofactor(&self, row: usize, col: usize) -> f64 {
+        let minor = self.minor(row, col);
+        if (row + col) % 2 == 0 {
+            minor
+        } else {
+            -minor
+        }
+    }
+
+    pub fn inverse(&self) -> Matrix {
+        let det = self.determinant();
+        let mut result = Matrix::new(self.rows, self.cols);
+        for i in 0..self.rows {
+            for j in 0..self.cols {
+                let c = self.cofactor(i, j);
+                result.set(j, i, c / det);
+            }
+        }
+        result
+    }
+
+    pub fn translate(x: f64, y: f64, z: f64) -> Matrix {
+        let mut m = Matrix::identity(4);
+        m.set(0, 3, x);
+        m.set(1, 3, y);
+        m.set(2, 3, z);
+        m
+    }
+
+    pub fn scale(x: f64, y: f64, z: f64) -> Matrix {
+        let mut m = Matrix::identity(4);
+        m.set(0, 0, x);
+        m.set(1, 1, y);
+        m.set(2, 2, z);
+        m
+    }
+
+    pub fn rotate_x(r: f64) -> Matrix {
+        let mut m = Matrix::identity(4);
+        m.set(1, 1, r.cos());
+        m.set(1, 2, -r.sin());
+        m.set(2, 1, r.sin());
+        m.set(2, 2, r.cos());
+        m
+    }
+
+    pub fn rotate_y(r: f64) -> Matrix {
+        let mut m = Matrix::identity(4);
+        m.set(0, 0, r.cos());
+        m.set(0, 2, r.sin());
+        m.set(2, 0, -r.sin());
+        m.set(2, 2, r.cos());
+        m
+    }
+
+    pub fn rotate_z(r: f64) -> Matrix {
+        let mut m = Matrix::identity(4);
+        m.set(0, 0, r.cos());
+        m.set(0, 1, -r.sin());
+        m.set(1, 0, r.sin());
+        m.set(1, 1, r.cos());
+        m
+    }
+
+    pub fn shear(xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Matrix {
+        let mut m = Matrix::identity(4);
+        m.set(0, 1, xy);
+        m.set(0, 2, xz);
+        m.set(1, 0, yx);
+        m.set(1, 2, yz);
+        m.set(2, 0, zx);
+        m.set(2, 1, zy);
+        m
+    }
+
+    pub fn view_transform(from: Tuple, to: Tuple, up: Tuple) -> Matrix {
+        let forward = (to - from).normalize();
+        let left = forward.cross(&up.normalize());
+        let true_up = left.cross(&forward);
+        let mut orientation = Matrix::new(4, 4);
+        orientation.set(0, 0, left.x);
+        orientation.set(0, 1, left.y);
+        orientation.set(0, 2, left.z);
+        orientation.set(1, 0, true_up.x);
+        orientation.set(1, 1, true_up.y);
+        orientation.set(1, 2, true_up.z);
+        orientation.set(2, 0, -forward.x);
+        orientation.set(2, 1, -forward.y);
+        orientation.set(2, 2, -forward.z);
+        orientation.set(3, 0, 0f64);
+        orientation.set(3, 1, 0f64);
+        orientation.set(3, 2, 0f64);
+        orientation.set(3, 3, 1f64);
+
+        let translation = Matrix::translate(-from.x, -from.y, -from.z);
+        orientation.multiply(&translation)
+    }
+}
+
+impl Mul for Matrix {
+    type Output = Matrix;
+
+    fn mul(self, other: Matrix) -> Matrix {
+        self.multiply(&other)
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
-    use super::matrix::Matrix;
-    use crate::tuple::tuple::Tuple;
-    use super::matrix::EPSILON;
+    use super::Matrix;
+    use crate::tuple::Tuple;
+    use super::EPSILON;
 
     #[test]
     fn test_matrix() {

@@ -1,124 +1,122 @@
+use serde::Deserialize;
+use serde_json;
+use std::fs;
+use std::path::Path;
 
-pub mod scene {
-    use serde::Deserialize;
-    use serde_json;
-    use std::fs;
-    use std::path::Path;
+#[derive(Deserialize)]
+pub struct Scene {
+    pub camera: Camera,
+    pub lights: Vec<Light>,
+    pub scene: Vec<SceneObject>,
+}
 
-    #[derive(Deserialize)]
-    pub struct Scene {
-        pub camera: Camera,
-        pub lights: Vec<Light>,
-        pub scene: Vec<SceneObject>,
-    }
+#[derive(Deserialize)]
+pub struct Camera {
+    pub fov: f64,
+    pub from: Vec<f64>,
+    pub to: Vec<f64>,
+    pub up: Vec<f64>,
+}
 
-    #[derive(Deserialize)]
-    pub struct Camera {
-        pub fov: f64,
-        pub from: Vec<f64>,
-        pub to: Vec<f64>,
-        pub up: Vec<f64>,
-    }
+#[derive(Deserialize)]
+#[allow(dead_code)]
+pub struct Light {
+    #[serde(rename = "type")]
+    pub light_type: String,
+    pub color: Vec<f64>,
+    pub position: Vec<f64>,
+}
 
-    #[derive(Deserialize)]
-    #[allow(dead_code)]
-    pub struct Light {
-        #[serde(rename = "type")]
-        pub light_type: String,
-        pub color: Vec<f64>,
-        pub position: Vec<f64>,
-    }
+#[derive(Deserialize)]
+pub struct SceneObject {
+    #[serde(rename = "type")]
+    pub object_type: String,
+    pub transforms: Option<Vec<Transform>>,
+    pub material: Material,
+}
 
-    #[derive(Deserialize)]
-    pub struct SceneObject {
-        #[serde(rename = "type")]
-        pub object_type: String,
-        pub transforms: Option<Vec<Transform>>,
-        pub material: Material,
-    }
+#[derive(Deserialize, Clone)]
+pub struct Transform {
+    #[serde(rename = "type")]
+    pub transform_type: String,
+    pub x: Option<f64>,
+    pub y: Option<f64>,
+    pub z: Option<f64>,
+    pub axis: Option<String>,
+    pub angle: Option<f32>,
+    pub xy: Option<f64>,
+    pub xz: Option<f64>,
+    pub yx: Option<f64>,
+    pub yz: Option<f64>,
+    pub zx: Option<f64>,
+    pub zy: Option<f64>,
+}
 
-    #[derive(Deserialize, Clone)]
-    pub struct Transform {
-        #[serde(rename = "type")]
-        pub transform_type: String,
-        pub x: Option<f64>,
-        pub y: Option<f64>,
-        pub z: Option<f64>,
-        pub axis: Option<String>,
-        pub angle: Option<f32>,
-        pub xy: Option<f64>,
-        pub xz: Option<f64>,
-        pub yx: Option<f64>,
-        pub yz: Option<f64>,
-        pub zx: Option<f64>,
-        pub zy: Option<f64>,
-    }
+#[derive(Deserialize)]
+pub struct Material {
+    pub pattern: Pattern,
+    pub ambient: Option<f64>,
+    pub diffuse: Option<f64>,
+    pub specular: Option<f64>,
+    pub shininess: Option<f64>,
+    pub reflective: Option<f64>,
+    pub transparency: Option<f64>,
+    pub refractive_index: Option<f64>,
+}
 
-    #[derive(Deserialize)]
-    pub struct Material {
-        pub pattern: Pattern,
-        pub ambient: Option<f64>,
-        pub diffuse: Option<f64>,
-        pub specular: Option<f64>,
-        pub shininess: Option<f64>,
-        pub reflective: Option<f64>,
-        pub transparency: Option<f64>,
-        pub refractive_index: Option<f64>,
-    }
+#[derive(Deserialize, Clone)]
+pub struct Pattern {
+    #[serde(rename = "type")]
+    pub pattern_type: String,
+    pub color: Option<Vec<f64>>,
+    pub color_a: Option<Vec<f64>>,
+    pub color_b: Option<Vec<f64>>,
+    pub pattern_a: Option<Box<Pattern>>,
+    pub pattern_b: Option<Box<Pattern>>,
+    pub transforms: Option<Vec<Transform>>,
+    pub scale: Option<f64>,
+    pub octaves: Option<i32>,
+    pub persistence: Option<f64>,
+}
 
-    #[derive(Deserialize, Clone)]
-    pub struct Pattern {
-        #[serde(rename = "type")]
-        pub pattern_type: String,
-        pub color: Option<Vec<f64>>,
-        pub color_a: Option<Vec<f64>>,
-        pub color_b: Option<Vec<f64>>,
-        pub pattern_a: Option<Box<Pattern>>,
-        pub pattern_b: Option<Box<Pattern>>,
-        pub transforms: Option<Vec<Transform>>,
-        pub scale: Option<f64>,
-        pub octaves: Option<i32>,
-        pub persistence: Option<f64>,
-    }
-
-    impl Default for Pattern {
-        fn default() -> Self {
-            Pattern {
-                pattern_type: "solid".to_string(),
-                color: Some(vec![0.0, 0.0, 0.0]),
-                color_a: None,
-                color_b: None,
-                pattern_a: None,
-                pattern_b: None,
-                transforms: Some(Vec::new()),
-                scale: None,
-                octaves: None,
-                persistence: None,
-            }
-        }
-    }
-
-    pub fn create_scene_from_json_str(json_string: &str) -> Option<Scene> {
-        let scene: Result<Scene, _> = serde_json::from_str(json_string);
-        match scene {
-            Ok(s) => Some(s),
-            Err(_) => None,
-        }
-    }
-
-    pub fn create_scene_from_file(path: &str) -> Option<Scene> {
-        if Path::new(path).exists() {
-            let contents = fs::read_to_string(path).expect("Something went wrong reading the file");
-            create_scene_from_json_str(&contents)
-        } else {
-            panic!("File does not exist");
+impl Default for Pattern {
+    fn default() -> Self {
+        Pattern {
+            pattern_type: "solid".to_string(),
+            color: Some(vec![0.0, 0.0, 0.0]),
+            color_a: None,
+            color_b: None,
+            pattern_a: None,
+            pattern_b: None,
+            transforms: Some(Vec::new()),
+            scale: None,
+            octaves: None,
+            persistence: None,
         }
     }
 }
 
+pub fn create_scene_from_json_str(json_string: &str) -> Option<Scene> {
+    let scene: Result<Scene, _> = serde_json::from_str(json_string);
+    match scene {
+        Ok(s) => Some(s),
+        Err(_) => None,
+    }
+}
+
+pub fn create_scene_from_file(path: &str) -> Option<Scene> {
+    if Path::new(path).exists() {
+        let contents = fs::read_to_string(path).expect("Something went wrong reading the file");
+        create_scene_from_json_str(&contents)
+    } else {
+        panic!("File does not exist");
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
-    use crate::scene::scene::create_scene_from_json_str;
+    use crate::scene::create_scene_from_json_str;
 
     #[test]
     fn test_create_scene_from_json() {

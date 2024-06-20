@@ -1,6 +1,6 @@
-use crate::matrix::matrix::Matrix;
-use crate::ray::ray::Ray;
-use crate::tuple::tuple::Tuple;
+use crate::matrix::Matrix;
+use crate::ray::Ray;
+use crate::tuple::Tuple;
 use super::Shape;
 
 #[test]

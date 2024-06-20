@@ -12,19 +12,19 @@ mod scene;
 mod pattern;
 
 extern crate lazy_static;
-use crate::camera::camera::Camera;
-use crate::scene::scene::Scene;
-use crate::scene::scene::SceneObject;
-use crate::scene::scene::Transform;
-use crate::scene::scene::create_scene_from_file;
-use crate::matrix::matrix::Matrix;
-use crate::tuple::tuple::Tuple;
+use crate::camera::Camera;
+use crate::scene::Scene;
+use crate::scene::SceneObject;
+use crate::scene::Transform;
+use crate::scene::create_scene_from_file;
+use crate::matrix::Matrix;
+use crate::tuple::Tuple;
 use crate::world::world::World;
-use crate::color::color::Color;
-use crate::light::light::Light;
+use crate::color::Color;
+use crate::light::Light;
 use crate::shape::Shape;
-use crate::material::material::Material;
-use crate::pattern::pattern::Pattern;
+use crate::material::Material;
+use crate::pattern::Pattern;
 
 fn degrees_to_radians(degrees: f64) -> f64 {
     degrees * std::f64::consts::PI / 180.0
@@ -99,7 +99,7 @@ fn create_transforms(transforms: &Vec<Transform>) -> Matrix {
 }
 
 #[allow(dead_code)]
-fn create_pattern(pattern: &scene::scene::Pattern) -> Pattern {
+fn create_pattern(pattern: &scene::Pattern) -> Pattern {
     let transform = create_transforms(&pattern.transforms.clone().unwrap_or(vec![]));
     let pattern = pattern.clone();
     if pattern.pattern_type == "solid" {
@@ -141,7 +141,7 @@ fn create_pattern(pattern: &scene::scene::Pattern) -> Pattern {
     }
 }
 
-fn create_material(material: &scene::scene::Material) -> Material {
+fn create_material(material: &scene::Material) -> Material {
     let mut m = Material::default();
     m.ambient = material.ambient.unwrap_or(0.1);
     m.diffuse = material.diffuse.unwrap_or(0.9);

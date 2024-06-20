@@ -1,6 +1,6 @@
-use crate::ray::ray::{Intersection, Ray};
+use crate::ray::{Intersection, Ray};
 use crate::shape::{EPSILON, Shape};
-use crate::tuple::tuple::Tuple;
+use crate::tuple::Tuple;
 
 pub fn local_intersect<'a>(plane: &'a Shape, ray: &Ray) -> Vec<Intersection<'a>> {
     if ray.direction.y.abs() < EPSILON {

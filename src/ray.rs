@@ -1,148 +1,147 @@
 #[allow(dead_code)]
 
-pub mod ray {
-    use crate::tuple::tuple::Tuple;
-    use crate::matrix::matrix::Matrix;
-    use crate::shape::Shape;
+use crate::tuple::Tuple;
+use crate::matrix::Matrix;
+use crate::shape::Shape;
 
-    pub const EPSILON: f64 = 0.00001;
+pub const EPSILON: f64 = 0.00001;
 
-    // Intersection struct
-    #[derive(Debug, Clone, PartialEq)]
-    pub struct Intersection<'a> {
-        pub t: f64,
-        pub object: &'a Shape,
-    }
+// Intersection struct
+#[derive(Debug, Clone, PartialEq)]
+pub struct Intersection<'a> {
+    pub t: f64,
+    pub object: &'a Shape,
+}
 
-    pub struct Computations<'a> {
-        pub t: f64,
-        pub object: &'a Shape,
-        pub point: Tuple,
-        pub eyev: Tuple,
-        pub normalv: Tuple,
-        pub inside: bool,
-        pub over_point: Tuple,
-        pub under_point: Tuple,
-        pub reflectv: Tuple,
-        pub n1: f64,
-        pub n2: f64,
-    }
+pub struct Computations<'a> {
+    pub t: f64,
+    pub object: &'a Shape,
+    pub point: Tuple,
+    pub eyev: Tuple,
+    pub normalv: Tuple,
+    pub inside: bool,
+    pub over_point: Tuple,
+    pub under_point: Tuple,
+    pub reflectv: Tuple,
+    pub n1: f64,
+    pub n2: f64,
+}
 
-    impl Computations<'_> {
-        pub fn schlick(&self) -> f64 {
-            let mut cos = self.eyev.dot(&self.normalv);
-            if self.n1 > self.n2 {
-                let n = self.n1 / self.n2;
-                let sin2_t = n * n * (1.0 - cos * cos);
-                if sin2_t > 1.0 {
-                    return 1.0;
-                }
-
-                let cos_t = (1.0 - sin2_t).sqrt();
-                cos = cos_t;
+impl Computations<'_> {
+    pub fn schlick(&self) -> f64 {
+        let mut cos = self.eyev.dot(&self.normalv);
+        if self.n1 > self.n2 {
+            let n = self.n1 / self.n2;
+            let sin2_t = n * n * (1.0 - cos * cos);
+            if sin2_t > 1.0 {
+                return 1.0;
             }
 
-            let r0 = ((self.n1 - self.n2) / (self.n1 + self.n2)).powi(2);
-            r0 + (1.0 - r0) * (1.0 - cos).powi(5)
-        }
-    }
-
-    impl<'a> Intersection<'a> {
-        pub fn new(t: f64, object: &'a Shape) -> Intersection<'a> {
-            Intersection { t, object }
+            let cos_t = (1.0 - sin2_t).sqrt();
+            cos = cos_t;
         }
 
-        pub fn prepare_computations(&self, r: &Ray, xs: &Vec<Intersection>) -> Computations<'a> {
-            let point = r.position(self.t);
-            let eyev = r.direction.negate();
-            let normalv = self.object.normal_at(&point);
-            let inside = normalv.dot(&eyev) < 0.0;
-            let normalv = if inside { normalv.negate() } else { normalv };
-            let over_point = point.add(&normalv.multiply(EPSILON));
-            let under_point = point.subtract(&normalv.multiply(EPSILON));
-            let reflectv = r.direction.reflect(&normalv);
-
-            let mut n1 = 1.0;
-            let mut n2 = 1.0;
-            let mut containers: Vec<&Shape> = vec![];
-            for i in xs {
-                if *i == *self {
-                    if containers.is_empty() {
-                        n1 = 1.0;
-                    } else {
-                        n1 = containers.last().unwrap().material.refractive_index;
-                    }
-                }
-
-                if containers.contains(&i.object) {
-                    if let Some(index) = containers.iter().position(|shape| shape == &i.object) {
-                        containers.remove(index);
-                    }
-                } else {
-                    containers.push(i.object);
-                }
-
-                if *i == *self {
-                    if containers.is_empty() {
-                        n2 = 1.0;
-                    } else {
-                        n2 = containers.last().unwrap().material.refractive_index;
-                    }
-                }
-            }
-
-            Computations { t: self.t, object: self.object, point, eyev, normalv, inside, over_point, under_point, reflectv, n1, n2 }
-        }
-    }
-
-    // Ray struct
-    #[derive(Debug, Clone)]
-    pub struct Ray {
-        pub origin: Tuple,
-        pub direction: Tuple,
-    }
-
-    impl Ray {
-        pub fn new(origin: Tuple, direction: Tuple) -> Ray {
-            Ray { origin, direction }
-        }
-
-        pub fn position(&self, t: f64) -> Tuple {
-            self.origin.add(&self.direction.multiply(t))
-        }
-
-        pub fn transform(&self, matrix: &Matrix) -> Ray {
-            Ray {
-                origin: matrix.multiply_tuple(&self.origin),
-                direction: matrix.multiply_tuple(&self.direction),
-            }
-        }
-    }
-
-    pub fn hit<'a>(xs: &'a Vec<Intersection>) -> Option<&'a Intersection<'a>> {
-        let mut result = None;
-        let mut t = f64::MAX;
-        for x in xs {
-            if x.t >= 0.0 && x.t < t { //maybe take out check for t >= 0.0
-                t = x.t;
-                result = Some(x);
-            }
-        }
-        result
+        let r0 = ((self.n1 - self.n2) / (self.n1 + self.n2)).powi(2);
+        r0 + (1.0 - r0) * (1.0 - cos).powi(5)
     }
 }
 
+impl<'a> Intersection<'a> {
+    pub fn new(t: f64, object: &'a Shape) -> Intersection<'a> {
+        Intersection { t, object }
+    }
+
+    pub fn prepare_computations(&self, r: &Ray, xs: &Vec<Intersection>) -> Computations<'a> {
+        let point = r.position(self.t);
+        let eyev = r.direction.negate();
+        let normalv = self.object.normal_at(&point);
+        let inside = normalv.dot(&eyev) < 0.0;
+        let normalv = if inside { normalv.negate() } else { normalv };
+        let over_point = point.add(&normalv.multiply(EPSILON));
+        let under_point = point.subtract(&normalv.multiply(EPSILON));
+        let reflectv = r.direction.reflect(&normalv);
+
+        let mut n1 = 1.0;
+        let mut n2 = 1.0;
+        let mut containers: Vec<&Shape> = vec![];
+        for i in xs {
+            if *i == *self {
+                if containers.is_empty() {
+                    n1 = 1.0;
+                } else {
+                    n1 = containers.last().unwrap().material.refractive_index;
+                }
+            }
+
+            if containers.contains(&i.object) {
+                if let Some(index) = containers.iter().position(|shape| shape == &i.object) {
+                    containers.remove(index);
+                }
+            } else {
+                containers.push(i.object);
+            }
+
+            if *i == *self {
+                if containers.is_empty() {
+                    n2 = 1.0;
+                } else {
+                    n2 = containers.last().unwrap().material.refractive_index;
+                }
+            }
+        }
+
+        Computations { t: self.t, object: self.object, point, eyev, normalv, inside, over_point, under_point, reflectv, n1, n2 }
+    }
+}
+
+// Ray struct
+#[derive(Debug, Clone)]
+pub struct Ray {
+    pub origin: Tuple,
+    pub direction: Tuple,
+}
+
+impl Ray {
+    pub fn new(origin: Tuple, direction: Tuple) -> Ray {
+        Ray { origin, direction }
+    }
+
+    pub fn position(&self, t: f64) -> Tuple {
+        self.origin.add(&self.direction.multiply(t))
+    }
+
+    pub fn transform(&self, matrix: &Matrix) -> Ray {
+        Ray {
+            origin: matrix.multiply_tuple(&self.origin),
+            direction: matrix.multiply_tuple(&self.direction),
+        }
+    }
+}
+
+pub fn hit<'a>(xs: &'a Vec<Intersection>) -> Option<&'a Intersection<'a>> {
+    let mut result = None;
+    let mut t = f64::MAX;
+    for x in xs {
+        if x.t >= 0.0 && x.t < t { //maybe take out check for t >= 0.0
+            t = x.t;
+            result = Some(x);
+        }
+    }
+    result
+}
+
+
 #[cfg(test)]
 mod tests {
-    use crate::matrix::matrix::Matrix;
-    use super::ray::Ray;
-    use crate::tuple::tuple::Tuple;
+    use crate::matrix::Matrix;
+    use super::Ray;
+    use crate::tuple::Tuple;
     use crate::shape::Shape;
-    use crate::color::color::Color;
-    use crate::canvas::canvas::Canvas;
-    use crate::light::light::Light;
-    use crate::light::light::lighting;
-    use crate::pattern::pattern::Pattern;
+    use crate::color::Color;
+    use crate::canvas::Canvas;
+    use crate::light::Light;
+    use crate::light::lighting;
+    use crate::pattern::Pattern;
 
     #[test]
     fn test_ray() {
@@ -165,34 +164,34 @@ mod tests {
     #[test]
     fn test_hit() {
         let s = Shape::sphere();
-        let i1 = super::ray::Intersection { t: 1.0, object: &s };
-        let i2 = super::ray::Intersection { t: 2.0, object: &s };
+        let i1 = super::Intersection { t: 1.0, object: &s };
+        let i2 = super::Intersection { t: 2.0, object: &s };
         let xs = vec![i1, i2];
-        let i = super::ray::hit(&xs);
+        let i = super::hit(&xs);
         assert_eq!(i.unwrap().t, 1.0);
 
-        let i1 = super::ray::Intersection { t: -1.0, object: &s };
-        let i2 = super::ray::Intersection { t: 1.0, object: &s };
+        let i1 = super::Intersection { t: -1.0, object: &s };
+        let i2 = super::Intersection { t: 1.0, object: &s };
         let xs = vec![i1, i2];
-        let i = super::ray::hit(&xs);
+        let i = super::hit(&xs);
         assert_eq!(i.unwrap().t, 1.0);
 
-        let i1 = super::ray::Intersection { t: -2.0, object: &s };
-        let i2 = super::ray::Intersection { t: -1.0, object: &s };
+        let i1 = super::Intersection { t: -2.0, object: &s };
+        let i2 = super::Intersection { t: -1.0, object: &s };
         let xs = vec![i1, i2];
-        let i = super::ray::hit(&xs);
+        let i = super::hit(&xs);
         assert_eq!(i, None);
 
-        let i1 = super::ray::Intersection { t: 5.0, object: &s };
-        let i2 = super::ray::Intersection { t: 7.0, object: &s };
-        let i3 = super::ray::Intersection { t: -3.0, object: &s };
-        let i4 = super::ray::Intersection { t: 2.0, object: &s };
+        let i1 = super::Intersection { t: 5.0, object: &s };
+        let i2 = super::Intersection { t: 7.0, object: &s };
+        let i3 = super::Intersection { t: -3.0, object: &s };
+        let i4 = super::Intersection { t: 2.0, object: &s };
         let xs = vec![i1, i2, i3, i4];
-        let i = super::ray::hit(&xs);
+        let i = super::hit(&xs);
         assert_eq!(i.unwrap().t, 2.0);
 
         let xs = vec![];
-        let i = super::ray::hit(&xs);
+        let i = super::hit(&xs);
         assert_eq!(i, None);
     }
 
@@ -216,10 +215,10 @@ mod tests {
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
         let mut s = Shape::sphere();
         s.transform = Matrix::translate(0.0, 0.0, 1.0);
-        let i = super::ray::Intersection { t: 5.0, object: &s };
+        let i = super::Intersection { t: 5.0, object: &s };
         let xs = vec![i];
         let comps = xs[0].prepare_computations(&r, &xs);
-        assert!(comps.over_point.z < -super::ray::EPSILON / 2.0);
+        assert!(comps.over_point.z < -super::EPSILON / 2.0);
         assert!(comps.point.z > comps.over_point.z);
     }
 
@@ -232,8 +231,8 @@ mod tests {
         let canvas_pixels = 100;
         let pixel_size = wall_size / canvas_pixels as f64;
         let half = wall_size / 2.0;
-        let mut canvas = crate::canvas::canvas::Canvas::new(canvas_pixels, canvas_pixels);
-        let color = crate::color::color::Color::new(1.0, 0.0, 0.0);
+        let mut canvas = crate::canvas::Canvas::new(canvas_pixels, canvas_pixels);
+        let color = crate::color::Color::new(1.0, 0.0, 0.0);
         let mut s = Shape::sphere();
         s.transform = Matrix::scale(1.0, 0.5, 1.0);
 
@@ -244,7 +243,7 @@ mod tests {
                 let position = Tuple::point(world_x, world_y, wall_z);
                 let r = Ray::new(ray_origin.clone(), position.subtract(&ray_origin).normalize());
                 let xs = s.intersect(&r);
-                if let Some(_i) = super::ray::hit(&xs) {
+                if let Some(_i) = super::hit(&xs) {
                     canvas.write_pixel(x, y, color);
                 }
             }
@@ -278,7 +277,7 @@ mod tests {
                 let position = Tuple::point(world_x, world_y, wall_z);
                 let r = Ray::new(ray_origin.clone(), position.subtract(&ray_origin).normalize());
                 let xs = s.intersect(&r);
-                if let Some(hit) = super::ray::hit(&xs) {
+                if let Some(hit) = super::hit(&xs) {
                     let point = r.position(hit.t);
                     let normal = hit.object.normal_at(&point);
                     let eye = r.direction.negate();
@@ -295,7 +294,7 @@ mod tests {
     fn test_prepare_computations() {
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
         let s = Shape::sphere();
-        let i = super::ray::Intersection { t: 4.0, object: &s };
+        let i = super::Intersection { t: 4.0, object: &s };
         let xs = vec![i];
         let comps = xs[0].prepare_computations(&r, &xs);
         assert_eq!(comps.t, xs[0].t);
@@ -310,7 +309,7 @@ mod tests {
     fn test_prepare_computations_inside() {
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
         let s = Shape::sphere();
-        let xs = vec![super::ray::Intersection { t: 1.0, object: &s }];
+        let xs = vec![super::Intersection { t: 1.0, object: &s }];
         let comps = xs[0].prepare_computations(&r, &xs);
         assert_eq!(comps.t, xs[0].t);
         assert_eq!(comps.object, xs[0].object);
@@ -324,7 +323,7 @@ mod tests {
     fn precomputing_the_reflection_vector() {
         let s = Shape::plane();
         let r = Ray::new(Tuple::point(0.0, 1.0, -1.0), Tuple::vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0));
-        let xs = vec![super::ray::Intersection { t: 2.0_f64.sqrt(), object: &s }];
+        let xs = vec![super::Intersection { t: 2.0_f64.sqrt(), object: &s }];
         let comps = xs[0].prepare_computations(&r, &xs);
         assert_eq!(comps.reflectv, Tuple::vector(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0));
     }
@@ -345,12 +344,12 @@ mod tests {
 
         let r = Ray::new(Tuple::point(0.0, 0.0, -4.0), Tuple::vector(0.0, 0.0, 1.0));
         let xs = vec![
-            super::ray::Intersection { t: 2.0, object: &a },
-            super::ray::Intersection { t: 2.75, object: &b },
-            super::ray::Intersection { t: 3.25, object: &c },
-            super::ray::Intersection { t: 4.75, object: &b },
-            super::ray::Intersection { t: 5.25, object: &c },
-            super::ray::Intersection { t: 6.0, object: &a },
+            super::Intersection { t: 2.0, object: &a },
+            super::Intersection { t: 2.75, object: &b },
+            super::Intersection { t: 3.25, object: &c },
+            super::Intersection { t: 4.75, object: &b },
+            super::Intersection { t: 5.25, object: &c },
+            super::Intersection { t: 6.0, object: &a },
         ];
 
         let expected_n1 = vec![1.0, 1.5, 2.0, 2.5, 2.5, 1.5];
@@ -368,10 +367,10 @@ mod tests {
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
         let mut s = Shape::glass_sphere();
         s.transform = Matrix::translate(0.0, 0.0, 1.0);
-        let i = super::ray::Intersection { t: 5.0, object: &s };
+        let i = super::Intersection { t: 5.0, object: &s };
         let xs = vec![i];
         let comps = xs[0].prepare_computations(&r, &xs);
-        assert!(comps.under_point.z > super::ray::EPSILON / 2.0);
+        assert!(comps.under_point.z > super::EPSILON / 2.0);
         assert!(comps.point.z < comps.under_point.z);
     }
 }

@@ -1,60 +1,54 @@
 #[allow(dead_code)]
 
-pub mod material {
-    use crate::color::color::Color;
-    use crate::matrix::matrix::Matrix;
-    use crate::pattern::pattern::Pattern;
-    use crate::shape::Shape;
-    use crate::tuple::tuple::Tuple;
+use crate::color::Color;
+use crate::matrix::Matrix;
+use crate::pattern::Pattern;
+use crate::shape::Shape;
+use crate::tuple::Tuple;
 
-    #[derive(Debug, Clone, PartialEq)]
-    pub struct Material {
-        pub pattern: Pattern,
-        pub ambient: f64,
-        pub diffuse: f64,
-        pub specular: f64,
-        pub shininess: f64,
-        pub reflective: f64,
-        pub transparency: f64,
-        pub refractive_index: f64,
-    }
-
-    impl Material {
-        pub fn new(pattern: Pattern, ambient: f64, diffuse: f64, specular: f64, shininess: f64, reflective: f64, transparency: f64, refractive_index: f64) -> Material {
-            Material { pattern, ambient, diffuse, specular, shininess, reflective, transparency, refractive_index}
-        }
-
-        pub fn default() -> Material {
-            Material {
-                pattern: Pattern::solid(Color::new(1.0, 1.0, 1.0), Matrix::identity(4)),
-                ambient: 0.1,
-                diffuse: 0.9,
-                specular: 0.9,
-                shininess: 200.0,
-                reflective: 0.0,
-                transparency: 0.0,
-                refractive_index: 1.0,
-            }
-        }
-    }
-
-    pub fn pattern_at_object(shape: &Shape, world_point: &Tuple) -> Color {
-        let object_point = shape.transform.inverse().multiply_tuple(world_point);
-        shape.material.pattern.pattern_at(&object_point)
-    }
-
+#[derive(Debug, Clone, PartialEq)]
+pub struct Material {
+    pub pattern: Pattern,
+    pub ambient: f64,
+    pub diffuse: f64,
+    pub specular: f64,
+    pub shininess: f64,
+    pub reflective: f64,
+    pub transparency: f64,
+    pub refractive_index: f64,
 }
+
+impl Material {
+    pub fn default() -> Material {
+        Material {
+            pattern: Pattern::solid(Color::new(1.0, 1.0, 1.0), Matrix::identity(4)),
+            ambient: 0.1,
+            diffuse: 0.9,
+            specular: 0.9,
+            shininess: 200.0,
+            reflective: 0.0,
+            transparency: 0.0,
+            refractive_index: 1.0,
+        }
+    }
+}
+
+pub fn pattern_at_object(shape: &Shape, world_point: &Tuple) -> Color {
+    let object_point = shape.transform.inverse().multiply_tuple(world_point);
+    shape.material.pattern.pattern_at(&object_point)
+}
+
 
 #[cfg(test)]
 mod tests {
-    use crate::color::color::Color;
-    use crate::tuple::tuple::Tuple;
-    use crate::light::light::Light;
-    use crate::light::light::lighting;
-    use crate::material::material;
-    use crate::material::material::{Material};
-    use crate::matrix::matrix::Matrix;
-    use crate::pattern::pattern::Pattern;
+    use crate::color::Color;
+    use crate::tuple::Tuple;
+    use crate::light::Light;
+    use crate::light::lighting;
+    use crate::material;
+    use crate::material::{Material};
+    use crate::matrix::Matrix;
+    use crate::pattern::Pattern;
     use crate::shape::Shape;
 
     #[test]

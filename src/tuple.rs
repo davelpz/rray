@@ -1,149 +1,147 @@
 #![allow(dead_code)]
 
 // module for tuples
-pub mod tuple {
-    use std::ops::Sub;
-    use std::ops::Add;
-    use std::ops::Mul;
-    use std::ops::Div;
+use std::ops::Sub;
+use std::ops::Add;
+use std::ops::Mul;
+use std::ops::Div;
 
-    pub const EPSILON: f64 = 0.00001;
+pub const EPSILON: f64 = 0.00001;
 
-    // Tuple struct
-    #[derive(Debug, Clone, Copy)]
-    pub struct Tuple {
-        pub x: f64,
-        pub y: f64,
-        pub z: f64,
-        pub w: f64,
+// Tuple struct
+#[derive(Debug, Clone, Copy)]
+pub struct Tuple {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub w: f64,
+}
+
+impl PartialEq for Tuple {
+    fn eq(&self, other: &Self) -> bool {
+        (self.x - other.x).abs() < EPSILON
+            && (self.y - other.y).abs() < EPSILON
+            && (self.z - other.z).abs() < EPSILON
+            && (self.w - other.w).abs() < EPSILON
+    }
+}
+
+impl Tuple {
+    pub fn new(x: f64, y: f64, z: f64, w: f64) -> Tuple {
+        Tuple { x, y, z, w }
     }
 
-    impl PartialEq for Tuple {
-        fn eq(&self, other: &Self) -> bool {
-            (self.x - other.x).abs() < EPSILON
-                && (self.y - other.y).abs() < EPSILON
-                && (self.z - other.z).abs() < EPSILON
-                && (self.w - other.w).abs() < EPSILON
-        }
+    pub fn is_point(&self) -> bool {
+        self.w == 1.0
     }
 
-    impl Tuple {
-        pub fn new(x: f64, y: f64, z: f64, w: f64) -> Tuple {
-            Tuple { x, y, z, w }
-        }
-
-        pub fn is_point(&self) -> bool {
-            self.w == 1.0
-        }
-
-        pub fn is_vector(&self) -> bool {
-            self.w == 0.0
-        }
-
-        pub fn point(x: f64, y: f64, z: f64) -> Tuple {
-            Tuple::new(x, y, z, 1.0)
-        }
-
-        pub fn vector(x: f64, y: f64, z: f64) -> Tuple {
-            Tuple::new(x, y, z, 0.0)
-        }
-
-        pub fn add(&self, other: &Tuple) -> Tuple {
-            Tuple::new(self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w)
-        }
-
-        pub fn add_float(&self, other: f64) -> Tuple {
-            Tuple::new(self.x + other, self.y + other, self.z + other, self.w + other)
-        }
-
-        pub fn subtract(&self, other: &Tuple) -> Tuple {
-            Tuple::new(self.x - other.x, self.y - other.y, self.z - other.z, self.w - other.w)
-        }
-
-        pub fn negate(&self) -> Tuple {
-            Tuple::new(-self.x, -self.y, -self.z, -self.w)
-        }
-
-        pub fn multiply(&self, scalar: f64) -> Tuple {
-            Tuple::new(self.x * scalar, self.y * scalar, self.z * scalar, self.w * scalar)
-        }
-
-        pub fn divide(&self, scalar: f64) -> Tuple {
-            Tuple::new(self.x / scalar, self.y / scalar, self.z / scalar, self.w / scalar)
-        }
-
-        pub fn magnitude(&self) -> f64 {
-            (self.x.powi(2) + self.y.powi(2) + self.z.powi(2) + self.w.powi(2)).sqrt()
-        }
-
-        pub fn normalize(&self) -> Tuple {
-            let magnitude = self.magnitude();
-            Tuple::new(self.x / magnitude, self.y / magnitude, self.z / magnitude, self.w / magnitude)
-        }
-
-        pub fn dot(&self, other: &Tuple) -> f64 {
-            self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w
-        }
-
-        pub fn cross(&self, other: &Tuple) -> Tuple {
-            Tuple::vector(
-                self.y * other.z - self.z * other.y,
-                self.z * other.x - self.x * other.z,
-                self.x * other.y - self.y * other.x
-            )
-        }
-
-        pub fn reflect(&self, normal: &Tuple) -> Tuple {
-            self.subtract(&normal.multiply(2.0 * self.dot(normal)))
-        }
+    pub fn is_vector(&self) -> bool {
+        self.w == 0.0
     }
 
-    impl Sub for Tuple {
-        type Output = Self;
-
-        fn sub(self, other: Self) -> Self {
-            self.subtract(&other)
-        }
+    pub fn point(x: f64, y: f64, z: f64) -> Tuple {
+        Tuple::new(x, y, z, 1.0)
     }
 
-    impl Add for Tuple {
-        type Output = Self;
-
-        fn add(self, other: Self) -> Self {
-            Tuple::new(self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w)
-        }
+    pub fn vector(x: f64, y: f64, z: f64) -> Tuple {
+        Tuple::new(x, y, z, 0.0)
     }
 
-    impl Add<f64> for Tuple {
-        type Output = Self;
-
-        fn add(self, scalar: f64) -> Self {
-            Tuple::new(self.x + scalar, self.y + scalar, self.z + scalar, self.w + scalar)
-        }
+    pub fn add(&self, other: &Tuple) -> Tuple {
+        Tuple::new(self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w)
     }
 
-    impl Mul<f64> for Tuple {
-        type Output = Self;
-
-        fn mul(self, scalar: f64) -> Self {
-            self.multiply(scalar)
-        }
+    pub fn add_float(&self, other: f64) -> Tuple {
+        Tuple::new(self.x + other, self.y + other, self.z + other, self.w + other)
     }
 
-    impl Div<f64> for Tuple {
-        type Output = Self;
+    pub fn subtract(&self, other: &Tuple) -> Tuple {
+        Tuple::new(self.x - other.x, self.y - other.y, self.z - other.z, self.w - other.w)
+    }
 
-        fn div(self, scalar: f64) -> Self {
-            self.divide(scalar)
-        }
+    pub fn negate(&self) -> Tuple {
+        Tuple::new(-self.x, -self.y, -self.z, -self.w)
+    }
+
+    pub fn multiply(&self, scalar: f64) -> Tuple {
+        Tuple::new(self.x * scalar, self.y * scalar, self.z * scalar, self.w * scalar)
+    }
+
+    pub fn divide(&self, scalar: f64) -> Tuple {
+        Tuple::new(self.x / scalar, self.y / scalar, self.z / scalar, self.w / scalar)
+    }
+
+    pub fn magnitude(&self) -> f64 {
+        (self.x.powi(2) + self.y.powi(2) + self.z.powi(2) + self.w.powi(2)).sqrt()
+    }
+
+    pub fn normalize(&self) -> Tuple {
+        let magnitude = self.magnitude();
+        Tuple::new(self.x / magnitude, self.y / magnitude, self.z / magnitude, self.w / magnitude)
+    }
+
+    pub fn dot(&self, other: &Tuple) -> f64 {
+        self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w
+    }
+
+    pub fn cross(&self, other: &Tuple) -> Tuple {
+        Tuple::vector(
+            self.y * other.z - self.z * other.y,
+            self.z * other.x - self.x * other.z,
+            self.x * other.y - self.y * other.x
+        )
+    }
+
+    pub fn reflect(&self, normal: &Tuple) -> Tuple {
+        self.subtract(&normal.multiply(2.0 * self.dot(normal)))
+    }
+}
+
+impl Sub for Tuple {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        self.subtract(&other)
+    }
+}
+
+impl Add for Tuple {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Tuple::new(self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w)
+    }
+}
+
+impl Add<f64> for Tuple {
+    type Output = Self;
+
+    fn add(self, scalar: f64) -> Self {
+        Tuple::new(self.x + scalar, self.y + scalar, self.z + scalar, self.w + scalar)
+    }
+}
+
+impl Mul<f64> for Tuple {
+    type Output = Self;
+
+    fn mul(self, scalar: f64) -> Self {
+        self.multiply(scalar)
+    }
+}
+
+impl Div<f64> for Tuple {
+    type Output = Self;
+
+    fn div(self, scalar: f64) -> Self {
+        self.divide(scalar)
     }
 }
 
 //unit tests
 #[cfg(test)]
 mod tests {
-    use super::tuple::Tuple;
-    use super::tuple::EPSILON;
+    use super::Tuple;
+    use super::EPSILON;
 
     #[test]
     fn test_tuple_is_point() {

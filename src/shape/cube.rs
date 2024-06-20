@@ -1,5 +1,5 @@
-use crate::ray::ray::{Intersection, Ray};
-use crate::tuple::tuple::{EPSILON, Tuple};
+use crate::ray::{Intersection, Ray};
+use crate::tuple::{EPSILON, Tuple};
 use crate::shape::Shape;
 
 pub fn local_intersect<'a>(cube: &'a Shape, ray: &Ray) -> Vec<Intersection<'a>> {
@@ -11,8 +11,8 @@ pub fn local_intersect<'a>(cube: &'a Shape, ray: &Ray) -> Vec<Intersection<'a>> 
     if tmin > tmax {
         vec![]
     } else {
-        vec![Intersection { t: tmin, object: cube },
-             Intersection { t: tmax, object: cube }]
+        vec![Intersection::new(tmin, cube),
+             Intersection::new(tmax, cube )]
     }
 }
 
@@ -45,8 +45,8 @@ pub fn local_normal_at(_cube: &Shape, local_point: &Tuple) -> Tuple {
 #[cfg(test)]
 mod tests {
     use super::{local_intersect, local_normal_at, Shape};
-    use crate::ray::ray::Ray;
-    use crate::tuple::tuple::Tuple;
+    use crate::ray::Ray;
+    use crate::tuple::Tuple;
     #[test]
     fn test_check_axis() {
         let (tmin, tmax) = super::check_axis(5.0, 1.0);

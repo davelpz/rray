@@ -4,11 +4,11 @@ mod cube;
 mod sphere;
 mod plane;
 
-use crate::matrix::matrix::Matrix;
-use crate::tuple::tuple::Tuple;
-use crate::ray::ray::Intersection;
-use crate::ray::ray::Ray;
-use crate::material::material::Material;
+use crate::matrix::Matrix;
+use crate::tuple::Tuple;
+use crate::ray::Intersection;
+use crate::ray::Ray;
+use crate::material::Material;
 
 pub const EPSILON: f64 = 0.00001;
 

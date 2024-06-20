@@ -1,209 +1,168 @@
-pub mod pattern {
-    use crate::color::color::Color;
-    use crate::matrix::matrix::Matrix;
-    use crate::pattern::noise;
-    use crate::tuple::tuple::Tuple;
+mod noise;
 
-    #[derive(Debug, Clone, PartialEq)]
+use crate::color::Color;
+use crate::matrix::Matrix;
+use crate::tuple::Tuple;
+
+#[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
+pub enum PatternType {
+    Test,
+    Solid(Color),
+    Stripe(Box<Pattern>, Box<Pattern>),
+    Gradient(Box<Pattern>, Box<Pattern>),
+    Ring(Box<Pattern>, Box<Pattern>),
+    Checker(Box<Pattern>, Box<Pattern>),
+    Blend(Box<Pattern>, Box<Pattern>, f64),
+    Perturbed(Box<Pattern>, f64, usize, f64),
+    Noise(Box<Pattern>,Box<Pattern>, f64, usize, f64)
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Pattern {
+    pub pattern_type: PatternType,
+    pub transform: Matrix,
+}
+
+impl Pattern {
     #[allow(dead_code)]
-    pub enum PatternType {
-        Test,
-        Solid(Color),
-        Stripe(Box<Pattern>, Box<Pattern>),
-        Gradient(Box<Pattern>, Box<Pattern>),
-        Ring(Box<Pattern>, Box<Pattern>),
-        Checker(Box<Pattern>, Box<Pattern>),
-        Blend(Box<Pattern>, Box<Pattern>, f64),
-        Perturbed(Box<Pattern>, f64, usize, f64),
-        Noise(Box<Pattern>,Box<Pattern>, f64, usize, f64)
+    pub fn test() -> Pattern {
+        Pattern {
+            pattern_type: PatternType::Test,
+            transform: Matrix::identity(4),
+        }
     }
 
-    #[derive(Debug, Clone, PartialEq)]
-    pub struct Pattern {
-        pub pattern_type: PatternType,
-        pub transform: Matrix,
+    pub fn solid(color: Color, transform: Matrix) -> Pattern {
+        Pattern {
+            pattern_type: PatternType::Solid(color),
+            transform,
+        }
     }
 
-    impl Pattern {
-        #[allow(dead_code)]
-        pub fn test() -> Pattern {
-            Pattern {
-                pattern_type: PatternType::Test,
-                transform: Matrix::identity(4),
-            }
+    pub fn stripe(a: Pattern, b: Pattern, transform: Matrix) -> Pattern {
+        Pattern {
+            pattern_type: PatternType::Stripe(Box::new(a), Box::new(b)),
+            transform,
         }
+    }
 
-        pub fn solid(color: Color, transform: Matrix) -> Pattern {
-            Pattern {
-                pattern_type: PatternType::Solid(color),
-                transform,
-            }
+    pub fn gradient(a: Pattern, b: Pattern, transform: Matrix) -> Pattern {
+        Pattern {
+            pattern_type: PatternType::Gradient(Box::new(a), Box::new(b)),
+            transform,
         }
+    }
 
-        pub fn stripe(a: Pattern, b: Pattern, transform: Matrix) -> Pattern {
-            Pattern {
-                pattern_type: PatternType::Stripe(Box::new(a), Box::new(b)),
-                transform,
-            }
+    pub fn ring(a: Pattern, b: Pattern, transform: Matrix) -> Pattern {
+        Pattern {
+            pattern_type: PatternType::Ring(Box::new(a), Box::new(b)),
+            transform,
         }
+    }
 
-        pub fn gradient(a: Pattern, b: Pattern, transform: Matrix) -> Pattern {
-            Pattern {
-                pattern_type: PatternType::Gradient(Box::new(a), Box::new(b)),
-                transform,
-            }
+    pub fn checker(a: Pattern, b: Pattern, transform: Matrix) -> Pattern {
+        Pattern {
+            pattern_type: PatternType::Checker(Box::new(a), Box::new(b)),
+            transform,
         }
+    }
 
-        pub fn ring(a: Pattern, b: Pattern, transform: Matrix) -> Pattern {
-            Pattern {
-                pattern_type: PatternType::Ring(Box::new(a), Box::new(b)),
-                transform,
-            }
+    pub fn blend(a: Pattern, b: Pattern, scale: f64, transform: Matrix) -> Pattern {
+        Pattern {
+            pattern_type: PatternType::Blend(Box::new(a), Box::new(b), scale),
+            transform,
         }
+    }
 
-        pub fn checker(a: Pattern, b: Pattern, transform: Matrix) -> Pattern {
-            Pattern {
-                pattern_type: PatternType::Checker(Box::new(a), Box::new(b)),
-                transform,
-            }
+    pub fn perturbed(a: Pattern, scale: f64, octaves: usize, persistence: f64, transform: Matrix) -> Pattern {
+        Pattern {
+            pattern_type: PatternType::Perturbed(Box::new(a), scale, octaves, persistence),
+            transform,
         }
+    }
 
-        pub fn blend(a: Pattern, b: Pattern, scale: f64, transform: Matrix) -> Pattern {
-            Pattern {
-                pattern_type: PatternType::Blend(Box::new(a), Box::new(b), scale),
-                transform,
-            }
+    pub fn noise(a: Pattern, b: Pattern, scale: f64, octaves: usize, persistence: f64, transform: Matrix) -> Pattern {
+        Pattern {
+            pattern_type: PatternType::Noise(Box::new(a), Box::new(b), scale, octaves, persistence),
+            transform,
         }
+    }
 
-        pub fn perturbed(a: Pattern, scale: f64, octaves: usize, persistence: f64, transform: Matrix) -> Pattern {
-            Pattern {
-                pattern_type: PatternType::Perturbed(Box::new(a), scale, octaves, persistence),
-                transform,
-            }
-        }
-
-        pub fn noise(a: Pattern, b: Pattern, scale: f64, octaves: usize, persistence: f64, transform: Matrix) -> Pattern {
-            Pattern {
-                pattern_type: PatternType::Noise(Box::new(a), Box::new(b), scale, octaves, persistence),
-                transform,
-            }
-        }
-
-        pub fn pattern_at(&self, object_point: &Tuple) -> Color {
-            let pattern_point = self.transform.inverse().multiply_tuple(object_point);
-            match &self.pattern_type {
-                PatternType::Test => {
-                    Color::new(pattern_point.x, pattern_point.y, pattern_point.z)
-                },
-                PatternType::Solid(color) => {
-                    color.clone()
-                },
-                PatternType::Stripe(a,b) => {
-                    if (pattern_point.x.floor() as i32) % 2 == 0 {
-                        a.pattern_at(&pattern_point)
-                    } else {
-                        b.pattern_at(&pattern_point)
-                    }
-                },
-                PatternType::Gradient(a,b) => {
-                    let a = a.pattern_at(&pattern_point);
-                    let b = b.pattern_at(&pattern_point);
-                    let distance = b.subtract(&a);
-                    let fraction = pattern_point.x - pattern_point.x.floor();
-                    a.add(&distance.multiply(fraction))
-                },
-                PatternType::Ring(a,b) => {
-                    if (pattern_point.x.powi(2) + pattern_point.z.powi(2)).sqrt().floor() as i32 % 2 == 0 {
-                        a.pattern_at(&pattern_point)
-                    } else {
-                        b.pattern_at(&pattern_point)
-                    }
-                },
-                PatternType::Checker(a,b) => {
-                    if (pattern_point.x.floor() + pattern_point.y.floor() + pattern_point.z.floor()) as i32 % 2 == 0 {
-                        a.pattern_at(&pattern_point)
-                    } else {
-                        b.pattern_at(&pattern_point)
-                    }
-                },
-                PatternType::Blend(a,b, scale) => {
-                    let a = a.pattern_at(&pattern_point);
-                    let b = b.pattern_at(&pattern_point);
-                    a.multiply(1.0-scale).add(&b.multiply(*scale))
-                },
-                PatternType::Perturbed(a, scale, octaves, persistence) => {
-                    let x = pattern_point.x;
-                    let y = pattern_point.y;
-                    let z = pattern_point.z;
-                    let noise_x = noise::octave_perlin(x, y, z, *octaves, *persistence) * scale;
-                    let noise_y = noise::octave_perlin(x, y, z + 1.0, *octaves, *persistence) * scale;
-                    let noise_z = noise::octave_perlin(x, y, z + 2.0, *octaves, *persistence) * scale;
-                    let new_x = pattern_point.x + noise_x;
-                    let new_y = pattern_point.y + noise_y;
-                    let new_z = pattern_point.z + noise_z;
-                    let new_point = Tuple::new(new_x, new_y, new_z, pattern_point.w);
-                    a.pattern_at(&new_point)
-                },
-                PatternType::Noise(a,b, scale, octaves, persistence) => {
-                    let noise = noise::octave_perlin(pattern_point.x, pattern_point.y, pattern_point.z, *octaves, *persistence);
-                    let noise = noise * scale;
-                    if noise <= 0.0 {
-                        a.pattern_at(&pattern_point).multiply(-noise)
-                    } else {
-                        b.pattern_at(&pattern_point).multiply(noise)
-                    }
+    pub fn pattern_at(&self, object_point: &Tuple) -> Color {
+        let pattern_point = self.transform.inverse().multiply_tuple(object_point);
+        match &self.pattern_type {
+            PatternType::Test => {
+                Color::new(pattern_point.x, pattern_point.y, pattern_point.z)
+            },
+            PatternType::Solid(color) => {
+                color.clone()
+            },
+            PatternType::Stripe(a,b) => {
+                if (pattern_point.x.floor() as i32) % 2 == 0 {
+                    a.pattern_at(&pattern_point)
+                } else {
+                    b.pattern_at(&pattern_point)
+                }
+            },
+            PatternType::Gradient(a,b) => {
+                let a = a.pattern_at(&pattern_point);
+                let b = b.pattern_at(&pattern_point);
+                let distance = b.subtract(&a);
+                let fraction = pattern_point.x - pattern_point.x.floor();
+                a.add(&distance.multiply(fraction))
+            },
+            PatternType::Ring(a,b) => {
+                if (pattern_point.x.powi(2) + pattern_point.z.powi(2)).sqrt().floor() as i32 % 2 == 0 {
+                    a.pattern_at(&pattern_point)
+                } else {
+                    b.pattern_at(&pattern_point)
+                }
+            },
+            PatternType::Checker(a,b) => {
+                if (pattern_point.x.floor() + pattern_point.y.floor() + pattern_point.z.floor()) as i32 % 2 == 0 {
+                    a.pattern_at(&pattern_point)
+                } else {
+                    b.pattern_at(&pattern_point)
+                }
+            },
+            PatternType::Blend(a,b, scale) => {
+                let a = a.pattern_at(&pattern_point);
+                let b = b.pattern_at(&pattern_point);
+                a.multiply(1.0-scale).add(&b.multiply(*scale))
+            },
+            PatternType::Perturbed(a, scale, octaves, persistence) => {
+                let x = pattern_point.x;
+                let y = pattern_point.y;
+                let z = pattern_point.z;
+                let noise_x = noise::octave_perlin(x, y, z, *octaves, *persistence) * scale;
+                let noise_y = noise::octave_perlin(x, y, z + 1.0, *octaves, *persistence) * scale;
+                let noise_z = noise::octave_perlin(x, y, z + 2.0, *octaves, *persistence) * scale;
+                let new_x = pattern_point.x + noise_x;
+                let new_y = pattern_point.y + noise_y;
+                let new_z = pattern_point.z + noise_z;
+                let new_point = Tuple::new(new_x, new_y, new_z, pattern_point.w);
+                a.pattern_at(&new_point)
+            },
+            PatternType::Noise(a,b, scale, octaves, persistence) => {
+                let noise = noise::octave_perlin(pattern_point.x, pattern_point.y, pattern_point.z, *octaves, *persistence);
+                let noise = noise * scale;
+                if noise <= 0.0 {
+                    a.pattern_at(&pattern_point).multiply(-noise)
+                } else {
+                    b.pattern_at(&pattern_point).multiply(noise)
                 }
             }
         }
     }
 }
 
-pub mod noise {
-    use fastnoise_lite::{FastNoiseLite, NoiseType};
-    use lazy_static::lazy_static;
-
-    fn init_noise() -> FastNoiseLite {
-        let mut noise = FastNoiseLite::new();
-        noise.set_noise_type(Some(NoiseType::Perlin));
-        noise
-    }
-
-    pub fn get_noise_3d(x: f64, y: f64, z: f64) -> f64 {
-        let raw_noise = NOISE_GENERATOR.get_noise_3d(x, y, z) as f64;
-        raw_noise
-        // let min_noise = -0.9999828338623047;
-        // let max_noise = -0.11478698253631592;
-        // let normalized_noise = 2.0 * ((raw_noise - min_noise) / (max_noise - min_noise)) - 1.0;
-        // normalized_noise
-    }
-
-    pub fn octave_perlin(x: f64, y: f64, z: f64, octaves: usize, persistence: f64) -> f64 {
-        let mut total: f64 = 0.0;
-        let mut frequency = 1.0;
-        let mut amplitude = 1.0;
-        let mut max_value = 0.0; // Used for normalizing result to 0.0 - 1.0
-        for _ in 0..octaves {
-            total += get_noise_3d(x * frequency, y * frequency, z * frequency) * amplitude;
-            max_value += amplitude;
-            amplitude *= persistence;
-            frequency *= 2.0;
-        }
-
-        total / max_value
-    }
-
-    lazy_static! {
-        pub static ref NOISE_GENERATOR: FastNoiseLite = init_noise();
-    }
-}
-
-
 #[cfg(test)]
 mod tests {
-    use crate::color::color::Color;
-    use crate::matrix::matrix::Matrix;
-    use crate::tuple::tuple::Tuple;
-    use crate::pattern::pattern::{Pattern};
+    use crate::color::Color;
+    use crate::matrix::Matrix;
+    use crate::tuple::Tuple;
+    use crate::pattern::{Pattern};
 
     #[test]
     fn stripe_pattern_is_constant_in_y() {
@@ -314,8 +273,8 @@ mod tests {
     }
 
     use crate::shape::Shape;
-    use crate::ray::ray::Ray;
-    use crate::ray::ray::Intersection;
+    use crate::ray::Ray;
+    use crate::ray::Intersection;
 
     #[test]
     fn schlick_reflectance_under_total_internal_reflection() {
@@ -340,7 +299,7 @@ mod tests {
         ];
         let comps = xs[1].prepare_computations(&r, &xs);
         let reflectance = comps.schlick();
-        assert!((reflectance - 0.04).abs() < crate::ray::ray::EPSILON);
+        assert!((reflectance - 0.04).abs() < crate::ray::EPSILON);
     }
 
     #[test]
@@ -352,6 +311,6 @@ mod tests {
         ];
         let comps = xs[0].prepare_computations(&r, &xs);
         let reflectance = comps.schlick();
-        assert!((reflectance - 0.48873).abs() < crate::ray::ray::EPSILON);
+        assert!((reflectance - 0.48873).abs() < crate::ray::EPSILON);
     }
 }
