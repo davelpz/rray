@@ -2,7 +2,7 @@
 
 pub mod world {
     use crate::color::color::Color;
-    use crate::shape::shape::Shape;
+    use crate::shape::Shape;
     use crate::light::light::{lighting, Light};
     use crate::matrix::matrix::Matrix;
     use crate::pattern::pattern::Pattern;
@@ -141,7 +141,7 @@ mod tests {
     use crate::pattern::pattern::{Pattern, PatternType};
     use crate::tuple::tuple::Tuple;
     use super::world::World;
-    use crate::shape::shape::Shape;
+    use crate::shape::Shape;
     use crate::ray::ray::{Intersection, Ray};
 
     #[test]

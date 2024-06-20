@@ -313,7 +313,7 @@ mod tests {
         println!("min: {}, max {}", min, max);
     }
 
-    use crate::shape::shape::Shape;
+    use crate::shape::Shape;
     use crate::ray::ray::Ray;
     use crate::ray::ray::Intersection;
 

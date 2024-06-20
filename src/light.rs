@@ -3,7 +3,7 @@
 pub mod light {
     use crate::color::color::Color;
     use crate::tuple::tuple::Tuple;
-    use crate::shape::shape::Shape;
+    use crate::shape::Shape;
     use crate::material::material::pattern_at_object;
 
     #[derive(Debug, Clone, PartialEq, Copy)]
@@ -80,7 +80,7 @@ mod tests {
     use crate::material::material::{Material};
     use crate::matrix::matrix::Matrix;
     use crate::pattern::pattern::Pattern;
-    use crate::shape::shape::Shape;
+    use crate::shape::Shape;
 
     #[test]
     fn a_point_light_has_a_position_and_intensity() {

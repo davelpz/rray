@@ -1,0 +1,23 @@
+use crate::ray::ray::{Intersection, Ray};
+use crate::shape::Shape;
+use crate::tuple::tuple::Tuple;
+
+pub fn local_intersect<'a>(sphere: &'a Shape, ray: &Ray) -> Vec<Intersection<'a>> {
+    let sphere_to_ray = ray.origin.subtract(&sphere.center);
+    let a = ray.direction.dot(&ray.direction);
+    let b = 2.0 * ray.direction.dot(&sphere_to_ray);
+    let c = sphere_to_ray.dot(&sphere_to_ray) - 1.0;
+    let discriminant = b * b - 4.0 * a * c;
+    if discriminant < 0.0 {
+        vec![]
+    } else {
+        let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
+        let t2 = (-b + discriminant.sqrt()) / (2.0 * a);
+        vec![Intersection { t: t1, object: sphere },
+             Intersection { t: t2, object: sphere }]
+    }
+}
+
+pub fn local_normal_at(_sphere: &Shape, world_point: &Tuple) -> Tuple {
+    world_point.subtract(&Tuple::point(0.0, 0.0, 0.0))
+}

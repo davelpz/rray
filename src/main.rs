@@ -22,7 +22,7 @@ use crate::tuple::tuple::Tuple;
 use crate::world::world::World;
 use crate::color::color::Color;
 use crate::light::light::Light;
-use crate::shape::shape::Shape;
+use crate::shape::Shape;
 use crate::material::material::Material;
 use crate::pattern::pattern::Pattern;
 
@@ -158,6 +158,8 @@ fn create_shape(scene_object: &SceneObject) -> Shape {
     let mut s = match scene_object.object_type.as_str() {
         "sphere" => Shape::sphere(),
         "plane" => Shape::plane(),
+        "cube" => Shape::cube(),
+        "glass_sphere" => Shape::glass_sphere(),
         _ => Shape::sphere(),
     };
     s.transform = create_transforms(&scene_object.transforms.clone().unwrap_or(vec![]));

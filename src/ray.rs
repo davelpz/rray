@@ -3,7 +3,7 @@
 pub mod ray {
     use crate::tuple::tuple::Tuple;
     use crate::matrix::matrix::Matrix;
-    use crate::shape::shape::Shape;
+    use crate::shape::Shape;
 
     pub const EPSILON: f64 = 0.00001;
 
@@ -137,7 +137,7 @@ mod tests {
     use crate::matrix::matrix::Matrix;
     use super::ray::Ray;
     use crate::tuple::tuple::Tuple;
-    use crate::shape::shape::Shape;
+    use crate::shape::Shape;
     use crate::color::color::Color;
     use crate::canvas::canvas::Canvas;
     use crate::light::light::Light;

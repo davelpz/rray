@@ -179,13 +179,24 @@
       }
     },
     {
-      "type": "sphere",
+      "type": "cube",
       "transforms": [
         {
+          "type": "rotate",
+          "axis": "y",
+          "angle": 60
+        },
+        {
           "type": "translate",
-          "x": -0.5,
+          "x": -0.25,
           "y": 1.0,
-          "z": 0.5
+          "z": 1.0
+        },
+        {
+          "type": "scale",
+          "x": 1.0,
+          "y": 0.5,
+          "z": 1.0
         }
       ],
       "material": {

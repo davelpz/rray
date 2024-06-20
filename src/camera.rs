@@ -185,7 +185,7 @@ mod tests {
     fn test_render_chap7() {
         use crate::color::color::Color;
         use crate::light::light::Light;
-        use crate::shape::shape::Shape;
+        use crate::shape::Shape;
         use crate::world::world::World;
 
         let mut c = Camera::new(256, 256, std::f64::consts::PI / 3.0);
@@ -253,7 +253,7 @@ mod tests {
     fn test_render_chap9() {
         use crate::color::color::Color;
         use crate::light::light::Light;
-        use crate::shape::shape::Shape;
+        use crate::shape::Shape;
         use crate::world::world::World;
 
         let mut c = Camera::new(400, 200, std::f64::consts::PI / 3.0);

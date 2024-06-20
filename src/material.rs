@@ -4,7 +4,7 @@ pub mod material {
     use crate::color::color::Color;
     use crate::matrix::matrix::Matrix;
     use crate::pattern::pattern::Pattern;
-    use crate::shape::shape::Shape;
+    use crate::shape::Shape;
     use crate::tuple::tuple::Tuple;
 
     #[derive(Debug, Clone, PartialEq)]
@@ -55,7 +55,7 @@ mod tests {
     use crate::material::material::{Material};
     use crate::matrix::matrix::Matrix;
     use crate::pattern::pattern::Pattern;
-    use crate::shape::shape::Shape;
+    use crate::shape::Shape;
 
     #[test]
     fn surface_in_shadow() {
