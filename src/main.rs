@@ -160,6 +160,7 @@ fn create_shape(scene_object: &SceneObject) -> Shape {
         "plane" => Shape::plane(),
         "cube" => Shape::cube(),
         "glass_sphere" => Shape::glass_sphere(),
+        "cylinder" => Shape::cylinder(),
         _ => Shape::sphere(),
     };
     s.transform = create_transforms(&scene_object.transforms.clone().unwrap_or(vec![]));

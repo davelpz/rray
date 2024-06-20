@@ -16,7 +16,8 @@ pub const EPSILON: f64 = 0.00001;
 pub enum ShapeType {
     Sphere,
     Plane,
-    Cube
+    Cube,
+    Cylinder(f64, f64, bool),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -67,12 +68,22 @@ impl Shape {
         }
     }
 
+    pub fn cylinder() -> Shape {
+        Shape {
+            shape_type: ShapeType::Cylinder(-f64::INFINITY, f64::INFINITY, false),
+            center: Tuple::point(0.0, 0.0, 0.0),
+            transform: Matrix::identity(4),
+            material: Material::default(),
+        }
+    }
+
     pub fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
         let trans_ray = ray.transform(&self.transform.inverse());
         match self.shape_type {
             ShapeType::Sphere => sphere::local_intersect(&self, &trans_ray),
             ShapeType::Plane => plane::local_intersect(&self, &trans_ray),
             ShapeType::Cube => cube::local_intersect(&self, &trans_ray),
+            ShapeType::Cylinder(_, _, _) => cylinder::local_intersect(&self, &trans_ray),
         }
     }
 
@@ -82,6 +93,7 @@ impl Shape {
             ShapeType::Sphere => sphere::local_normal_at(&self, &local_point),
             ShapeType::Plane => plane::local_normal_at(&self, &local_point),
             ShapeType::Cube => cube::local_normal_at(&self, &local_point),
+            ShapeType::Cylinder(_, _, _) => cylinder::local_normal_at(&self, &local_point),
         };
         let mut world_normal = self.transform.inverse().transpose().multiply_tuple(&local_normal);
         world_normal.w = 0.0;
@@ -92,3 +104,4 @@ impl Shape {
 
 #[cfg(test)]
 mod tests;
+mod cylinder;
