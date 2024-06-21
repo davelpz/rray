@@ -166,6 +166,12 @@ fn create_shape(scene_object: &SceneObject) -> Shape {
             let closed = scene_object.closed.unwrap_or(false);
             Shape::cylinder(minimum, maximum, closed)
         },
+        "cone" => {
+            let minimum = scene_object.minimum.unwrap_or(-f64::INFINITY);
+            let maximum = scene_object.maximum.unwrap_or(f64::INFINITY);
+            let closed = scene_object.closed.unwrap_or(false);
+            Shape::cone(minimum, maximum, closed)
+        },
         _ => Shape::sphere(),
     };
     s.transform = create_transforms(&scene_object.transforms.clone().unwrap_or(vec![]));

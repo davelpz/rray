@@ -13,6 +13,7 @@ pub struct Intersection<'a> {
     pub object: &'a Shape,
 }
 
+#[allow(dead_code)]
 pub struct Computations<'a> {
     pub t: f64,
     pub object: &'a Shape,

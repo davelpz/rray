@@ -11,6 +11,7 @@ use rayon::iter::ParallelBridge;
 use rayon::prelude::ParallelIterator;
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct Camera {
     pub hsize: usize,
     pub vsize: usize,

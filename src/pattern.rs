@@ -15,7 +15,7 @@ pub enum PatternType {
     Checker(Box<Pattern>, Box<Pattern>),
     Blend(Box<Pattern>, Box<Pattern>, f64),
     Perturbed(Box<Pattern>, f64, usize, f64),
-    Noise(Box<Pattern>,Box<Pattern>, f64, usize, f64)
+    Noise(Box<Pattern>, Box<Pattern>, f64, usize, f64)
 }
 
 #[derive(Debug, Clone, PartialEq)]

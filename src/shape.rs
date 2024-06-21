@@ -3,6 +3,8 @@
 mod cube;
 mod sphere;
 mod plane;
+mod cone;
+mod cylinder;
 
 use crate::matrix::Matrix;
 use crate::tuple::Tuple;
@@ -18,6 +20,7 @@ pub enum ShapeType {
     Plane,
     Cube,
     Cylinder(f64, f64, bool),
+    Cone(f64, f64, bool),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -77,6 +80,15 @@ impl Shape {
         }
     }
 
+    pub fn cone(minimum: f64, maximum: f64, closed: bool) -> Shape {
+        Shape {
+            shape_type: ShapeType::Cone(minimum, maximum, closed),
+            center: Tuple::point(0.0, 0.0, 0.0),
+            transform: Matrix::identity(4),
+            material: Material::default(),
+        }
+    }
+
     pub fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
         let trans_ray = ray.transform(&self.transform.inverse());
         match self.shape_type {
@@ -84,6 +96,7 @@ impl Shape {
             ShapeType::Plane => plane::local_intersect(&self, &trans_ray),
             ShapeType::Cube => cube::local_intersect(&self, &trans_ray),
             ShapeType::Cylinder(_, _, _) => cylinder::local_intersect(&self, &trans_ray),
+            ShapeType::Cone(_, _, _) => cone::local_intersect(&self, &trans_ray),
         }
     }
 
@@ -94,6 +107,7 @@ impl Shape {
             ShapeType::Plane => plane::local_normal_at(&self, &local_point),
             ShapeType::Cube => cube::local_normal_at(&self, &local_point),
             ShapeType::Cylinder(_, _, _) => cylinder::local_normal_at(&self, &local_point),
+            ShapeType::Cone(_, _, _) => cone::local_normal_at(&self, &local_point),
         };
         let mut world_normal = self.transform.inverse().transpose().multiply_tuple(&local_normal);
         world_normal.w = 0.0;
@@ -104,4 +118,4 @@ impl Shape {
 
 #[cfg(test)]
 mod tests;
-mod cylinder;
+
