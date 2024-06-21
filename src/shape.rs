@@ -26,7 +26,6 @@ pub enum ShapeType {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Shape {
     pub shape_type: ShapeType,
-    pub center: Tuple,
     pub transform: Matrix,
     pub material: Material,
 }
@@ -35,7 +34,6 @@ impl Shape {
     pub fn sphere() -> Shape {
         Shape {
             shape_type: ShapeType::Sphere,
-            center: Tuple::point(0.0, 0.0, 0.0),
             transform: Matrix::identity(4),
             material: Material::default(),
         }
@@ -47,7 +45,6 @@ impl Shape {
         m.refractive_index = 1.5;
         Shape {
             shape_type: ShapeType::Sphere,
-            center: Tuple::point(0.0, 0.0, 0.0),
             transform: Matrix::identity(4),
             material: m,
         }
@@ -56,7 +53,6 @@ impl Shape {
     pub fn plane() -> Shape {
         Shape {
             shape_type: ShapeType::Plane,
-            center: Tuple::point(0.0, 0.0, 0.0),
             transform: Matrix::identity(4),
             material: Material::default(),
         }
@@ -65,7 +61,6 @@ impl Shape {
     pub fn cube() -> Shape {
         Shape {
             shape_type: ShapeType::Cube,
-            center: Tuple::point(0.0, 0.0, 0.0),
             transform: Matrix::identity(4),
             material: Material::default(),
         }
@@ -74,7 +69,6 @@ impl Shape {
     pub fn cylinder(minimum: f64, maximum: f64, closed: bool) -> Shape {
         Shape {
             shape_type: ShapeType::Cylinder(minimum, maximum, closed),
-            center: Tuple::point(0.0, 0.0, 0.0),
             transform: Matrix::identity(4),
             material: Material::default(),
         }
@@ -83,7 +77,6 @@ impl Shape {
     pub fn cone(minimum: f64, maximum: f64, closed: bool) -> Shape {
         Shape {
             shape_type: ShapeType::Cone(minimum, maximum, closed),
-            center: Tuple::point(0.0, 0.0, 0.0),
             transform: Matrix::identity(4),
             material: Material::default(),
         }
