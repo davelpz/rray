@@ -68,9 +68,9 @@ impl Shape {
         }
     }
 
-    pub fn cylinder() -> Shape {
+    pub fn cylinder(minimum: f64, maximum: f64, closed: bool) -> Shape {
         Shape {
-            shape_type: ShapeType::Cylinder(-f64::INFINITY, f64::INFINITY, false),
+            shape_type: ShapeType::Cylinder(minimum, maximum, closed),
             center: Tuple::point(0.0, 0.0, 0.0),
             transform: Matrix::identity(4),
             material: Material::default(),

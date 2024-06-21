@@ -223,7 +223,10 @@
       }
     },
     {
-      "type": "sphere",
+      "type": "cylinder",
+      "minimum" : -1.0,
+      "maximum" : 1.0,
+      "closed" : true,
       "transforms": [
         {
           "type": "scale",

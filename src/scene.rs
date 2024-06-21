@@ -33,6 +33,9 @@ pub struct SceneObject {
     pub object_type: String,
     pub transforms: Option<Vec<Transform>>,
     pub material: Material,
+    pub minimum: Option<f64>,
+    pub maximum: Option<f64>,
+    pub closed: Option<bool>,
 }
 
 #[derive(Deserialize, Clone)]
