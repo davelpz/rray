@@ -78,6 +78,7 @@ mod tests {
     use super::lighting;
     use crate::material::{Material};
     use crate::matrix::Matrix;
+    use crate::object::Object;
     use crate::pattern::Pattern;
     use crate::shape::Shape;
 
@@ -97,8 +98,8 @@ mod tests {
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let mut shape = Shape::sphere();
-        shape.material = material;
+        let mut shape: Box<dyn Object> = Box::new(Shape::sphere());
+        shape.set_material(material);
         let result = lighting(&shape, &light, &position, &eyev, &normalv, false);
         assert_eq!(result, Color::new(1.9, 1.9, 1.9));
     }
@@ -110,8 +111,8 @@ mod tests {
         let eyev = Tuple::vector(0.0, 2_f64.sqrt() / 2.0, -2_f64.sqrt() / 2.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let mut shape = Shape::sphere();
-        shape.material = material;
+        let mut shape: Box<dyn Object> = Box::new(Shape::sphere());
+        shape.set_material(material);
         let result = lighting(&shape,  &light, &position, &eyev, &normalv, false);
         assert_eq!(result, Color::new(1.0, 1.0, 1.0));
     }
@@ -123,8 +124,8 @@ mod tests {
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new_point_light(Tuple::point(0.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let mut shape = Shape::sphere();
-        shape.material = material;
+        let mut shape: Box<dyn Object> = Box::new(Shape::sphere());
+        shape.set_material(material);
         let result = lighting(&shape,  &light, &position, &eyev, &normalv, false);
         assert_eq!(result, Color::new(0.7364, 0.7364, 0.7364));
     }
@@ -136,8 +137,8 @@ mod tests {
         let eyev = Tuple::vector(0.0, -2_f64.sqrt() / 2.0, -2_f64.sqrt() / 2.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new_point_light(Tuple::point(0.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let mut shape = Shape::sphere();
-        shape.material = material;
+        let mut shape: Box<dyn Object> = Box::new(Shape::sphere());
+        shape.set_material(material);
         let result = lighting(&shape,  &light, &position, &eyev, &normalv, false);
         assert_eq!(result, Color::new(1.6364, 1.6364, 1.6364));
     }
@@ -149,8 +150,8 @@ mod tests {
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new_point_light(Tuple::point(0.0, 0.0, 10.0), Color::new(1.0, 1.0, 1.0));
-        let mut shape = Shape::sphere();
-        shape.material = material;
+        let mut shape: Box<dyn Object> = Box::new(Shape::sphere());
+        shape.set_material(material);
         let result = lighting(&shape,  &light, &position, &eyev, &normalv, false);
         assert_eq!(result, Color::new(0.1, 0.1, 0.1));
     }
@@ -164,8 +165,8 @@ mod tests {
         m.pattern = Pattern::stripe(Pattern::solid(Color::new(1.0, 1.0, 1.0), Matrix::identity(4)),
                                     Pattern::solid(Color::new(0.0, 0.0, 0.0), Matrix::identity(4)),
                                     Matrix::identity(4));
-        let mut object = Shape::sphere();
-        object.material = m;
+        let mut object: Box<dyn Object> = Box::new(Shape::sphere());
+        object.set_material(m);
 
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);

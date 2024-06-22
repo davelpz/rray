@@ -37,7 +37,7 @@ fn test_intersect() {
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, -6.0);
         assert_eq!(xs[1].t, -4.0);
-        let s: Box<dyn Object> = Box::new(s);
+        let s: Box<dyn Object> = Box::new(s.clone());
         assert_eq!(xs[0].object.get_uuid(), s.get_uuid());
         assert_eq!(xs[1].object.get_uuid(), s.get_uuid());
     }

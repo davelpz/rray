@@ -5,7 +5,7 @@ use crate::tuple::Tuple;
 
 const ORIGIN: Tuple = Tuple { x: 0.0, y: 0.0, z: 0.0, w: 1.0 };
 
-pub fn local_intersect<'a>(sphere: &'a Shape, ray: &Ray) -> Vec<Intersection<'a>> {
+pub fn local_intersect<'a>(sphere: &'a Box<dyn Object>, ray: &Ray) -> Vec<Intersection<'a>> {
     let sphere_to_ray = ray.origin.subtract(&ORIGIN);
     let a = ray.direction.dot(&ray.direction);
     let b = 2.0 * ray.direction.dot(&sphere_to_ray);
@@ -16,7 +16,7 @@ pub fn local_intersect<'a>(sphere: &'a Shape, ray: &Ray) -> Vec<Intersection<'a>
     } else {
         let t1: f64 = (-b - discriminant.sqrt()) / (2.0 * a);
         let t2: f64 = (-b + discriminant.sqrt()) / (2.0 * a);
-        let sphere: Box<dyn Object> = Box::new(sphere.clone());
+        //let sphere: Box<dyn Object> = Box::new(sphere.clone());
         vec![Intersection { t: t1, object: &sphere },
              Intersection { t: t2, object: &sphere }]
     }

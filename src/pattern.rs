@@ -161,6 +161,7 @@ impl Pattern {
 mod tests {
     use crate::color::Color;
     use crate::matrix::Matrix;
+    use crate::object::Object;
     use crate::tuple::Tuple;
     use crate::pattern::{Pattern};
 
@@ -278,7 +279,7 @@ mod tests {
 
     #[test]
     fn schlick_reflectance_under_total_internal_reflection() {
-        let shape = Shape::glass_sphere();
+        let shape: Box<dyn Object> = Box::new(Shape::glass_sphere());
         let r = Ray::new(Tuple::point(0.0, 0.0, 2_f64.sqrt()/2.0), Tuple::vector(0.0, 1.0, 0.0));
         let xs = vec![
             Intersection::new(-2.0_f64.sqrt() / 2.0, &shape),
@@ -291,7 +292,7 @@ mod tests {
 
     #[test]
     fn schlick_reflectance_with_perpendicular_viewing_angle() {
-        let shape = Shape::glass_sphere();
+        let shape: Box<dyn Object> = Box::new(Shape::glass_sphere());
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 1.0, 0.0));
         let xs = vec![
             Intersection::new(-1.0, &shape),
@@ -304,7 +305,7 @@ mod tests {
 
     #[test]
     fn schlick_approximation_with_small_angle_and_n2_greater_than_n1() {
-        let shape = Shape::glass_sphere();
+        let shape: Box<dyn Object> = Box::new(Shape::glass_sphere());
         let r = Ray::new(Tuple::point(0.0, 0.99, -2.0), Tuple::vector(0.0, 0.0, 1.0));
         let xs = vec![
             Intersection::new(1.8589, &shape)

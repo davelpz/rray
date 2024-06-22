@@ -94,7 +94,7 @@ impl Shape {
     pub fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
         let trans_ray = ray.transform(&self.transform.inverse());
         match self.shape_type {
-            ShapeType::Sphere => sphere::local_intersect(&self, &trans_ray),
+            ShapeType::Sphere => sphere::local_intersect(self, &trans_ray),
             ShapeType::Plane => plane::local_intersect(&self, &trans_ray),
             ShapeType::Cube => cube::local_intersect(&self, &trans_ray),
             ShapeType::Cylinder(_, _, _) => cylinder::local_intersect(&self, &trans_ray),

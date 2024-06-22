@@ -61,7 +61,7 @@ pub mod world {
             let reflected = self.reflected_color(comps, remaining);
             let refracted = self.refracted_color(comps, remaining);
 
-            let material = &comps.object.material;
+            let material = &comps.object.get_material();
 
             if material.reflective > 0.0 && material.transparency > 0.0 {
                 let reflectance = comps.schlick();
@@ -95,17 +95,17 @@ pub mod world {
         }
 
         pub fn reflected_color(&self, comps: &Computations, remaining: usize) -> Color {
-            if remaining <= 0 || comps.object.material.reflective == 0.0 {
+            if remaining <= 0 || comps.object.get_material().reflective == 0.0 {
                 return Color::new(0.0, 0.0, 0.0);
             }
 
             let reflect_ray = Ray::new(comps.over_point, comps.reflectv);
             let color = self.color_at(&reflect_ray, remaining - 1);
-            color * comps.object.material.reflective
+            color * comps.object.get_material().reflective
         }
 
         pub fn refracted_color(&self, comps: &Computations, remaining: usize) -> Color {
-            if remaining <= 0 || comps.object.material.transparency == 0.0 {
+            if remaining <= 0 || comps.object.get_material().transparency == 0.0 {
                 return Color::new(0.0, 0.0, 0.0);
             }
 
@@ -128,7 +128,7 @@ pub mod world {
             let refract_ray = Ray::new(comps.under_point, direction);
             // find the color of the refracted ray, making sure to multiply
             // by the transparency value to account for any opacity
-            self.color_at(&refract_ray, remaining - 1) * comps.object.material.transparency
+            self.color_at(&refract_ray, remaining - 1) * comps.object.get_material().transparency
         }
     }
 }

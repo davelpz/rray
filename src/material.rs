@@ -2,8 +2,8 @@
 
 use crate::color::Color;
 use crate::matrix::Matrix;
+use crate::object::Object;
 use crate::pattern::Pattern;
-use crate::shape::Shape;
 use crate::tuple::Tuple;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -33,9 +33,9 @@ impl Material {
     }
 }
 
-pub fn pattern_at_object(shape: &Shape, world_point: &Tuple) -> Color {
-    let object_point = shape.transform.inverse().multiply_tuple(world_point);
-    shape.material.pattern.pattern_at(&object_point)
+pub fn pattern_at_object(shape: &Box<dyn Object>, world_point: &Tuple) -> Color {
+    let object_point = shape.get_transform().inverse().multiply_tuple(world_point);
+    shape.get_material().pattern.pattern_at(&object_point)
 }
 
 
@@ -48,6 +48,7 @@ mod tests {
     use crate::material;
     use crate::material::{Material};
     use crate::matrix::Matrix;
+    use crate::object::Object;
     use crate::pattern::Pattern;
     use crate::shape::Shape;
 
@@ -59,20 +60,20 @@ mod tests {
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let in_shadow = true;
-        let mut shape = Shape::sphere();
-        shape.material = m;
+        let mut shape: Box<dyn Object> = Box::new(Shape::sphere());
+        shape.set_material(m);
         let result = lighting(&shape,  &light, &position, &eyev, &normalv, in_shadow);
         assert_eq!(result, Color::new(0.1, 0.1, 0.1));
     }
 
     #[test]
     fn test_pattern() {
-        let mut shape = Shape::sphere();
-        shape.transform = Matrix::scale(2.0, 2.0, 2.0);
+        let mut shape: Box<dyn Object> = Box::new(Shape::sphere());
+        shape.set_transform(Matrix::scale(2.0, 2.0, 2.0));
         let mut m = Material::default();
         m.pattern = Pattern::test();
         m.pattern.transform = Matrix::translate(0.5, 1.0, 1.5);
-        shape.material = m;
+        shape.set_material(m);
         let c = material::pattern_at_object(&shape, &Tuple::point(2.5, 3.0, 3.5));
         assert_eq!(c, Color::new(0.75, 0.5, 0.25));
     }
