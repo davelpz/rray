@@ -1,3 +1,4 @@
+use crate::object::Object;
 use crate::ray::{Intersection, Ray};
 use crate::tuple::{EPSILON, Tuple};
 use crate::shape::Shape;
@@ -11,8 +12,9 @@ pub fn local_intersect<'a>(cube: &'a Shape, ray: &Ray) -> Vec<Intersection<'a>> 
     if tmin > tmax {
         vec![]
     } else {
-        vec![Intersection::new(tmin, cube),
-             Intersection::new(tmax, cube )]
+        let cube: Box<dyn Object> = Box::new(cube.clone());
+        vec![Intersection::new(tmin, &cube),
+             Intersection::new(tmax, &cube )]
     }
 }
 

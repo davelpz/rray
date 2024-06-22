@@ -16,6 +16,7 @@ mod camera;
 mod scene;
 mod pattern;
 mod world_builder;
+mod object;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();

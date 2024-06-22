@@ -1,3 +1,4 @@
+use crate::object::Object;
 use crate::ray::{Intersection, Ray};
 use crate::shape::{Shape, ShapeType};
 use crate::tuple::Tuple;
@@ -20,7 +21,8 @@ pub fn local_intersect<'a>(cone: &'a Shape, ray: &Ray) -> Vec<Intersection<'a>> 
         let t = -c / (2.0 * b);
         let y = ray.origin.y + t * ray.direction.y;
         if minimum < y && y < maximum {
-            xs.push(Intersection::new(t, cone));
+            let cone: Box<dyn Object> =  Box::new(cone.clone());
+            xs.push(Intersection::new(t, &cone));
             return xs;
         }
     }
@@ -38,11 +40,13 @@ pub fn local_intersect<'a>(cone: &'a Shape, ray: &Ray) -> Vec<Intersection<'a>> 
 
     let y0 = ray.origin.y + t0 * ray.direction.y;
     if minimum < y0 && y0 < maximum {
-        xs.push(Intersection::new(t0, cone));
+        let cone: Box<dyn Object> =  Box::new(cone.clone());
+        xs.push(Intersection::new(t0, &cone));
     }
     let y1 = ray.origin.y + t1 * ray.direction.y;
     if minimum < y1 && y1 < maximum {
-        xs.push(Intersection::new(t1, cone));
+        let cone: Box<dyn Object> =  Box::new(cone.clone());
+        xs.push(Intersection::new(t1, &cone));
     }
 
     intersect_caps(cone, ray).iter().for_each(|i| xs.push(i.clone()));
@@ -73,14 +77,16 @@ fn intersect_caps<'a>(cone: &'a Shape, ray: &Ray) -> Vec<Intersection<'a>> {
     // the ray with the plane at y = minimum
     let t = (minimum - ray.origin.y) / ray.direction.y;
     if check_cap(ray, t) {
-        xs.push(Intersection::new(t, cone));
+        let cone: Box<dyn Object> =  Box::new(cone.clone());
+        xs.push(Intersection::new(t, &cone));
     }
 
     // Check for an intersection with the upper end cap by intersecting
     // the ray with the plane at y = maximum
     let t = (maximum - ray.origin.y) / ray.direction.y;
     if check_cap(ray, t) {
-        xs.push(Intersection::new(t, cone));
+        let cone: Box<dyn Object> =  Box::new(cone.clone());
+        xs.push(Intersection::new(t, &cone));
     }
 
     xs

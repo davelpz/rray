@@ -1,4 +1,5 @@
 use crate::matrix::Matrix;
+use crate::object::Object;
 use crate::ray::Ray;
 use crate::tuple::Tuple;
 use super::Shape;
@@ -36,8 +37,9 @@ fn test_intersect() {
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, -6.0);
         assert_eq!(xs[1].t, -4.0);
-        assert_eq!(xs[0].object, &s);
-        assert_eq!(xs[1].object, &s);
+        let s: Box<dyn Object> = Box::new(s);
+        assert_eq!(xs[0].object.get_uuid(), s.get_uuid());
+        assert_eq!(xs[1].object.get_uuid(), s.get_uuid());
     }
 }
 

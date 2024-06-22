@@ -1,3 +1,4 @@
+use crate::object::Object;
 use crate::ray::{Intersection, Ray};
 use crate::shape::{EPSILON, Shape};
 use crate::tuple::Tuple;
@@ -7,7 +8,8 @@ pub fn local_intersect<'a>(plane: &'a Shape, ray: &Ray) -> Vec<Intersection<'a>>
         vec![]
     } else {
         let t = -ray.origin.y / ray.direction.y;
-        vec![Intersection { t, object: plane }]
+        let plane: Box<dyn Object> = Box::new(plane.clone());
+        vec![Intersection { t, object: &plane }]
     }
 }
 

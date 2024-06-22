@@ -2,8 +2,8 @@
 
 use crate::color::Color;
 use crate::tuple::Tuple;
-use crate::shape::Shape;
 use crate::material::pattern_at_object;
+use crate::object::Object;
 
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum LightType {
@@ -23,8 +23,8 @@ impl Light {
     }
 }
 
-pub fn lighting(object: &Shape, light: &Light, point: &Tuple, eyev: &Tuple, normalv: &Tuple, in_shadow: bool) -> Color {
-    let material = &object.material;
+pub fn lighting(object: &Box<dyn Object>, light: &Light, point: &Tuple, eyev: &Tuple, normalv: &Tuple, in_shadow: bool) -> Color {
+    let material = &object.get_material();
     // Combine the surface color with the light's color/intensity
     let color = pattern_at_object(object, point);
 

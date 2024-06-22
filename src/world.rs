@@ -2,17 +2,17 @@
 
 pub mod world {
     use crate::color::Color;
-    use crate::shape::Shape;
     use crate::light::{lighting, Light};
     use crate::matrix::Matrix;
+    use crate::object::Object;
     use crate::pattern::Pattern;
     use crate::ray::{Computations, hit, Ray};
     use crate::ray::Intersection;
+    use crate::shape::Shape;
     use crate::tuple::Tuple;
 
-    #[derive(Debug, PartialEq, Clone)]
     pub struct World {
-        pub objects: Vec<Shape>,
+        pub objects: Vec<Box<dyn Object>>,
         pub light: Light,
     }
 
@@ -34,7 +34,7 @@ pub mod world {
             s2.transform = Matrix::scale(0.5, 0.5, 0.5);
             World {
                 light,
-                objects: vec![s1, s2],
+                objects: vec![Box::new(s1), Box::new(s2)],
             }
         }
 
@@ -162,8 +162,12 @@ mod tests {
         s2.transform = Matrix::scale(0.5, 0.5, 0.5);
         let w = World::default_world();
         assert_eq!(w.light, light);
-        assert_eq!(w.objects[0], s1);
-        assert_eq!(w.objects[1], s2);
+        let w1 = w.objects[0].as_ref();
+        assert_eq!(*w1.get_material(), s1.material);
+        assert_eq!(*w1.get_transform(), s1.transform);
+        let w2 = w.objects[1].as_ref();
+        assert_eq!(*w2.get_material(), s2.material);
+        assert_eq!(*w2.get_transform(), s2.transform);
     }
 
     #[test]
@@ -208,7 +212,7 @@ mod tests {
         let s1 = Shape::sphere();
         let mut s2 = Shape::sphere();
         s2.transform = Matrix::translate(0.0, 0.0, 10.0);
-        w.objects = vec![s1, s2];
+        w.objects = vec![Box::new(s1), Box::new(s2)];
         let r = Ray::new(Tuple::point(0.0, 0.0, 5.0), Tuple::vector(0.0, 0.0, 1.0));
         let xs = vec![Intersection{t: 4.0, object: &w.objects[1]}];
         let comps = xs[0].prepare_computations(&r, &xs);
@@ -235,11 +239,15 @@ mod tests {
     #[test]
     fn the_color_with_an_intersection_behind_the_ray() {
         let mut w = World::default_world();
-        w.objects[0].material.ambient = 1.0;
-        w.objects[1].material.ambient = 1.0;
+        let mut mat = w.objects[0].get_material().clone();
+        mat.ambient = 1.0;
+        w.objects[0].set_material(mat);
+        let mut mat = w.objects[1].get_material().clone();
+        mat.ambient = 1.0;
+        w.objects[1].set_material(mat);
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.75), Tuple::vector(0.0, 0.0, -1.0));
         let c = w.color_at(&r,5);
-        let obj_color = match w.objects[1].material.pattern.pattern_type {
+        let obj_color = match w.objects[1].get_material().pattern.pattern_type {
             PatternType::Solid(c) => c,
             _ => Color::new(0.0, 0.0, 0.0)
         };
@@ -286,7 +294,7 @@ mod tests {
         s2.material.ambient = 1.0;
         let w = World {
             light,
-            objects: vec![s1, s2],
+            objects: vec![Box::new(s1), Box::new(s2)],
         };
 
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
@@ -312,7 +320,7 @@ mod tests {
 
         let w = World {
             light,
-            objects: vec![s1, s2, s3],
+            objects: vec![Box::new(s1), Box::new(s2), Box::new(s3)],
         };
 
         let r = Ray::new(Tuple::point(0.0, 0.0, -3.0), Tuple::vector(0.0, -2.0_f64.sqrt()/2.0, 2.0_f64.sqrt()/2.0));
@@ -338,7 +346,7 @@ mod tests {
 
         let w = World {
             light,
-            objects: vec![s1, s2, s3],
+            objects: vec![Box::new(s1), Box::new(s2), Box::new(s3)],
         };
 
         let r = Ray::new(Tuple::point(0.0, 0.0, -3.0), Tuple::vector(0.0, -2.0_f64.sqrt()/2.0, 2.0_f64.sqrt()/2.0));
@@ -359,7 +367,7 @@ mod tests {
         upper.transform = Matrix::translate(0.0, 1.0, 0.0);
         let w = World {
             light,
-            objects: vec![lower, upper],
+            objects: vec![Box::new(lower), Box::new(upper)],
         };
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 1.0, 0.0));
         let c = w.color_at(&r,5);
@@ -382,7 +390,7 @@ mod tests {
 
         let w = World {
             light,
-            objects: vec![s1, s2, s3],
+            objects: vec![Box::new(s1), Box::new(s2), Box::new(s3)],
         };
 
         let r = Ray::new(Tuple::point(0.0, 0.0, -3.0), Tuple::vector(0.0, -2.0_f64.sqrt()/2.0, 2.0_f64.sqrt()/2.0));
@@ -416,7 +424,7 @@ mod tests {
         s2.transform = Matrix::scale(0.5, 0.5, 0.5);
         let w = World {
             light,
-            objects: vec![s1, s2],
+            objects: vec![Box::new(s1), Box::new(s2)],
         };
 
         let shape = &w.objects[0];
@@ -440,7 +448,7 @@ mod tests {
         s2.transform = Matrix::scale(0.5, 0.5, 0.5);
         let w = World {
             light,
-            objects: vec![s1, s2],
+            objects: vec![Box::new(s1), Box::new(s2)],
         };
 
         let shape = &w.objects[0];
@@ -465,7 +473,7 @@ mod tests {
         s2.transform = Matrix::scale(0.5, 0.5, 0.5);
         let w = World {
             light,
-            objects: vec![s1, s2],
+            objects: vec![Box::new(s1), Box::new(s2)],
         };
 
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.1), Tuple::vector(0.0, 1.0, 0.0));
@@ -499,7 +507,7 @@ mod tests {
         s3.material.ambient = 0.5;
         let w = World {
             light,
-            objects: vec![s1, s2, floor, s3],
+            objects: vec![Box::new(s1), Box::new(s2), Box::new(floor), Box::new(s3)],
         };
 
         let ray = Ray::new(Tuple::point(0.0, 0.0, -3.0), Tuple::vector(0.0, -2.0_f64.sqrt()/2.0, 2.0_f64.sqrt()/2.0));
@@ -531,7 +539,7 @@ mod tests {
         s3.material.ambient = 0.5;
         let w = World {
             light,
-            objects: vec![s1, s2, floor, s3],
+            objects: vec![Box::new(s1), Box::new(s2), Box::new(floor), Box::new(s3)],
         };
 
         let ray = Ray::new(Tuple::point(0.0, 0.0, -3.0), Tuple::vector(0.0, -2.0_f64.sqrt()/2.0, 2.0_f64.sqrt()/2.0));

@@ -1,3 +1,4 @@
+use crate::object::Object;
 use crate::ray::{Intersection, Ray};
 use crate::shape::Shape;
 use crate::tuple::Tuple;
@@ -15,8 +16,9 @@ pub fn local_intersect<'a>(sphere: &'a Shape, ray: &Ray) -> Vec<Intersection<'a>
     } else {
         let t1: f64 = (-b - discriminant.sqrt()) / (2.0 * a);
         let t2: f64 = (-b + discriminant.sqrt()) / (2.0 * a);
-        vec![Intersection { t: t1, object: sphere },
-             Intersection { t: t2, object: sphere }]
+        let sphere: Box<dyn Object> = Box::new(sphere.clone());
+        vec![Intersection { t: t1, object: &sphere },
+             Intersection { t: t2, object: &sphere }]
     }
 }
 

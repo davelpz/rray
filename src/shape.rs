@@ -11,6 +11,8 @@ use crate::tuple::Tuple;
 use crate::ray::Intersection;
 use crate::ray::Ray;
 use crate::material::Material;
+use crate::object::Object;
+use uuid::Uuid;
 
 pub const EPSILON: f64 = 0.00001;
 
@@ -28,6 +30,7 @@ pub struct Shape {
     pub shape_type: ShapeType,
     pub transform: Matrix,
     pub material: Material,
+    pub uuid: Uuid,
 }
 
 impl Shape {
@@ -36,6 +39,7 @@ impl Shape {
             shape_type: ShapeType::Sphere,
             transform: Matrix::identity(4),
             material: Material::default(),
+            uuid: Uuid::new_v4(),
         }
     }
 
@@ -47,6 +51,7 @@ impl Shape {
             shape_type: ShapeType::Sphere,
             transform: Matrix::identity(4),
             material: m,
+            uuid: Uuid::new_v4(),
         }
     }
 
@@ -55,6 +60,7 @@ impl Shape {
             shape_type: ShapeType::Plane,
             transform: Matrix::identity(4),
             material: Material::default(),
+            uuid: Uuid::new_v4(),
         }
     }
 
@@ -63,6 +69,7 @@ impl Shape {
             shape_type: ShapeType::Cube,
             transform: Matrix::identity(4),
             material: Material::default(),
+            uuid: Uuid::new_v4(),
         }
     }
 
@@ -71,6 +78,7 @@ impl Shape {
             shape_type: ShapeType::Cylinder(minimum, maximum, closed),
             transform: Matrix::identity(4),
             material: Material::default(),
+            uuid: Uuid::new_v4(),
         }
     }
 
@@ -79,6 +87,7 @@ impl Shape {
             shape_type: ShapeType::Cone(minimum, maximum, closed),
             transform: Matrix::identity(4),
             material: Material::default(),
+            uuid: Uuid::new_v4(),
         }
     }
 
@@ -108,6 +117,39 @@ impl Shape {
     }
 }
 
+impl Object for Shape {
+    fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
+        self.intersect(ray)
+    }
+
+    fn normal_at(&self, world_point: &Tuple) -> Tuple {
+        self.normal_at(&world_point)
+    }
+
+    fn get_transform(&self) -> &Matrix {
+        &self.transform
+    }
+
+    fn get_material(&self) -> &Material {
+        &self.material
+    }
+
+    fn set_transform(&mut self, transform: Matrix) {
+        self.transform = transform;
+    }
+
+    fn set_material(&mut self, material: Material) {
+        self.material = material;
+    }
+
+    fn debug_string(&self) -> String {
+        format!("{:?}", self)
+    }
+
+    fn get_uuid(&self) -> Uuid {
+        Uuid::new_v4()
+    }
+}
 
 #[cfg(test)]
 mod tests;

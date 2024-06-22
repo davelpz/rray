@@ -1,3 +1,4 @@
+use crate::object::Object;
 use crate::ray::{Intersection, Ray};
 use crate::shape::{Shape, ShapeType};
 use crate::tuple::Tuple;
@@ -22,11 +23,13 @@ pub fn local_intersect<'a>(cylinder: &'a Shape, ray: &Ray) -> Vec<Intersection<'
         let ShapeType::Cylinder(minimum, maximum, _closed) = cylinder.shape_type else { panic!("ShapeType is not Cylinder") };
         let y0 = ray.origin.y + t0 * ray.direction.y;
         if minimum < y0 && y0 < maximum {
-            xs.push(Intersection::new(t0, cylinder));
+            let cylinder: Box<dyn Object> =  Box::new(cylinder.clone());
+            xs.push(Intersection::new(t0, &cylinder));
         }
         let y1 = ray.origin.y + t1 * ray.direction.y;
         if minimum < y1 && y1 < maximum {
-            xs.push(Intersection::new(t1, cylinder));
+            let cylinder: Box<dyn Object> =  Box::new(cylinder.clone());
+            xs.push(Intersection::new(t1, &cylinder));
         }
     }
 
@@ -57,14 +60,16 @@ fn intersect_caps<'a>(cylinder: &'a Shape, ray: &Ray) -> Vec<Intersection<'a>> {
     // the ray with the plane at y = minimum
     let t = (minimum - ray.origin.y) / ray.direction.y;
     if check_cap(ray, t) {
-        xs.push(Intersection::new(t, cylinder));
+        let cylinder: Box<dyn Object> =  Box::new(cylinder.clone());
+        xs.push(Intersection::new(t, &cylinder));
     }
 
     // Check for an intersection with the upper end cap by intersecting
     // the ray with the plane at y = maximum
     let t = (maximum - ray.origin.y) / ray.direction.y;
     if check_cap(ray, t) {
-        xs.push(Intersection::new(t, cylinder));
+        let cylinder: Box<dyn Object> =  Box::new(cylinder.clone());
+        xs.push(Intersection::new(t, &cylinder));
     }
 
     xs

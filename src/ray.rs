@@ -1,22 +1,38 @@
+use std::fmt::{Debug, Formatter};
 #[allow(dead_code)]
 
 use crate::tuple::Tuple;
 use crate::matrix::Matrix;
-use crate::shape::Shape;
+use crate::object::Object;
 
 pub const EPSILON: f64 = 0.00001;
 
 // Intersection struct
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone)]
 pub struct Intersection<'a> {
     pub t: f64,
-    pub object: &'a Shape,
+    pub object: &'a Box<dyn Object>,
+}
+
+impl PartialEq for Intersection<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.t == other.t && self.object == other.object
+    }
+}
+
+impl Debug for Intersection<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Intersection")
+            .field("t", &self.t)
+            .field("object", &self.object)
+            .finish()
+    }
 }
 
 #[allow(dead_code)]
 pub struct Computations<'a> {
     pub t: f64,
-    pub object: &'a Shape,
+    pub object: &'a Box<dyn Object>,
     pub point: Tuple,
     pub eyev: Tuple,
     pub normalv: Tuple,
@@ -48,8 +64,8 @@ impl Computations<'_> {
 }
 
 impl<'a> Intersection<'a> {
-    pub fn new(t: f64, object: &'a Shape) -> Intersection<'a> {
-        Intersection { t, object }
+    pub fn new(t: f64, object: &Box<dyn Object>) -> Intersection<'a> {
+        Intersection { t, object: &object }
     }
 
     pub fn prepare_computations(&self, r: &Ray, xs: &Vec<Intersection>) -> Computations<'a> {
@@ -64,13 +80,13 @@ impl<'a> Intersection<'a> {
 
         let mut n1 = 1.0;
         let mut n2 = 1.0;
-        let mut containers: Vec<&Shape> = vec![];
+        let mut containers: Vec<&Box<dyn Object>> = vec![];
         for i in xs {
             if *i == *self {
                 if containers.is_empty() {
                     n1 = 1.0;
                 } else {
-                    n1 = containers.last().unwrap().material.refractive_index;
+                    n1 = containers.last().unwrap().get_material().refractive_index;
                 }
             }
 
@@ -79,14 +95,14 @@ impl<'a> Intersection<'a> {
                     containers.remove(index);
                 }
             } else {
-                containers.push(i.object);
+                containers.push(&i.object);
             }
 
             if *i == *self {
                 if containers.is_empty() {
                     n2 = 1.0;
                 } else {
-                    n2 = containers.last().unwrap().material.refractive_index;
+                    n2 = containers.last().unwrap().get_material().refractive_index;
                 }
             }
         }
@@ -142,6 +158,7 @@ mod tests {
     use crate::canvas::Canvas;
     use crate::light::Light;
     use crate::light::lighting;
+    use crate::object::Object;
     use crate::pattern::Pattern;
 
     #[test]
@@ -164,9 +181,9 @@ mod tests {
 
     #[test]
     fn test_hit() {
-        let s = Shape::sphere();
-        let i1 = super::Intersection { t: 1.0, object: &s };
-        let i2 = super::Intersection { t: 2.0, object: &s };
+        let s: Box<dyn Object> = Box::new(Shape::sphere());
+        let i1 = super::Intersection::new(1.0, &s);
+        let i2 = super::Intersection::new(2.0, &s);
         let xs = vec![i1, i2];
         let i = super::hit(&xs);
         assert_eq!(i.unwrap().t, 1.0);
@@ -214,8 +231,8 @@ mod tests {
     #[test]
     fn intersections_the_hit_should_offset_the_point() {
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
-        let mut s = Shape::sphere();
-        s.transform = Matrix::translate(0.0, 0.0, 1.0);
+        let mut s: Box<dyn Object> = Box::new(Shape::sphere());
+        s.set_transform(Matrix::translate(0.0, 0.0, 1.0));
         let i = super::Intersection { t: 5.0, object: &s };
         let xs = vec![i];
         let comps = xs[0].prepare_computations(&r, &xs);
@@ -294,7 +311,7 @@ mod tests {
     #[test]
     fn test_prepare_computations() {
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
-        let s = Shape::sphere();
+        let s: Box<dyn Object> = Box::new(Shape::sphere());
         let i = super::Intersection { t: 4.0, object: &s };
         let xs = vec![i];
         let comps = xs[0].prepare_computations(&r, &xs);
@@ -309,7 +326,7 @@ mod tests {
     #[test]
     fn test_prepare_computations_inside() {
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
-        let s = Shape::sphere();
+        let s: Box<dyn Object> = Box::new(Shape::sphere());
         let xs = vec![super::Intersection { t: 1.0, object: &s }];
         let comps = xs[0].prepare_computations(&r, &xs);
         assert_eq!(comps.t, xs[0].t);
@@ -322,7 +339,7 @@ mod tests {
 
     #[test]
     fn precomputing_the_reflection_vector() {
-        let s = Shape::plane();
+        let s: Box<dyn Object> = Box::new(Shape::plane());
         let r = Ray::new(Tuple::point(0.0, 1.0, -1.0), Tuple::vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0));
         let xs = vec![super::Intersection { t: 2.0_f64.sqrt(), object: &s }];
         let comps = xs[0].prepare_computations(&r, &xs);
@@ -331,17 +348,23 @@ mod tests {
 
     #[test]
     fn finding_n1_and_n2_at_various_intersections() {
-        let mut a = Shape::glass_sphere();
-        a.transform = Matrix::scale(2.0, 2.0, 2.0);
-        a.material.refractive_index = 1.5;
+        let mut a: Box<dyn Object> = Box::new(Shape::glass_sphere());
+        a.set_transform(Matrix::scale(2.0, 2.0, 2.0));
+        let mut mat = a.get_material().clone();
+        mat.refractive_index = 1.5;
+        a.set_material(mat);
 
-        let mut b = Shape::glass_sphere();
-        b.transform = Matrix::translate(0.0, 0.0, -0.25);
-        b.material.refractive_index = 2.0;
+        let mut b: Box<dyn Object> = Box::new(Shape::glass_sphere());
+        b.set_transform(Matrix::translate(0.0, 0.0, -0.25));
+        let mut mat = b.get_material().clone();
+        mat.refractive_index = 2.0;
+        b.set_material(mat);
 
-        let mut c = Shape::glass_sphere();
-        c.transform = Matrix::translate(0.0, 0.0, 0.25);
-        c.material.refractive_index = 2.5;
+        let mut c: Box<dyn Object> = Box::new(Shape::glass_sphere());
+        c.set_transform(Matrix::translate(0.0, 0.0, 0.25));
+        let mut mat = c.get_material().clone();
+        mat.refractive_index = 2.5;
+        c.set_material(mat);
 
         let r = Ray::new(Tuple::point(0.0, 0.0, -4.0), Tuple::vector(0.0, 0.0, 1.0));
         let xs = vec![
@@ -366,8 +389,8 @@ mod tests {
     #[test]
     fn underpoint_is_offset_below_the_surface() {
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
-        let mut s = Shape::glass_sphere();
-        s.transform = Matrix::translate(0.0, 0.0, 1.0);
+        let mut s: Box<dyn Object> = Box::new(Shape::glass_sphere());
+        s.set_transform(Matrix::translate(0.0, 0.0, 1.0));
         let i = super::Intersection { t: 5.0, object: &s };
         let xs = vec![i];
         let comps = xs[0].prepare_computations(&r, &xs);

@@ -173,7 +173,7 @@ pub fn render_scene(scene: Scene, width: usize, height: usize, file: &str) {
 
     for scene_object in scene.scene.iter() {
         let s = create_shape(scene_object);
-        w.objects.push(s);
+        w.objects.push(Box::new(s));
     }
 
     let image = c.render(&w);
