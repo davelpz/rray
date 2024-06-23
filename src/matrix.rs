@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-pub const EPSILON: f64 = 0.00001;
+use crate::EPSILON;
 use crate::tuple::Tuple;
 use std::ops::Mul;
 

@@ -1,14 +1,12 @@
-#[allow(dead_code)]
-
 use std::sync::{Arc, Mutex};
-use crate::canvas::Canvas;
 use crate::matrix::Matrix;
-use crate::ray::Ray;
 use crate::tuple::Tuple;
-use crate::world::world::World;
+use crate::canvas::Canvas;
 use indicatif::ProgressBar;
 use rayon::iter::ParallelBridge;
 use rayon::prelude::ParallelIterator;
+use crate::raytracer::ray::Ray;
+use crate::raytracer::scene::Scene;
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
@@ -67,13 +65,13 @@ impl Camera {
         Ray::new(origin, direction)
     }
 
-    pub fn render(&self, world: &World) -> Canvas {
+    pub fn render(&self, scene: &Scene) -> Canvas {
         let image = Arc::new(Mutex::new(Canvas::new(self.hsize, self.vsize)));
         let bar = ProgressBar::new((self.vsize * self.hsize) as u64);
         let iter = pixel_coordinates(self.vsize, self.hsize).par_bridge();
         iter.for_each(|(x, y)| {
             let ray = self.ray_for_pixel(x, y);
-            let color = world.color_at(&ray, 5);
+            let color = scene.color_at(&ray, 5);
             let mut image = image.lock().unwrap();
             image.write_pixel(x, y, color);
             drop(image); // unlock the mutex
@@ -82,22 +80,7 @@ impl Camera {
         bar.finish();
         Arc::try_unwrap(image).unwrap().into_inner().unwrap()
     }
-
-    #[allow(dead_code)]
-    pub fn render_sequential(&self, world: &World) -> Canvas {
-        let mut image = Canvas::new(self.hsize, self.vsize);
-        let bar = ProgressBar::new((self.vsize * self.hsize) as u64);
-        for (x, y) in pixel_coordinates(self.vsize, self.hsize) {
-            let ray = self.ray_for_pixel(x, y);
-            let color = world.color_at(&ray, 5);
-            image.write_pixel(x, y, color);
-            bar.inc(1);
-        }
-        bar.finish();
-        image
-    }
 }
-
 
 pub fn pixel_coordinates(vsize: usize, hsize: usize) -> impl Iterator<Item = (usize, usize)> {
     (0..vsize).flat_map(move |y| (0..hsize).map(move |x| (x, y)))
@@ -105,10 +88,14 @@ pub fn pixel_coordinates(vsize: usize, hsize: usize) -> impl Iterator<Item = (us
 
 #[cfg(test)]
 mod tests {
-    pub const EPSILON: f64 = 0.00001;
-
+    use crate::EPSILON;
+    use std::sync::Arc;
     use crate::matrix::Matrix;
-    use crate::pattern::Pattern;
+    use crate::raytracer::light::Light;
+    use crate::raytracer::material::pattern::Pattern;
+    use crate::raytracer::object::plane::Plane;
+    use crate::raytracer::object::sphere::Sphere;
+    use crate::raytracer::scene::{add_object, Scene};
     use super::Camera;
     use crate::tuple::Tuple;
 
@@ -184,9 +171,6 @@ mod tests {
     #[ignore]
     fn test_render_chap7() {
         use crate::color::Color;
-        use crate::light::Light;
-        use crate::shape::Shape;
-        use crate::world::world::World;
 
         let mut c = Camera::new(256, 256, std::f64::consts::PI / 3.0);
         let from = Tuple::point(0.0, 1.5, -5.0);
@@ -194,52 +178,52 @@ mod tests {
         let up = Tuple::vector(0.0, 1.0, 0.0);
         c.transform = Matrix::view_transform(from, to, up);
 
-        let mut w = World::new(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let w = Scene::new(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
 
-        let mut floor = Shape::sphere();
+        let mut floor = Sphere::new();
         floor.transform = Matrix::scale(10.0, 0.01, 10.0);
         floor.material.pattern = Pattern::solid(Color::new(1.0, 0.9, 0.9), Matrix::identity(4));
         floor.material.specular = 0.0;
-        w.objects.push(floor);
+        add_object(Arc::new(floor));
 
-        let mut left_wall = Shape::sphere();
+        let mut left_wall = Sphere::new();
         left_wall.transform = Matrix::translate(0.0, 0.0, 5.0)
             .multiply(&Matrix::rotate_y(-std::f64::consts::PI / 4.0))
             .multiply(&Matrix::rotate_x(std::f64::consts::PI / 2.0))
             .multiply(&Matrix::scale(10.0, 0.01, 10.0));
         left_wall.material.pattern = Pattern::solid(Color::new(1.0, 0.9, 0.9), Matrix::identity(4));
         left_wall.material.specular = 0.0;
-        w.objects.push(left_wall);
+        add_object(Arc::new(left_wall));
 
-        let mut right_wall = Shape::sphere();
+        let mut right_wall = Sphere::new();
         right_wall.transform = Matrix::translate(0.0, 0.0, 5.0)
             .multiply(&Matrix::rotate_y(std::f64::consts::PI / 4.0))
             .multiply(&Matrix::rotate_x(std::f64::consts::PI / 2.0))
             .multiply(&Matrix::scale(10.0, 0.01, 10.0));
         right_wall.material.pattern = Pattern::solid(Color::new(1.0, 0.9, 0.9), Matrix::identity(4));
         right_wall.material.specular = 0.0;
-        w.objects.push(right_wall);
+        add_object(Arc::new(right_wall));
 
-        let mut middle = Shape::sphere();
+        let mut middle = Sphere::new();
         middle.transform = Matrix::translate(-0.5, 1.0, 0.5);
         middle.material.pattern = Pattern::solid(Color::new(0.1, 1.0, 0.5), Matrix::identity(4));
         middle.material.diffuse = 0.7;
         middle.material.specular = 0.3;
-        w.objects.push(middle);
+        add_object(Arc::new(middle));
 
-        let mut right = Shape::sphere();
+        let mut right = Sphere::new();
         right.transform = Matrix::translate(1.5, 0.5, -0.5).multiply(&Matrix::scale(0.5, 0.5, 0.5));
         right.material.pattern = Pattern::solid(Color::new(0.5, 1.0, 0.1), Matrix::identity(4));
         right.material.diffuse = 0.7;
         right.material.specular = 0.3;
-        w.objects.push(right);
+        add_object(Arc::new(right));
 
-        let mut left = Shape::sphere();
+        let mut left = Sphere::new();
         left.transform = Matrix::translate(-1.5, 0.33, -0.75).multiply(&Matrix::scale(0.33, 0.33, 0.33));
         left.material.pattern = Pattern::solid(Color::new(1.0, 0.8, 0.1), Matrix::identity(4));
         left.material.diffuse = 0.7;
         left.material.specular = 0.3;
-        w.objects.push(left);
+        add_object(Arc::new(left));
 
         let image = c.render(&w);
         //let image = c.render_sequential(&w);
@@ -252,9 +236,6 @@ mod tests {
     #[ignore]
     fn test_render_chap9() {
         use crate::color::Color;
-        use crate::light::Light;
-        use crate::shape::Shape;
-        use crate::world::world::World;
 
         let mut c = Camera::new(400, 200, std::f64::consts::PI / 3.0);
         let from = Tuple::point(0.0, 1.5, -5.0);
@@ -262,22 +243,22 @@ mod tests {
         let up = Tuple::vector(0.0, 1.0, 0.0);
         c.transform = Matrix::view_transform(from, to, up);
 
-        let mut w = World::new(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let w = Scene::new(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
 
-        let mut floor = Shape::plane();
+        let mut floor = Plane::new();
         floor.transform = Matrix::translate(0.0, 0.0, 0.0);
         floor.material.pattern = Pattern::stripe(Pattern::solid(Color::new(1.0, 0.5, 0.5), Matrix::identity(4)),
                                                  Pattern::solid(Color::new(0.5, 1.0, 0.5), Matrix::identity(4)),
                                                  Matrix::scale(0.1, 0.1, 0.1).multiply(&Matrix::rotate_y(std::f64::consts::PI / 4.0)));
         floor.material.specular = 0.0;
-        w.objects.push(floor);
+        add_object(Arc::new(floor));
 
-        let mut left_wall = Shape::plane();
+        let mut left_wall = Plane::new();
         left_wall.material.pattern = Pattern::gradient(Pattern::solid(Color::new(1.0, 0.5, 0.5), Matrix::identity(4)),
                                                        Pattern::solid(Color::new(0.5, 1.0, 0.5), Matrix::identity(4)),
                                                        Matrix::identity(4)
                                                            .multiply(&Matrix::translate(124.0, 124.0, 124.0)
-                                                           .multiply(&Matrix::scale(7.0, 7.0, 7.0))
+                                                               .multiply(&Matrix::scale(7.0, 7.0, 7.0))
                                                            ));
         left_wall.transform = Matrix::identity(4)
             .multiply(&Matrix::rotate_y(std::f64::consts::PI / -4.0))
@@ -285,9 +266,9 @@ mod tests {
             .multiply(&Matrix::rotate_x(std::f64::consts::PI / 2.0))
         ;
         left_wall.material.specular = 0.0;
-        w.objects.push(left_wall);
+        add_object(Arc::new(left_wall));
 
-        let mut right_wall = Shape::plane();
+        let mut right_wall = Plane::new();
         right_wall.transform = Matrix::identity(4)
             .multiply(&Matrix::rotate_y(std::f64::consts::PI / 4.0))
             .multiply(&Matrix::translate(0.0, 0.0, 5.0))
@@ -295,28 +276,28 @@ mod tests {
         ;
         right_wall.material.pattern = Pattern::solid(Color::new(1.0, 0.9, 0.9), Matrix::identity(4));
         right_wall.material.specular = 0.0;
-        w.objects.push(right_wall);
+        add_object(Arc::new(right_wall));
 
-        let mut middle = Shape::sphere();
+        let mut middle = Sphere::new();
         middle.transform = Matrix::translate(-0.5, 1.0, 0.5);
         middle.material.pattern = Pattern::solid(Color::new(0.1, 1.0, 0.5), Matrix::identity(4));
         middle.material.diffuse = 0.7;
         middle.material.specular = 0.3;
-        w.objects.push(middle);
+        add_object(Arc::new(middle));
 
-        let mut right = Shape::sphere();
+        let mut right = Sphere::new();
         right.transform = Matrix::translate(1.5, 0.5, -0.5).multiply(&Matrix::scale(0.5, 0.5, 0.5));
         right.material.pattern = Pattern::solid(Color::new(0.5, 1.0, 0.1), Matrix::identity(4));
         right.material.diffuse = 0.7;
         right.material.specular = 0.3;
-        w.objects.push(right);
+        add_object(Arc::new(right));
 
-        let mut left = Shape::sphere();
+        let mut left = Sphere::new();
         left.transform = Matrix::translate(-1.5, 0.33, -0.75).multiply(&Matrix::scale(0.33, 0.33, 0.33));
         left.material.pattern = Pattern::solid(Color::new(1.0, 0.8, 0.1), Matrix::identity(4));
         left.material.diffuse = 0.7;
         left.material.specular = 0.3;
-        w.objects.push(left);
+        add_object(Arc::new(left));
 
         let image = c.render(&w);
         //let image = c.render_sequential(&w);

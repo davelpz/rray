@@ -4,14 +4,14 @@ use std::fs;
 use std::path::Path;
 
 #[derive(Deserialize)]
-pub struct Scene {
-    pub camera: Camera,
-    pub lights: Vec<Light>,
+pub struct SceneJson {
+    pub camera: CameraJson,
+    pub lights: Vec<LightJson>,
     pub scene: Vec<SceneObject>,
 }
 
 #[derive(Deserialize)]
-pub struct Camera {
+pub struct CameraJson {
     pub fov: f64,
     pub from: Vec<f64>,
     pub to: Vec<f64>,
@@ -20,7 +20,7 @@ pub struct Camera {
 
 #[derive(Deserialize)]
 #[allow(dead_code)]
-pub struct Light {
+pub struct LightJson {
     #[serde(rename = "type")]
     pub light_type: String,
     pub color: Vec<f64>,
@@ -31,15 +31,15 @@ pub struct Light {
 pub struct SceneObject {
     #[serde(rename = "type")]
     pub object_type: String,
-    pub transforms: Option<Vec<Transform>>,
-    pub material: Material,
+    pub transforms: Option<Vec<TransformJson>>,
+    pub material: MaterialJson,
     pub minimum: Option<f64>,
     pub maximum: Option<f64>,
     pub closed: Option<bool>,
 }
 
 #[derive(Deserialize, Clone)]
-pub struct Transform {
+pub struct TransformJson {
     #[serde(rename = "type")]
     pub transform_type: String,
     pub x: Option<f64>,
@@ -56,8 +56,8 @@ pub struct Transform {
 }
 
 #[derive(Deserialize)]
-pub struct Material {
-    pub pattern: Pattern,
+pub struct MaterialJson {
+    pub pattern: PatternJson,
     pub ambient: Option<f64>,
     pub diffuse: Option<f64>,
     pub specular: Option<f64>,
@@ -68,23 +68,23 @@ pub struct Material {
 }
 
 #[derive(Deserialize, Clone)]
-pub struct Pattern {
+pub struct PatternJson {
     #[serde(rename = "type")]
     pub pattern_type: String,
     pub color: Option<Vec<f64>>,
     pub color_a: Option<Vec<f64>>,
     pub color_b: Option<Vec<f64>>,
-    pub pattern_a: Option<Box<Pattern>>,
-    pub pattern_b: Option<Box<Pattern>>,
-    pub transforms: Option<Vec<Transform>>,
+    pub pattern_a: Option<Box<PatternJson>>,
+    pub pattern_b: Option<Box<PatternJson>>,
+    pub transforms: Option<Vec<TransformJson>>,
     pub scale: Option<f64>,
     pub octaves: Option<i32>,
     pub persistence: Option<f64>,
 }
 
-impl Default for Pattern {
+impl Default for PatternJson {
     fn default() -> Self {
-        Pattern {
+        PatternJson {
             pattern_type: "solid".to_string(),
             color: Some(vec![0.0, 0.0, 0.0]),
             color_a: None,
@@ -99,15 +99,15 @@ impl Default for Pattern {
     }
 }
 
-pub fn create_scene_from_json_str(json_string: &str) -> Option<Scene> {
-    let scene: Result<Scene, _> = serde_json::from_str(json_string);
+pub fn create_scene_from_json_str(json_string: &str) -> Option<SceneJson> {
+    let scene: Result<SceneJson, _> = serde_json::from_str(json_string);
     match scene {
         Ok(s) => Some(s),
         Err(_) => None,
     }
 }
 
-pub fn create_scene_from_file(path: &str) -> Option<Scene> {
+pub fn create_scene_from_file(path: &str) -> Option<SceneJson> {
     if Path::new(path).exists() {
         let contents = fs::read_to_string(path).expect("Something went wrong reading the file");
         create_scene_from_json_str(&contents)
@@ -119,7 +119,7 @@ pub fn create_scene_from_file(path: &str) -> Option<Scene> {
 
 #[cfg(test)]
 mod tests {
-    use crate::scene::create_scene_from_json_str;
+    use crate::raytracer::scene_json::create_scene_from_json_str;
 
     #[test]
     fn test_create_scene_from_json() {

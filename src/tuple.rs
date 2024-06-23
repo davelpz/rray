@@ -5,8 +5,7 @@ use std::ops::Sub;
 use std::ops::Add;
 use std::ops::Mul;
 use std::ops::Div;
-
-pub const EPSILON: f64 = 0.00001;
+use crate::EPSILON;
 
 // Tuple struct
 #[derive(Debug, Clone, Copy)]

@@ -1,0 +1,10 @@
+mod object;
+mod ray;
+mod intersection;
+mod computations;
+mod material;
+mod scene;
+mod light;
+mod camera;
+pub(crate) mod scene_builder;
+pub(crate) mod scene_json;

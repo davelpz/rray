@@ -1,8 +1,7 @@
 #![allow(dead_code)]
 
 use std::ops::Mul;
-
-const EPSILON: f64 = 0.00001;
+use crate::EPSILON;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Color {

@@ -1,14 +1,21 @@
-use crate::camera::Camera;
+use std::sync::Arc;
 use crate::color::Color;
-use crate::light::Light;
-use crate::material::Material;
 use crate::matrix::Matrix;
-use crate::pattern::Pattern;
-use crate::scene;
-use crate::scene::{Scene, SceneObject, Transform};
-use crate::shape::Shape;
 use crate::tuple::Tuple;
-use crate::world::world::World;
+use crate::raytracer::camera::Camera;
+use crate::raytracer::light::Light;
+use crate::raytracer::material::Material;
+use crate::raytracer::material::pattern::Pattern;
+use crate::raytracer::object::cone::Cone;
+use crate::raytracer::object::cube::Cube;
+use crate::raytracer::object::cylinder::Cylinder;
+use crate::raytracer::object::Object;
+use crate::raytracer::object::plane::Plane;
+use crate::raytracer::object::sphere::Sphere;
+use crate::raytracer::scene::{add_object, Scene};
+use crate::raytracer::scene_json::{MaterialJson, PatternJson, SceneJson, SceneObject, TransformJson};
+
+
 
 fn degrees_to_radians(degrees: f64) -> f64 {
     degrees * std::f64::consts::PI / 180.0
@@ -26,7 +33,7 @@ fn color_from_vec(v: &Vec<f64>) -> Color {
     Color::new(v[0], v[1], v[2])
 }
 
-fn create_camera(scene: &Scene, width: usize, height: usize) -> Camera {
+fn create_camera(scene: &SceneJson, width: usize, height: usize) -> Camera {
     let mut c = Camera::new(
         width,
         height,
@@ -38,7 +45,7 @@ fn create_camera(scene: &Scene, width: usize, height: usize) -> Camera {
     c
 }
 
-fn create_matrix(transform: &Transform) -> Matrix {
+fn create_matrix(transform: &TransformJson) -> Matrix {
     match transform.transform_type.as_str() {
         "translate" => {
             let x = transform.x.unwrap_or(0.0);
@@ -74,7 +81,7 @@ fn create_matrix(transform: &Transform) -> Matrix {
     }
 }
 
-fn create_transforms(transforms: &Vec<Transform>) -> Matrix {
+fn create_transforms(transforms: &Vec<TransformJson>) -> Matrix {
     let mut m = Matrix::identity(4);
     for t in transforms.iter().rev() {
         m = m * create_matrix(t);
@@ -83,7 +90,7 @@ fn create_transforms(transforms: &Vec<Transform>) -> Matrix {
 }
 
 #[allow(dead_code)]
-fn create_pattern(pattern: &scene::Pattern) -> Pattern {
+fn create_pattern(pattern: &PatternJson) -> Pattern {
     let transform = create_transforms(&pattern.transforms.clone().unwrap_or(vec![]));
     let pattern = pattern.clone();
     if pattern.pattern_type == "solid" {
@@ -125,7 +132,7 @@ fn create_pattern(pattern: &scene::Pattern) -> Pattern {
     }
 }
 
-fn create_material(material: &scene::Material) -> Material {
+fn create_material(material: &MaterialJson) -> Material {
     let mut m = Material::default();
     m.ambient = material.ambient.unwrap_or(0.1);
     m.diffuse = material.diffuse.unwrap_or(0.9);
@@ -138,42 +145,42 @@ fn create_material(material: &scene::Material) -> Material {
     m
 }
 
-fn create_shape(scene_object: &SceneObject) -> Shape {
-    let mut s = match scene_object.object_type.as_str() {
-        "sphere" => Shape::sphere(),
-        "plane" => Shape::plane(),
-        "cube" => Shape::cube(),
-        "glass_sphere" => Shape::glass_sphere(),
+fn create_shape(scene_object: &SceneObject) -> Arc<dyn Object> {
+    let mut s: Arc<dyn Object> = match scene_object.object_type.as_str() {
+        "sphere" => Arc::new(Sphere::new()),
+        "glass_sphere" => Arc::new(Sphere::glass_sphere()),
+        "plane" => Arc::new(Plane::new()),
+        "cube" => Arc::new(Cube::new()),
         "cylinder" => {
             let minimum = scene_object.minimum.unwrap_or(-f64::INFINITY);
             let maximum = scene_object.maximum.unwrap_or(f64::INFINITY);
             let closed = scene_object.closed.unwrap_or(false);
-            Shape::cylinder(minimum, maximum, closed)
+            Arc::new(Cylinder::new(minimum, maximum, closed))
         },
         "cone" => {
             let minimum = scene_object.minimum.unwrap_or(-f64::INFINITY);
             let maximum = scene_object.maximum.unwrap_or(f64::INFINITY);
             let closed = scene_object.closed.unwrap_or(false);
-            Shape::cone(minimum, maximum, closed)
+            Arc::new(Cone::new(minimum, maximum, closed))
         },
-        _ => Shape::sphere(),
+        _ => Arc::new(Sphere::new()),
     };
-    s.transform = create_transforms(&scene_object.transforms.clone().unwrap_or(vec![]));
-    s.material = create_material(&scene_object.material);
+    Arc::get_mut(&mut s).unwrap().set_transform(create_transforms(&scene_object.transforms.clone().unwrap_or(vec![])));
+    Arc::get_mut(&mut s).unwrap().set_material(create_material(&scene_object.material));
     s
 }
 
-pub fn render_scene(scene: Scene, width: usize, height: usize, file: &str) {
+pub fn render_scene(scene: SceneJson, width: usize, height: usize, file: &str) {
     let c = create_camera(&scene, width, height);
 
     //right now, only one light is supported
-    let mut w = World::new(Light::new_point_light(
+    let w = Scene::new(Light::new_point_light(
         point_from_vec(&scene.lights[0].position),
         color_from_vec(&scene.lights[0].color)));
 
     for scene_object in scene.scene.iter() {
         let s = create_shape(scene_object);
-        w.objects.push(s);
+        add_object(s);
     }
 
     let image = c.render(&w);
