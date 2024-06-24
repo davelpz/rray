@@ -39,7 +39,7 @@ fn number_of_objects() -> usize {
 }
 
 #[allow(dead_code)]
-pub fn clear_global_objects() {
+fn clear_global_objects() {
     let mut objects = GLOBAL_OBJECTS.lock().unwrap();
     objects.clear();
 }
@@ -63,17 +63,23 @@ impl Scene {
     }
 
     #[allow(dead_code)]
+    pub fn get_object_at_index(&self, index: usize) -> Arc<dyn Object + Send> {
+        get_object(self.ids[index])
+    }
+
+    #[allow(dead_code)]
     pub fn default_scene() -> Scene {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let mut scene = Scene::new(light);
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::solid(Color::new(0.8, 1.0, 0.6), Matrix::identity(4));
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
-        add_object(Arc::new(s1));
+        scene.add_object(Arc::new(s1));
         let mut s2 = Sphere::new();
         s2.transform = Matrix::scale(0.5, 0.5, 0.5);
-        add_object(Arc::new(s2));
-        Scene::new(light)
+        scene.add_object(Arc::new(s2));
+        scene
     }
 
     pub fn intersect(&self, r: &Ray) -> Vec<Intersection> {
@@ -186,14 +192,14 @@ mod tests {
     use crate::raytracer::object::plane::Plane;
     use crate::raytracer::object::sphere::Sphere;
     use crate::raytracer::ray::Ray;
-    use crate::raytracer::scene::{add_object, clear_global_objects, get_object, number_of_objects, Scene};
+    use crate::raytracer::scene::{Scene};
     use crate::tuple::Tuple;
 
     #[test]
     #[ignore]
     fn creating_a_world() {
         let w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
-        assert_eq!(number_of_objects(), 0);
+        assert_eq!(w.ids.len(), 0);
         assert_eq!(w.light, Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
     }
 
@@ -215,7 +221,7 @@ mod tests {
     fn shading_an_intersection() {
         let w = Scene::default_scene();
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
-        let shape = get_object(0);
+        let shape = w.get_object_at_index(0);
         let xs = vec![Intersection{t: 4.0, object: shape.get_id()}];
         let comps = xs[0].prepare_computations(&r, &xs);
         let c = w.shade_hit(&comps,5);
@@ -228,7 +234,7 @@ mod tests {
         let mut w = Scene::default_scene();
         w.light = Light::new_point_light(Tuple::point(0.0, 0.25, 0.0), Color::new(1.0, 1.0, 1.0));
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
-        let shape = get_object(1);
+        let shape = w.get_object_at_index(1);
         let xs = vec![Intersection{t: 0.5, object: shape.get_id()}];
         let comps = xs[0].prepare_computations(&r, &xs);
         let c = w.shade_hit(&comps,5);
@@ -238,13 +244,13 @@ mod tests {
     #[test]
     #[ignore]
     fn shade_hit_is_given_an_intersection_in_shadow() {
-        let w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let s1 = Sphere::new();
         let mut s2 = Sphere::new();
         s2.transform = Matrix::translate(0.0, 0.0, 10.0);
-        add_object(Arc::new(s1));
-        add_object(Arc::new(s2));
-        let s2_id = number_of_objects() - 1;
+        w.add_object(Arc::new(s1));
+        w.add_object(Arc::new(s2));
+        let s2_id = w.ids[1];
         let r = Ray::new(Tuple::point(0.0, 0.0, 5.0), Tuple::vector(0.0, 0.0, 1.0));
         let xs = vec![Intersection{t: 4.0, object: s2_id}];
         let comps = xs[0].prepare_computations(&r, &xs);
@@ -274,19 +280,19 @@ mod tests {
     #[ignore]
     fn the_color_with_an_intersection_behind_the_ray() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let mut w = Scene::new(light);
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::solid(Color::new(0.8, 1.0, 0.6), Matrix::identity(4));
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
         s1.material.ambient = 1.0;
-        add_object(Arc::new(s1));
+        w.add_object(Arc::new(s1));
         let mut s2 = Sphere::new();
         s2.transform = Matrix::scale(0.5, 0.5, 0.5);
         s2.material.ambient = 1.0;
-        add_object(Arc::new(s2));
-        let w = Scene::new(light);
+        w.add_object(Arc::new(s2));
 
-        let inner = get_object(1);
+        let inner = w.get_object_at_index(1);
         let inner_material = inner.get_material().clone();
         let obj_color = match inner_material.pattern.pattern_type {
             PatternType::Solid(c) => c,
@@ -469,7 +475,7 @@ mod tests {
     #[ignore]
     fn refracted_color_with_an_opaque_surface() {
         let w = Scene::default_scene();
-        let shape = get_object(0);
+        let shape = w.get_object_at_index(0);
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
         let xs = vec![Intersection{t: 4.0, object: shape.get_id()}, Intersection{t: 6.0, object: shape.get_id()}];
         let comps = xs[0].prepare_computations(&r, &xs);
@@ -567,7 +573,6 @@ mod tests {
     #[test]
     #[ignore]
     fn shade_hit_with_a_transparent_material() {
-        clear_global_objects();
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let mut w = Scene::new(light);
 
