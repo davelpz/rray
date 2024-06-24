@@ -12,7 +12,7 @@ use crate::raytracer::object::cylinder::Cylinder;
 use crate::raytracer::object::Object;
 use crate::raytracer::object::plane::Plane;
 use crate::raytracer::object::sphere::Sphere;
-use crate::raytracer::scene::{add_object, Scene};
+use crate::raytracer::scene::{Scene};
 use crate::raytracer::scene_json::{MaterialJson, PatternJson, SceneJson, SceneObject, TransformJson};
 
 
@@ -174,13 +174,13 @@ pub fn render_scene(scene: SceneJson, width: usize, height: usize, file: &str) {
     let c = create_camera(&scene, width, height);
 
     //right now, only one light is supported
-    let w = Scene::new(Light::new_point_light(
+    let mut w = Scene::new(Light::new_point_light(
         point_from_vec(&scene.lights[0].position),
         color_from_vec(&scene.lights[0].color)));
 
     for scene_object in scene.scene.iter() {
         let s = create_shape(scene_object);
-        add_object(s);
+        w.add_object(s);
     }
 
     let image = c.render(&w);

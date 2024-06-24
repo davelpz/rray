@@ -23,6 +23,10 @@ impl Color {
         Color { r, g, b }
     }
 
+    pub fn white() -> Color {
+        Color::new(1.0, 1.0, 1.0)
+    }
+
     pub fn add(&self, other: &Color) -> Color {
         Color::new(self.r + other.r, self.g + other.g, self.b + other.b)
     }

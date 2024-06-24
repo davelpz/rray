@@ -162,12 +162,13 @@ mod tests {
     use crate::color::Color;
     use crate::matrix::Matrix;
     use crate::raytracer::intersection::Intersection;
+    use crate::raytracer::light::Light;
     use crate::tuple::Tuple;
     use crate::raytracer::material::noise::get_noise_3d;
     use crate::raytracer::material::pattern::Pattern;
     use crate::raytracer::object::sphere::Sphere;
     use crate::raytracer::ray::Ray;
-    use crate::raytracer::scene::{add_object, number_of_objects};
+    use crate::raytracer::scene::Scene;
 
     #[test]
     fn stripe_pattern_is_constant_in_y() {
@@ -277,9 +278,10 @@ mod tests {
 
     #[test]
     fn schlick_reflectance_under_total_internal_reflection() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::white()));
         let shape = Sphere::glass_sphere();
-        add_object(Arc::new(shape));
-        let id = number_of_objects() - 1;
+        w.add_object(Arc::new(shape));
+        let id = w.ids[0];
         let r = Ray::new(Tuple::point(0.0, 0.0, 2_f64.sqrt()/2.0), Tuple::vector(0.0, 1.0, 0.0));
         let xs = vec![
             Intersection::new(-2.0_f64.sqrt() / 2.0, id),
@@ -292,9 +294,10 @@ mod tests {
 
     #[test]
     fn schlick_reflectance_with_perpendicular_viewing_angle() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::white()));
         let shape = Sphere::glass_sphere();
-        add_object(Arc::new(shape));
-        let id = number_of_objects() - 1;
+        w.add_object(Arc::new(shape));
+        let id = w.ids[0];
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 1.0, 0.0));
         let xs = vec![
             Intersection::new(-1.0, id),
@@ -307,9 +310,10 @@ mod tests {
 
     #[test]
     fn schlick_approximation_with_small_angle_and_n2_greater_than_n1() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::white()));
         let shape = Sphere::glass_sphere();
-        add_object(Arc::new(shape));
-        let id = number_of_objects() - 1;
+        w.add_object(Arc::new(shape));
+        let id = w.ids[0];
         let r = Ray::new(Tuple::point(0.0, 0.99, -2.0), Tuple::vector(0.0, 0.0, 1.0));
         let xs = vec![
             Intersection::new(1.8589, id)

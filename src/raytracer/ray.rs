@@ -49,7 +49,7 @@ mod tests {
     use crate::raytracer::material::pattern::Pattern;
     use crate::raytracer::object::sphere::Sphere;
     use crate::raytracer::object::plane::Plane;
-    use crate::raytracer::scene::{add_object, get_object, number_of_objects};
+    use crate::raytracer::scene::{get_object, Scene};
 
     #[test]
     fn test_ray() {
@@ -71,9 +71,11 @@ mod tests {
 
     #[test]
     fn test_hit() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let s = Sphere::new();
-        add_object(Arc::new(s));
-        let id = number_of_objects() - 1;
+        w.add_object(Arc::new(s));
+        let id = w.ids[0];
+
         let i1 = super::Intersection { t: 1.0, object: id };
         let i2 = super::Intersection { t: 2.0, object: id };
         let xs = vec![i1, i2];
@@ -122,11 +124,12 @@ mod tests {
 
     #[test]
     fn intersections_the_hit_should_offset_the_point() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
         let mut s = Sphere::new();
         s.transform = Matrix::translate(0.0, 0.0, 1.0);
-        add_object(Arc::new(s));
-        let id = number_of_objects() - 1;
+        w.add_object(Arc::new(s));
+        let id = w.ids[0];
         let i = super::Intersection { t: 5.0, object: id };
         let xs = vec![i];
         let comps = xs[0].prepare_computations(&r, &xs);
@@ -137,6 +140,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test_render() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let ray_origin = Tuple::point(0.0, 0.0, -5.0);
         let wall_z = 10.0;
         let wall_size = 7.0;
@@ -147,8 +151,8 @@ mod tests {
         let color = Color::new(1.0, 0.0, 0.0);
         let mut s = Sphere::new();
         s.transform = Matrix::scale(1.0, 0.5, 1.0);
-        add_object(Arc::new(s));
-        let id = number_of_objects() - 1;
+        w.add_object(Arc::new(s));
+        let id = w.ids[0];
         let object = get_object(id);
 
         for y in 0..canvas_pixels {
@@ -170,6 +174,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test_render2() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let ray_origin = Tuple::point(0.0, 0.0, -5.0);
         let wall_z = 10.0;
         let wall_size = 7.0;
@@ -180,8 +185,8 @@ mod tests {
         let mut s = Sphere::new();
         //s.transform = Matrix::scale(1.0, 0.5, 1.0);
         s.material.pattern = Pattern::solid(Color::new(1.0, 0.2, 1.0), Matrix::identity(4));
-        add_object(Arc::new(s));
-        let id = number_of_objects() - 1;
+        w.add_object(Arc::new(s));
+        let id = w.ids[0];
         let object = get_object(id);
 
         let light_position = Tuple::point(-10.0, 10.0, -10.0);
@@ -211,10 +216,11 @@ mod tests {
 
     #[test]
     fn test_prepare_computations() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
         let s = Sphere::new();
-        add_object(Arc::new(s));
-        let id = number_of_objects() - 1;
+        w.add_object(Arc::new(s));
+        let id = w.ids[0];
         let i = super::Intersection { t: 4.0, object: id };
         let xs = vec![i];
         let comps = xs[0].prepare_computations(&r, &xs);
@@ -228,10 +234,11 @@ mod tests {
 
     #[test]
     fn test_prepare_computations_inside() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
         let s = Sphere::new();
-        add_object(Arc::new(s));
-        let id = number_of_objects() - 1;
+        w.add_object(Arc::new(s));
+        let id = w.ids[0];
         let xs = vec![super::Intersection { t: 1.0, object: id }];
         let comps = xs[0].prepare_computations(&r, &xs);
         assert_eq!(comps.t, xs[0].t);
@@ -244,9 +251,10 @@ mod tests {
 
     #[test]
     fn precomputing_the_reflection_vector() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let s = Plane::new();
-        add_object(Arc::new(s));
-        let id = number_of_objects() - 1;
+        w.add_object(Arc::new(s));
+        let id = w.ids[0];
         let r = Ray::new(Tuple::point(0.0, 1.0, -1.0), Tuple::vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0));
         let xs = vec![super::Intersection { t: 2.0_f64.sqrt(), object: id }];
         let comps = xs[0].prepare_computations(&r, &xs);
@@ -255,23 +263,24 @@ mod tests {
 
     #[test]
     fn finding_n1_and_n2_at_various_intersections() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let mut a = Sphere::glass_sphere();
         a.transform = Matrix::scale(2.0, 2.0, 2.0);
         a.material.refractive_index = 1.5;
-        add_object(Arc::new(a));
-        let aid = number_of_objects() - 1;
+        w.add_object(Arc::new(a));
+        let aid = w.ids[0];
 
         let mut b = Sphere::glass_sphere();
         b.transform = Matrix::translate(0.0, 0.0, -0.25);
         b.material.refractive_index = 2.0;
-        add_object(Arc::new(b));
-        let bid = number_of_objects() - 1;
+        w.add_object(Arc::new(b));
+        let bid = w.ids[1];
 
         let mut c = Sphere::glass_sphere();
         c.transform = Matrix::translate(0.0, 0.0, 0.25);
         c.material.refractive_index = 2.5;
-        add_object(Arc::new(c));
-        let cid = number_of_objects() - 1;
+        w.add_object(Arc::new(c));
+        let cid = w.ids[2];
 
         let r = Ray::new(Tuple::point(0.0, 0.0, -4.0), Tuple::vector(0.0, 0.0, 1.0));
         let xs = vec![
@@ -295,11 +304,12 @@ mod tests {
 
     #[test]
     fn underpoint_is_offset_below_the_surface() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
         let mut s = Sphere::glass_sphere();
         s.transform = Matrix::translate(0.0, 0.0, 1.0);
-        add_object(Arc::new(s));
-        let id = number_of_objects() - 1;
+        w.add_object(Arc::new(s));
+        let id = w.ids[0];
         let i = super::Intersection { t: 5.0, object: id };
         let xs = vec![i];
         let comps = xs[0].prepare_computations(&r, &xs);

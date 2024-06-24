@@ -1,5 +1,6 @@
 use crate::tuple::Tuple;
 
+#[allow(dead_code)]
 pub struct Computations {
     pub t: f64,
     pub object: usize,

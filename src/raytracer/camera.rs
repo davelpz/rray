@@ -95,7 +95,7 @@ mod tests {
     use crate::raytracer::material::pattern::Pattern;
     use crate::raytracer::object::plane::Plane;
     use crate::raytracer::object::sphere::Sphere;
-    use crate::raytracer::scene::{add_object, Scene};
+    use crate::raytracer::scene::{Scene};
     use super::Camera;
     use crate::tuple::Tuple;
 
@@ -178,13 +178,13 @@ mod tests {
         let up = Tuple::vector(0.0, 1.0, 0.0);
         c.transform = Matrix::view_transform(from, to, up);
 
-        let w = Scene::new(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
 
         let mut floor = Sphere::new();
         floor.transform = Matrix::scale(10.0, 0.01, 10.0);
         floor.material.pattern = Pattern::solid(Color::new(1.0, 0.9, 0.9), Matrix::identity(4));
         floor.material.specular = 0.0;
-        add_object(Arc::new(floor));
+        w.add_object(Arc::new(floor));
 
         let mut left_wall = Sphere::new();
         left_wall.transform = Matrix::translate(0.0, 0.0, 5.0)
@@ -193,7 +193,7 @@ mod tests {
             .multiply(&Matrix::scale(10.0, 0.01, 10.0));
         left_wall.material.pattern = Pattern::solid(Color::new(1.0, 0.9, 0.9), Matrix::identity(4));
         left_wall.material.specular = 0.0;
-        add_object(Arc::new(left_wall));
+        w.add_object(Arc::new(left_wall));
 
         let mut right_wall = Sphere::new();
         right_wall.transform = Matrix::translate(0.0, 0.0, 5.0)
@@ -202,28 +202,28 @@ mod tests {
             .multiply(&Matrix::scale(10.0, 0.01, 10.0));
         right_wall.material.pattern = Pattern::solid(Color::new(1.0, 0.9, 0.9), Matrix::identity(4));
         right_wall.material.specular = 0.0;
-        add_object(Arc::new(right_wall));
+        w.add_object(Arc::new(right_wall));
 
         let mut middle = Sphere::new();
         middle.transform = Matrix::translate(-0.5, 1.0, 0.5);
         middle.material.pattern = Pattern::solid(Color::new(0.1, 1.0, 0.5), Matrix::identity(4));
         middle.material.diffuse = 0.7;
         middle.material.specular = 0.3;
-        add_object(Arc::new(middle));
+        w.add_object(Arc::new(middle));
 
         let mut right = Sphere::new();
         right.transform = Matrix::translate(1.5, 0.5, -0.5).multiply(&Matrix::scale(0.5, 0.5, 0.5));
         right.material.pattern = Pattern::solid(Color::new(0.5, 1.0, 0.1), Matrix::identity(4));
         right.material.diffuse = 0.7;
         right.material.specular = 0.3;
-        add_object(Arc::new(right));
+        w.add_object(Arc::new(right));
 
         let mut left = Sphere::new();
         left.transform = Matrix::translate(-1.5, 0.33, -0.75).multiply(&Matrix::scale(0.33, 0.33, 0.33));
         left.material.pattern = Pattern::solid(Color::new(1.0, 0.8, 0.1), Matrix::identity(4));
         left.material.diffuse = 0.7;
         left.material.specular = 0.3;
-        add_object(Arc::new(left));
+        w.add_object(Arc::new(left));
 
         let image = c.render(&w);
         //let image = c.render_sequential(&w);
@@ -243,7 +243,7 @@ mod tests {
         let up = Tuple::vector(0.0, 1.0, 0.0);
         c.transform = Matrix::view_transform(from, to, up);
 
-        let w = Scene::new(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
 
         let mut floor = Plane::new();
         floor.transform = Matrix::translate(0.0, 0.0, 0.0);
@@ -251,7 +251,7 @@ mod tests {
                                                  Pattern::solid(Color::new(0.5, 1.0, 0.5), Matrix::identity(4)),
                                                  Matrix::scale(0.1, 0.1, 0.1).multiply(&Matrix::rotate_y(std::f64::consts::PI / 4.0)));
         floor.material.specular = 0.0;
-        add_object(Arc::new(floor));
+        w.add_object(Arc::new(floor));
 
         let mut left_wall = Plane::new();
         left_wall.material.pattern = Pattern::gradient(Pattern::solid(Color::new(1.0, 0.5, 0.5), Matrix::identity(4)),
@@ -266,7 +266,7 @@ mod tests {
             .multiply(&Matrix::rotate_x(std::f64::consts::PI / 2.0))
         ;
         left_wall.material.specular = 0.0;
-        add_object(Arc::new(left_wall));
+        w.add_object(Arc::new(left_wall));
 
         let mut right_wall = Plane::new();
         right_wall.transform = Matrix::identity(4)
@@ -276,28 +276,28 @@ mod tests {
         ;
         right_wall.material.pattern = Pattern::solid(Color::new(1.0, 0.9, 0.9), Matrix::identity(4));
         right_wall.material.specular = 0.0;
-        add_object(Arc::new(right_wall));
+        w.add_object(Arc::new(right_wall));
 
         let mut middle = Sphere::new();
         middle.transform = Matrix::translate(-0.5, 1.0, 0.5);
         middle.material.pattern = Pattern::solid(Color::new(0.1, 1.0, 0.5), Matrix::identity(4));
         middle.material.diffuse = 0.7;
         middle.material.specular = 0.3;
-        add_object(Arc::new(middle));
+        w.add_object(Arc::new(middle));
 
         let mut right = Sphere::new();
         right.transform = Matrix::translate(1.5, 0.5, -0.5).multiply(&Matrix::scale(0.5, 0.5, 0.5));
         right.material.pattern = Pattern::solid(Color::new(0.5, 1.0, 0.1), Matrix::identity(4));
         right.material.diffuse = 0.7;
         right.material.specular = 0.3;
-        add_object(Arc::new(right));
+        w.add_object(Arc::new(right));
 
         let mut left = Sphere::new();
         left.transform = Matrix::translate(-1.5, 0.33, -0.75).multiply(&Matrix::scale(0.33, 0.33, 0.33));
         left.material.pattern = Pattern::solid(Color::new(1.0, 0.8, 0.1), Matrix::identity(4));
         left.material.diffuse = 0.7;
         left.material.specular = 0.3;
-        add_object(Arc::new(left));
+        w.add_object(Arc::new(left));
 
         let image = c.render(&w);
         //let image = c.render_sequential(&w);

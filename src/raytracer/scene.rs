@@ -15,11 +15,12 @@ lazy_static! {
     pub static ref GLOBAL_OBJECTS: Arc<Mutex<Vec<Arc<dyn Object + Send>>>> = Arc::new(Mutex::new(Vec::new()));
 }
 
-pub fn add_object(mut object: Arc<dyn Object + Send>) {
+fn add_object(mut object: Arc<dyn Object + Send>) -> usize {
     let mut objects = GLOBAL_OBJECTS.lock().unwrap();
     let id = objects.len();
     Arc::get_mut(&mut object).unwrap().set_id(id);
     objects.push(object);
+    id
 }
 
 pub fn get_object(id: usize) -> Arc<dyn Object + Send> {
@@ -31,7 +32,8 @@ pub fn get_object(id: usize) -> Arc<dyn Object + Send> {
     }
 }
 
-pub fn number_of_objects() -> usize {
+#[allow(dead_code)]
+fn number_of_objects() -> usize {
     let objects = GLOBAL_OBJECTS.lock().unwrap();
     objects.len()
 }
@@ -44,11 +46,20 @@ pub fn clear_global_objects() {
 
 pub struct Scene {
     pub light: Light,
+    pub ids: Vec<usize>,
 }
 
 impl Scene {
     pub fn new(light: Light) -> Scene {
-        Scene { light }
+        Scene {
+            light,
+            ids: Vec::new(),
+        }
+    }
+
+    pub fn add_object(&mut self, object: Arc<dyn Object + Send>) {
+        let id = add_object(object);
+        self.ids.push(id);
     }
 
     #[allow(dead_code)]
@@ -67,8 +78,8 @@ impl Scene {
 
     pub fn intersect(&self, r: &Ray) -> Vec<Intersection> {
         let mut xs: Vec<Intersection> = Vec::new();
-        for i in 0..number_of_objects() {
-            let object = get_object(i);
+        for i in &self.ids {
+            let object = get_object(*i);
             let mut obj_xs = object.intersect(r);
             xs.append(&mut obj_xs);
         }
@@ -162,6 +173,7 @@ impl Scene {
         self.color_at(&refract_ray, remaining - 1) * object.get_material().transparency
     }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -322,21 +334,19 @@ mod tests {
     #[ignore]
     fn reflected_color_for_the_a_nonreflective_material() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let mut w = Scene::new(light);
+
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::solid(Color::new(0.8, 1.0, 0.6), Matrix::identity(4));
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
-        add_object(Arc::new(s1));
+        w.add_object(Arc::new(s1));
 
         let mut s2 = Sphere::new();
         s2.transform = Matrix::scale(0.5, 0.5, 0.5);
         s2.material.ambient = 1.0;
-        add_object(Arc::new(s2));
-        let s2_id = number_of_objects() - 1;
-
-        let w = Scene {
-            light,
-        };
+        w.add_object(Arc::new(s2));
+        let s2_id = w.ids[1];
 
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
         let xs = vec![Intersection{t: 1.0, object: s2_id}];
@@ -349,26 +359,23 @@ mod tests {
     #[ignore]
     fn reflected_color_for_a_reflective_material() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let mut w = Scene::new(light);
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::solid(Color::new(0.8, 1.0, 0.6), Matrix::identity(4));
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
-        add_object(Arc::new(s1));
+        w.add_object(Arc::new(s1));
 
         let mut s2 = Sphere::new();
         s2.transform = Matrix::scale(0.5, 0.5, 0.5);
         s2.material.ambient = 1.0;
-        add_object(Arc::new(s2));
+        w.add_object(Arc::new(s2));
 
         let mut s3 = Plane::new();
         s3.material.reflective = 0.5;
         s3.transform = Matrix::translate(0.0, -1.0, 0.0);
-        add_object(Arc::new(s3));
-        let s3_id = number_of_objects() - 1;
-
-        let w = Scene {
-            light,
-        };
+        w.add_object(Arc::new(s3));
+        let s3_id = w.ids[2];
 
         let r = Ray::new(Tuple::point(0.0, 0.0, -3.0), Tuple::vector(0.0, -2.0_f64.sqrt()/2.0, 2.0_f64.sqrt()/2.0));
         let xs = vec![Intersection{t: 2.0_f64.sqrt(), object: s3_id}];
@@ -381,26 +388,24 @@ mod tests {
     #[ignore]
     fn shade_hit_for_a_reflective_material() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let mut w = Scene::new(light);
+
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::solid(Color::new(0.8, 1.0, 0.6), Matrix::identity(4));
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
-        add_object(Arc::new(s1));
+        w.add_object(Arc::new(s1));
 
         let mut s2 = Sphere::new();
         s2.transform = Matrix::scale(0.5, 0.5, 0.5);
         s2.material.ambient = 1.0;
-        add_object(Arc::new(s2));
+        w.add_object(Arc::new(s2));
 
         let mut s3 = Plane::new();
         s3.material.reflective = 0.5;
         s3.transform = Matrix::translate(0.0, -1.0, 0.0);
-        add_object(Arc::new(s3));
-        let s3_id = number_of_objects() - 1;
-
-        let w = Scene {
-            light,
-        };
+        w.add_object(Arc::new(s3));
+        let s3_id = w.ids[2];
 
         let r = Ray::new(Tuple::point(0.0, 0.0, -3.0), Tuple::vector(0.0, -2.0_f64.sqrt()/2.0, 2.0_f64.sqrt()/2.0));
         let xs = vec![Intersection{t: 2.0_f64.sqrt(), object: s3_id}];
@@ -412,21 +417,19 @@ mod tests {
     #[test]
     #[ignore]
     fn color_at_with_mutually_reflective_surfaces() {
-        clear_global_objects();
         let light = Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0));
+        let mut w = Scene::new(light);
+
         let mut lower = Plane::new();
         lower.material.reflective = 1.0;
         lower.transform = Matrix::translate(0.0, -1.0, 0.0);
-        add_object(Arc::new(lower));
+        w.add_object(Arc::new(lower));
 
         let mut upper = Plane::new();
         upper.material.reflective = 1.0;
         upper.transform = Matrix::translate(0.0, 1.0, 0.0);
-        add_object(Arc::new(upper));
+        w.add_object(Arc::new(upper));
 
-        let w = Scene {
-            light,
-        };
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 1.0, 0.0));
         let c = w.color_at(&r,5);
         assert_eq!(c, Color::new(11.4,11.4,11.4));
@@ -436,26 +439,24 @@ mod tests {
     #[ignore]
     fn reflected_color_at_the_maximum_recursive_depth() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let mut w = Scene::new(light);
+
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::solid(Color::new(0.8, 1.0, 0.6), Matrix::identity(4));
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
-        add_object(Arc::new(s1));
+        w.add_object(Arc::new(s1));
 
         let mut s2 = Sphere::new();
         s2.transform = Matrix::scale(0.5, 0.5, 0.5);
         s2.material.ambient = 1.0;
-        add_object(Arc::new(s2));
+        w.add_object(Arc::new(s2));
 
         let mut s3 = Plane::new();
         s3.material.reflective = 0.5;
         s3.transform = Matrix::translate(0.0, -1.0, 0.0);
-        add_object(Arc::new(s3));
-        let s3_id = number_of_objects() - 1;
-
-        let w = Scene {
-            light,
-        };
+        w.add_object(Arc::new(s3));
+        let s3_id = w.ids[2];
 
         let r = Ray::new(Tuple::point(0.0, 0.0, -3.0), Tuple::vector(0.0, -2.0_f64.sqrt()/2.0, 2.0_f64.sqrt()/2.0));
         let xs = vec![Intersection{t: 2.0_f64.sqrt(), object: s3_id}];
@@ -480,21 +481,20 @@ mod tests {
     #[ignore]
     fn refracted_color_at_the_maximum_recursive_depth() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let mut w = Scene::new(light);
+
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::solid(Color::new(0.8, 1.0, 0.6), Matrix::identity(4));
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
         s1.material.transparency = 1.0;
         s1.material.refractive_index = 1.5;
-        add_object(Arc::new(s1));
-        let s1_id = number_of_objects() - 1;
+        w.add_object(Arc::new(s1));
+        let s1_id = w.ids[0];
+
         let mut s2 = Sphere::new();
         s2.transform = Matrix::scale(0.5, 0.5, 0.5);
-        add_object(Arc::new(s2));
-
-        let w = Scene {
-            light,
-        };
+        w.add_object(Arc::new(s2));
 
         let shape = s1_id;
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
@@ -508,21 +508,20 @@ mod tests {
     #[ignore]
     fn refracted_color_under_total_internal_reflection() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let mut w = Scene::new(light);
+
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::solid(Color::new(0.8, 1.0, 0.6), Matrix::identity(4));
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
         s1.material.transparency = 1.0;
         s1.material.refractive_index = 1.5;
-        add_object(Arc::new(s1));
-        let s1_id = number_of_objects() - 1;
+        w.add_object(Arc::new(s1));
+        let s1_id = w.ids[0];
+
         let mut s2 = Sphere::new();
         s2.transform = Matrix::scale(0.5, 0.5, 0.5);
-        add_object(Arc::new(s2));
-
-        let w = Scene {
-            light,
-        };
+        w.add_object(Arc::new(s2));
 
         let shape = s1_id;
         let r = Ray::new(Tuple::point(0.0, 0.0, 2_f64.sqrt()/2.0), Tuple::vector(0.0, 1.0, 0.0));
@@ -536,23 +535,22 @@ mod tests {
     #[ignore]
     fn refracted_color_with_a_recracted_ray() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let mut w = Scene::new(light);
+
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::test();
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
         s1.material.ambient = 1.0;
-        add_object(Arc::new(s1));
-        let s1_id = number_of_objects() - 1;
+        w.add_object(Arc::new(s1));
+        let s1_id = w.ids[0];
+
         let mut s2 = Sphere::new();
         s2.material.transparency = 1.0;
         s2.material.refractive_index = 1.5;
         s2.transform = Matrix::scale(0.5, 0.5, 0.5);
-        add_object(Arc::new(s2));
-        let s2_id = number_of_objects() - 1;
-
-        let w = Scene {
-            light,
-        };
+        w.add_object(Arc::new(s2));
+        let s2_id = w.ids[1];
 
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.1), Tuple::vector(0.0, 1.0, 0.0));
         let xs = vec![
@@ -571,32 +569,30 @@ mod tests {
     fn shade_hit_with_a_transparent_material() {
         clear_global_objects();
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let mut w = Scene::new(light);
+
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::test();
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
-        add_object(Arc::new(s1));
+        w.add_object(Arc::new(s1));
 
         let mut s2 = Sphere::new();
         s2.transform = Matrix::scale(0.5, 0.5, 0.5);
-        add_object(Arc::new(s2));
+        w.add_object(Arc::new(s2));
 
         let mut floor = Plane::new();
         floor.material.transparency = 0.5;
         floor.material.refractive_index = 1.5;
         floor.transform = Matrix::translate(0.0, -1.0, 0.0);
-        add_object(Arc::new(floor));
-        let floor_id = number_of_objects() - 1;
+        w.add_object(Arc::new(floor));
+        let floor_id = w.ids[2];
+
         let mut s3 = Sphere::new();
         s3.transform = Matrix::translate(0.0, -3.5, -0.5);
         s3.material.pattern = Pattern::solid(Color::new(1.0, 0.0, 0.0), Matrix::identity(4));
         s3.material.ambient = 0.5;
-        add_object(Arc::new(s3));
-
-
-        let w = Scene {
-            light,
-        };
+        w.add_object(Arc::new(s3));
 
         let ray = Ray::new(Tuple::point(0.0, 0.0, -3.0), Tuple::vector(0.0, -2.0_f64.sqrt()/2.0, 2.0_f64.sqrt()/2.0));
         let xs = vec![
@@ -610,35 +606,32 @@ mod tests {
     #[test]
     #[ignore]
     fn shade_hit_with_a_reflective_transparent_material() {
-        clear_global_objects();
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let mut w = Scene::new(light);
+
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::test();
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
-        add_object(Arc::new(s1));
+        w.add_object(Arc::new(s1));
 
         let mut s2 = Sphere::new();
         s2.transform = Matrix::scale(0.5, 0.5, 0.5);
-        add_object(Arc::new(s2));
+        w.add_object(Arc::new(s2));
 
         let mut floor = Plane::new();
         floor.transform = Matrix::translate(0.0, -1.0, 0.0);
         floor.material.reflective = 0.5;
         floor.material.transparency = 0.5;
         floor.material.refractive_index = 1.5;
-        add_object(Arc::new(floor));
-        let floor_id = number_of_objects() - 1;
+        w.add_object(Arc::new(floor));
+        let floor_id = w.ids[2];
+
         let mut s3 = Sphere::new();
         s3.transform = Matrix::translate(0.0, -3.5, -0.5);
         s3.material.pattern = Pattern::solid(Color::new(1.0, 0.0, 0.0), Matrix::identity(4));
         s3.material.ambient = 0.5;
-        add_object(Arc::new(s3));
-
-
-        let w = Scene {
-            light,
-        };
+        w.add_object(Arc::new(s3));
 
         let ray = Ray::new(Tuple::point(0.0, 0.0, -3.0), Tuple::vector(0.0, -2.0_f64.sqrt()/2.0, 2.0_f64.sqrt()/2.0));
         let xs = vec![Intersection::new(2.0_f64.sqrt(), floor_id)];

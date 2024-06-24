@@ -79,7 +79,7 @@ mod tests {
     use crate::raytracer::material::Material;
     use crate::raytracer::material::pattern::Pattern;
     use crate::raytracer::object::sphere::Sphere;
-    use crate::raytracer::scene::{add_object, number_of_objects};
+    use crate::raytracer::scene::Scene;
 
     #[test]
     fn a_point_light_has_a_position_and_intensity() {
@@ -92,6 +92,7 @@ mod tests {
 
     #[test]
     fn lighting_with_the_eye_between_the_light_and_the_surface() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let material = Material::default();
         let position = Tuple::point(0.0, 0.0, 0.0);
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
@@ -99,14 +100,15 @@ mod tests {
         let light = Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let mut shape = Sphere::new();
         shape.material = material;
-        add_object(Arc::new(shape));
-        let id = number_of_objects() - 1;
+        w.add_object(Arc::new(shape));
+        let id = w.ids[0];
         let result = lighting(id, &light, &position, &eyev, &normalv, false);
         assert_eq!(result, Color::new(1.9, 1.9, 1.9));
     }
 
     #[test]
     fn lighting_with_the_eye_between_light_and_surface_eye_offset_45_degrees() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let material = Material::default();
         let position = Tuple::point(0.0, 0.0, 0.0);
         let eyev = Tuple::vector(0.0, 2_f64.sqrt() / 2.0, -2_f64.sqrt() / 2.0);
@@ -114,14 +116,15 @@ mod tests {
         let light = Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let mut shape = Sphere::new();
         shape.material = material;
-        add_object(Arc::new(shape));
-        let id = number_of_objects() - 1;
+        w.add_object(Arc::new(shape));
+        let id = w.ids[0];
         let result = lighting(id, &light, &position, &eyev, &normalv, false);
         assert_eq!(result, Color::new(1.0, 1.0, 1.0));
     }
 
     #[test]
     fn lighting_with_eye_opposite_surface_light_offset_45_degrees() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let material = Material::default();
         let position = Tuple::point(0.0, 0.0, 0.0);
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
@@ -129,14 +132,15 @@ mod tests {
         let light = Light::new_point_light(Tuple::point(0.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let mut shape = Sphere::new();
         shape.material = material;
-        add_object(Arc::new(shape));
-        let id = number_of_objects() - 1;
+        w.add_object(Arc::new(shape));
+        let id = w.ids[0];
         let result = lighting(id, &light, &position, &eyev, &normalv, false);
         assert_eq!(result, Color::new(0.7364, 0.7364, 0.7364));
     }
 
     #[test]
     fn lighting_with_eye_in_the_path_of_the_reflection_vector() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let material = Material::default();
         let position = Tuple::point(0.0, 0.0, 0.0);
         let eyev = Tuple::vector(0.0, -2_f64.sqrt() / 2.0, -2_f64.sqrt() / 2.0);
@@ -144,14 +148,15 @@ mod tests {
         let light = Light::new_point_light(Tuple::point(0.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let mut shape = Sphere::new();
         shape.material = material;
-        add_object(Arc::new(shape));
-        let id = number_of_objects() - 1;
+        w.add_object(Arc::new(shape));
+        let id = w.ids[0];
         let result = lighting(id, &light, &position, &eyev, &normalv, false);
         assert_eq!(result, Color::new(1.6364, 1.6364, 1.6364));
     }
 
     #[test]
     fn lighting_with_the_light_behind_the_surface() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 10.0), Color::new(1.0, 1.0, 1.0)));
         let material = Material::default();
         let position = Tuple::point(0.0, 0.0, 0.0);
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
@@ -159,14 +164,15 @@ mod tests {
         let light = Light::new_point_light(Tuple::point(0.0, 0.0, 10.0), Color::new(1.0, 1.0, 1.0));
         let mut shape = Sphere::new();
         shape.material = material;
-        add_object(Arc::new(shape));
-        let id = number_of_objects() - 1;
+        w.add_object(Arc::new(shape));
+        let id = w.ids[0];
         let result = lighting(id, &light, &position, &eyev, &normalv, false);
         assert_eq!(result, Color::new(0.1, 0.1, 0.1));
     }
 
     #[test]
     fn lighting_with_a_pattern_applied() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let mut m = Material::default();
         m.ambient = 1.0;
         m.diffuse = 0.0;
@@ -176,8 +182,8 @@ mod tests {
                                     Matrix::identity(4));
         let mut object = Sphere::new();
         object.material = m;
-        add_object(Arc::new(object));
-        let id = number_of_objects() - 1;
+        w.add_object(Arc::new(object));
+        let id = w.ids[0];
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
