@@ -1,6 +1,6 @@
 use crate::color::Color;
 use crate::tuple::Tuple;
-use crate::raytracer::scene::get_object;
+use crate::raytracer::object::db::get_object;
 use crate::raytracer::material::pattern_at_object;
 
 #[derive(Debug, Clone, PartialEq, Copy)]

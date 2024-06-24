@@ -1,7 +1,8 @@
 use crate::EPSILON;
 use crate::raytracer::computations::Computations;
 use crate::raytracer::ray::Ray;
-use crate::raytracer::scene::get_object;
+use crate::raytracer::object::db::get_object;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Intersection {
     pub t: f64,

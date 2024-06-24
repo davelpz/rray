@@ -3,6 +3,7 @@ pub(crate) mod plane;
 pub(crate) mod cone;
 pub(crate) mod cube;
 pub(crate) mod cylinder;
+pub(crate) mod db;
 
 use std::fmt::{Debug, Formatter};
 use crate::matrix::Matrix;

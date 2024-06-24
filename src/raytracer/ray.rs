@@ -49,7 +49,8 @@ mod tests {
     use crate::raytracer::material::pattern::Pattern;
     use crate::raytracer::object::sphere::Sphere;
     use crate::raytracer::object::plane::Plane;
-    use crate::raytracer::scene::{get_object, Scene};
+    use crate::raytracer::scene::Scene;
+    use crate::raytracer::object::db::get_object;
 
     #[test]
     fn test_ray() {

@@ -2,7 +2,7 @@ use crate::color::Color;
 use crate::matrix::Matrix;
 use crate::raytracer::material::pattern::Pattern;
 use crate::tuple::Tuple;
-use crate::raytracer::scene::get_object;
+use crate::raytracer::object::db::get_object;
 
 pub(crate) mod pattern;
 mod noise;
