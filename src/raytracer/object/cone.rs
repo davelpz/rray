@@ -5,9 +5,11 @@ use crate::raytracer::object::Object;
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 use crate::EPSILON;
+use crate::raytracer::object::db::insert_sentinel;
 
 pub struct Cone {
     pub id: usize,
+    pub parent_id: Option<usize>,
     pub minimum: f64,
     pub maximum: f64,
     pub closed: bool,
@@ -18,7 +20,8 @@ pub struct Cone {
 impl Cone {
     pub fn new(minimum: f64, maximum: f64, closed: bool) -> Cone {
         Cone {
-            id: 0,
+            id: insert_sentinel(),
+            parent_id: None,
             transform: Matrix::identity(4),
             material: Material::default(),
             minimum,
@@ -169,7 +172,11 @@ impl Object for Cone {
         self.id
     }
 
-    fn set_id(&mut self, id: usize) {
-        self.id = id;
+    fn get_parent_id(&self) -> Option<usize> {
+        self.parent_id
+    }
+
+    fn set_parent_id(&mut self, id: usize) {
+        self.parent_id = Some(id);
     }
 }

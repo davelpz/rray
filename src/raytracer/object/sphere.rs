@@ -1,12 +1,14 @@
 use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
+use crate::raytracer::object::db::insert_sentinel;
 use crate::raytracer::object::Object;
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 
 pub struct Sphere {
     pub id: usize,
+    pub parent_id: Option<usize>,
     pub transform: Matrix,
     pub material: Material,
 }
@@ -14,7 +16,8 @@ pub struct Sphere {
 impl Sphere {
     pub fn new() -> Sphere {
         Sphere {
-            id: 0,
+            id: insert_sentinel(),
+            parent_id: None,
             transform: Matrix::identity(4),
             material: Material::default(),
         }
@@ -25,7 +28,8 @@ impl Sphere {
         m.transparency = 1.0;
         m.refractive_index = 1.5;
         Sphere {
-            id: 0,
+            id: insert_sentinel(),
+            parent_id: None,
             transform: Matrix::identity(4),
             material: m,
         }
@@ -84,7 +88,11 @@ impl Object for Sphere {
         self.id
     }
 
-    fn set_id(&mut self, id: usize) {
-        self.id = id;
+    fn get_parent_id(&self) -> Option<usize> {
+        self.parent_id
+    }
+
+    fn set_parent_id(&mut self, id: usize) {
+        self.parent_id = Some(id);
     }
 }

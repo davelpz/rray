@@ -4,10 +4,12 @@ use crate::raytracer::material::Material;
 use crate::raytracer::object::Object;
 use crate::raytracer::ray::Ray;
 use crate::EPSILON;
+use crate::raytracer::object::db::insert_sentinel;
 use crate::tuple::Tuple;
 
 pub struct Plane {
     pub id: usize,
+    pub parent_id: Option<usize>,
     pub transform: Matrix,
     pub material: Material,
 }
@@ -15,7 +17,8 @@ pub struct Plane {
 impl Plane {
     pub fn new() -> Plane {
         Plane {
-            id: 0,
+            id: insert_sentinel(),
+            parent_id: None,
             transform: Matrix::identity(4),
             material: Material::default(),
         }
@@ -64,7 +67,11 @@ impl Object for Plane {
         self.id
     }
 
-    fn set_id(&mut self, id: usize) {
-        self.id = id;
+    fn get_parent_id(&self) -> Option<usize> {
+        self.parent_id
+    }
+
+    fn set_parent_id(&mut self, id: usize) {
+        self.parent_id = Some(id);
     }
 }

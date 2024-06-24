@@ -4,6 +4,7 @@ pub(crate) mod cone;
 pub(crate) mod cube;
 pub(crate) mod cylinder;
 pub(crate) mod db;
+mod group;
 
 use std::fmt::{Debug, Formatter};
 use crate::matrix::Matrix;
@@ -21,7 +22,8 @@ pub trait Object: Sync + Send {
     fn set_material(&mut self, material: Material);
     fn debug_string(&self) -> String;
     fn get_id(&self) -> usize;
-    fn set_id(&mut self, id: usize);
+    fn get_parent_id(&self) -> Option<usize>;
+    fn set_parent_id(&mut self, id: usize);
 }
 
 impl PartialEq for dyn Object {

@@ -9,7 +9,7 @@ use crate::raytracer::light::{Light, lighting};
 use crate::raytracer::object::Object;
 use crate::raytracer::object::sphere::Sphere;
 use crate::raytracer::ray::{hit, Ray};
-use crate::raytracer::object::db::{add_object, get_object};
+use crate::raytracer::object::db::{get_object, replace_sentinel};
 
 pub struct Scene {
     pub light: Light,
@@ -24,9 +24,11 @@ impl Scene {
         }
     }
 
-    pub fn add_object(&mut self, object: Arc<dyn Object + Send>) {
-        let id = add_object(object);
+    pub fn add_object(&mut self, object: Arc<dyn Object + Send>) -> usize {
+        let id = object.get_id();
+        replace_sentinel(id, object);
         self.ids.push(id);
+        id
     }
 
     #[allow(dead_code)]
