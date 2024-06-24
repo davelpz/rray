@@ -196,7 +196,6 @@ mod tests {
     use crate::tuple::Tuple;
 
     #[test]
-    #[ignore]
     fn creating_a_world() {
         let w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
         assert_eq!(w.ids.len(), 0);
@@ -204,7 +203,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn intersect_a_world_with_a_ray() {
         let w = Scene::default_scene();
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
@@ -217,7 +215,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn shading_an_intersection() {
         let w = Scene::default_scene();
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
@@ -229,7 +226,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn shading_an_intersection_from_the_inside() {
         let mut w = Scene::default_scene();
         w.light = Light::new_point_light(Tuple::point(0.0, 0.25, 0.0), Color::new(1.0, 1.0, 1.0));
@@ -242,7 +238,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn shade_hit_is_given_an_intersection_in_shadow() {
         let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let s1 = Sphere::new();
@@ -259,7 +254,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn the_color_when_a_ray_misses() {
         let w = Scene::default_scene();
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 1.0, 0.0));
@@ -268,7 +262,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn the_color_when_a_ray_hits() {
         let w = Scene::default_scene();
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
@@ -277,7 +270,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn the_color_with_an_intersection_behind_the_ray() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let mut w = Scene::new(light);
@@ -305,7 +297,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn there_is_no_shadow_when_nothing_is_collinear_with_point_and_light() {
         let w = Scene::default_scene();
         let p = Tuple::point(0.0, 10.0, 0.0);
@@ -313,7 +304,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn the_shadow_when_an_object_is_between_the_point_and_the_light() {
         let w = Scene::default_scene();
         let p = Tuple::point(10.0, -10.0, 10.0);
@@ -321,7 +311,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn there_is_no_shadow_when_an_object_is_behind_the_light() {
         let w = Scene::default_scene();
         let p = Tuple::point(-20.0, 20.0, -20.0);
@@ -329,7 +318,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn there_is_no_shadow_when_an_object_is_behind_the_point() {
         let w = Scene::default_scene();
         let p = Tuple::point(-2.0, 2.0, -2.0);
@@ -337,7 +325,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn reflected_color_for_the_a_nonreflective_material() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let mut w = Scene::new(light);
@@ -362,7 +349,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn reflected_color_for_a_reflective_material() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let mut w = Scene::new(light);
@@ -391,7 +377,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn shade_hit_for_a_reflective_material() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let mut w = Scene::new(light);
@@ -421,7 +406,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn color_at_with_mutually_reflective_surfaces() {
         let light = Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0));
         let mut w = Scene::new(light);
@@ -442,7 +426,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn reflected_color_at_the_maximum_recursive_depth() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let mut w = Scene::new(light);
@@ -472,7 +455,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn refracted_color_with_an_opaque_surface() {
         let w = Scene::default_scene();
         let shape = w.get_object_at_index(0);
@@ -484,7 +466,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn refracted_color_at_the_maximum_recursive_depth() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let mut w = Scene::new(light);
@@ -511,7 +492,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn refracted_color_under_total_internal_reflection() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let mut w = Scene::new(light);
@@ -538,7 +518,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn refracted_color_with_a_recracted_ray() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let mut w = Scene::new(light);
@@ -571,7 +550,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn shade_hit_with_a_transparent_material() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let mut w = Scene::new(light);
@@ -609,7 +587,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn shade_hit_with_a_reflective_transparent_material() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let mut w = Scene::new(light);
