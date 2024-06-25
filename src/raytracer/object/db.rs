@@ -32,7 +32,7 @@ fn clear_global_objects() {
     objects.clear();
 }
 
-pub fn insert_sentinel() -> usize {
+pub fn get_next_id() -> usize {
     let mut objects = GLOBAL_OBJECTS.lock().unwrap();
     let id = objects.len();
     let sentinel = Arc::new(Sentinel {id, parent_id: None});
@@ -40,8 +40,9 @@ pub fn insert_sentinel() -> usize {
     id
 }
 
-pub fn replace_sentinel(id: usize, object: Arc<dyn Object + Send>) {
+pub fn add_object(object: Arc<dyn Object + Send>) {
     let mut objects = GLOBAL_OBJECTS.lock().unwrap();
+    let id = object.get_id();
     objects[id] = object;
 }
 

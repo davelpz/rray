@@ -4,7 +4,7 @@ use crate::raytracer::material::Material;
 use crate::raytracer::object::{normal_to_world, Object, world_to_object};
 use crate::raytracer::ray::Ray;
 use crate::EPSILON;
-use crate::raytracer::object::db::insert_sentinel;
+use crate::raytracer::object::db::get_next_id;
 use crate::tuple::Tuple;
 
 pub struct Plane {
@@ -17,7 +17,7 @@ pub struct Plane {
 impl Plane {
     pub fn new() -> Plane {
         Plane {
-            id: insert_sentinel(),
+            id: get_next_id(),
             parent_id: None,
             transform: Matrix::identity(4),
             material: Material::default(),

@@ -5,7 +5,7 @@ use crate::raytracer::object::{normal_to_world, Object, world_to_object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 use crate::EPSILON;
-use crate::raytracer::object::db::insert_sentinel;
+use crate::raytracer::object::db::get_next_id;
 
 pub struct Cylinder {
     pub id: usize,
@@ -20,7 +20,7 @@ pub struct Cylinder {
 impl Cylinder {
     pub fn new(minimum: f64, maximum: f64, closed: bool) -> Cylinder {
         Cylinder {
-            id: insert_sentinel(),
+            id: get_next_id(),
             parent_id: None,
             transform: Matrix::identity(4),
             material: Material::default(),

@@ -1,7 +1,7 @@
 use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
-use crate::raytracer::object::db::insert_sentinel;
+use crate::raytracer::object::db::get_next_id;
 use crate::raytracer::object::{normal_to_world, Object, world_to_object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
@@ -16,7 +16,7 @@ pub struct Sphere {
 impl Sphere {
     pub fn new() -> Sphere {
         Sphere {
-            id: insert_sentinel(),
+            id: get_next_id(),
             parent_id: None,
             transform: Matrix::identity(4),
             material: Material::default(),
@@ -28,7 +28,7 @@ impl Sphere {
         m.transparency = 1.0;
         m.refractive_index = 1.5;
         Sphere {
-            id: insert_sentinel(),
+            id: get_next_id(),
             parent_id: None,
             transform: Matrix::identity(4),
             material: m,

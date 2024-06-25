@@ -5,7 +5,7 @@ use crate::raytracer::material::Material;
 use crate::raytracer::object::Object;
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
-use crate::raytracer::object::db::{get_object, insert_sentinel, replace_sentinel};
+use crate::raytracer::object::db::{get_object, get_next_id, add_object};
 use crate::raytracer::object::{world_to_object, normal_to_world};
 
 pub struct Group {
@@ -18,7 +18,7 @@ pub struct Group {
 impl Group {
     pub fn new() -> Group {
         Group {
-            id: insert_sentinel(),
+            id: get_next_id(),
             parent_id: None,
             transform: Matrix::identity(4),
             child_ids: Vec::new(),
@@ -28,7 +28,7 @@ impl Group {
     pub fn add_child(&mut self, mut object: Arc<dyn Object + Send>) -> usize {
         Arc::get_mut(&mut object).unwrap().set_parent_id(self.id);
         let child_id = object.get_id();
-        replace_sentinel(child_id, object);
+        add_object(object);
         self.child_ids.push(child_id);
         child_id
     }
