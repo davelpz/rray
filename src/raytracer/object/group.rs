@@ -107,6 +107,7 @@ mod tests {
     use crate::raytracer::scene::Scene;
     use crate::tuple::Tuple;
     use crate::raytracer::object::{world_to_object, normal_to_world};
+    use crate::raytracer::object::db::get_object;
 
     #[test]
     fn intersecting_a_ray_with_an_empty_group() {
@@ -196,5 +197,25 @@ mod tests {
 
         let n = normal_to_world(s_id, &Tuple::vector(3.0_f64.sqrt() / 3.0, 3.0_f64.sqrt() / 3.0, 3.0_f64.sqrt() / 3.0));
         assert_eq!(n, Tuple::vector(0.28571428571428575, 0.42857142857142855, -0.8571428571428571));
+    }
+
+    #[test]
+    fn finding_the_normal_on_a_child_object() {
+        let mut scene = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut g1 = Group::new();
+        g1.set_transform(Matrix::rotate_y(std::f64::consts::PI / 2.0));
+        let mut g2 = Group::new();
+        g2.set_transform(Matrix::scale(1.0, 2.0, 3.0));
+        let mut s = Sphere::new();
+        s.set_transform(Matrix::translate(5.0, 0.0, 0.0));
+        let s_id = s.get_id();
+        let s: Arc<dyn Object + Send> = Arc::new(s);
+        g2.add_child(s);
+        g1.add_child(Arc::new(g2));
+        scene.add_object(Arc::new(g1));
+
+        let s = get_object(s_id);
+        let n = s.normal_at(&Tuple::point(1.7321, 1.1547, -5.5774));
+        assert_eq!(n, Tuple::vector(0.28570368184140726, 0.42854315178114105, -0.8571605294481017));
     }
 }

@@ -3,6 +3,7 @@ use crate::matrix::Matrix;
 use crate::raytracer::material::pattern::Pattern;
 use crate::tuple::Tuple;
 use crate::raytracer::object::db::get_object;
+use crate::raytracer::object::world_to_object;
 
 pub(crate) mod pattern;
 mod noise;
@@ -35,9 +36,8 @@ impl Material {
 }
 
 pub fn pattern_at_object(shape: usize, world_point: &Tuple) -> Color {
-    let shape = get_object(shape);
-    let object_point = shape.get_transform().inverse().multiply_tuple(world_point);
-    shape.get_material().pattern.pattern_at(&object_point)
+    let object_point = world_to_object(shape, world_point);
+    get_object(shape).get_material().pattern.pattern_at(&object_point)
 }
 
 #[cfg(test)]

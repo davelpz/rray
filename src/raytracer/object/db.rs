@@ -35,7 +35,7 @@ fn clear_global_objects() {
 pub fn insert_sentinel() -> usize {
     let mut objects = GLOBAL_OBJECTS.lock().unwrap();
     let id = objects.len();
-    let sentinel = Arc::new(Sentinel {id, parent_id: 0});
+    let sentinel = Arc::new(Sentinel {id, parent_id: None});
     objects.push(sentinel);
     id
 }
@@ -47,7 +47,7 @@ pub fn replace_sentinel(id: usize, object: Arc<dyn Object + Send>) {
 
 struct Sentinel {
     id: usize,
-    parent_id: usize
+    parent_id: Option<usize>,
 }
 
 impl Object for Sentinel {
@@ -82,10 +82,10 @@ impl Object for Sentinel {
     }
 
     fn get_parent_id(&self) -> Option<usize> {
-        Some(self.parent_id)
+        self.parent_id
     }
 
-    fn set_parent_id(&mut self, _id: usize) {
-        self.parent_id = _id;
+    fn set_parent_id(&mut self, id: usize) {
+        self.parent_id = Some(id);
     }
 }

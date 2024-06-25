@@ -1,7 +1,7 @@
 use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
-use crate::raytracer::object::Object;
+use crate::raytracer::object::{normal_to_world, Object, world_to_object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 use crate::EPSILON;
@@ -144,11 +144,9 @@ impl Object for Cone {
     }
 
     fn normal_at(&self, world_point: &Tuple) -> Tuple {
-        let local_point = self.transform.inverse().multiply_tuple(world_point);
+        let local_point = world_to_object(self.id, world_point);
         let local_normal = self.local_normal_at(&local_point);
-        let mut world_normal = self.transform.inverse().transpose().multiply_tuple(&local_normal);
-        world_normal.w = 0.0;
-        world_normal.normalize()
+        normal_to_world(self.id, &local_normal)
     }
 
     fn get_transform(&self) -> &Matrix {
