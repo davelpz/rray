@@ -10,6 +10,7 @@ use std::fmt::{Debug, Formatter};
 use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
+use crate::raytracer::object::db::get_object;
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 
@@ -36,6 +37,26 @@ impl Debug for dyn Object {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.debug_string())
     }
+}
+
+pub fn world_to_object(object_id: usize, world_point: &Tuple) -> Tuple {
+    let object = get_object(object_id);
+    let mut point = world_point.clone();
+    if let Some(parent_id) = object.get_parent_id() {
+        point = world_to_object(parent_id, &point);
+    }
+    object.get_transform().inverse().multiply_tuple(&point)
+}
+
+pub fn normal_to_world(object_id: usize, object_normal: &Tuple) -> Tuple {
+    let object = get_object(object_id);
+    let mut normal = object.get_transform().inverse().transpose().multiply_tuple(&object_normal);
+    normal.w = 0.0;
+    normal = normal.normalize();
+    if let Some(parent_id) = object.get_parent_id() {
+        normal = normal_to_world(parent_id, &normal);
+    }
+    normal
 }
 
 #[cfg(test)]

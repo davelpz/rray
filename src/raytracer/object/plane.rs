@@ -23,21 +23,29 @@ impl Plane {
             material: Material::default(),
         }
     }
+
+    pub fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
+        if ray.direction.y.abs() < EPSILON {
+            vec![]
+        } else {
+            let t = -ray.origin.y / ray.direction.y;
+            vec![Intersection { t, object: self.id }]
+        }
+    }
+    pub fn local_normal_at(&self, _local_point: &Tuple) -> Tuple {
+        Tuple::vector(0.0, 1.0, 0.0)
+    }
 }
 
 impl Object for Plane {
     fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
         let trans_ray = ray.transform(&self.transform.inverse());
-        if trans_ray.direction.y.abs() < EPSILON {
-            vec![]
-        } else {
-            let t = -trans_ray.origin.y / trans_ray.direction.y;
-            vec![Intersection { t, object: self.id }]
-        }
+        self.local_intersect(&trans_ray)
     }
 
-    fn normal_at(&self, _world_point: &Tuple) -> Tuple {
-        let local_normal = Tuple::vector(0.0, 1.0, 0.0);
+    fn normal_at(&self, world_point: &Tuple) -> Tuple {
+        let local_point = self.transform.inverse().multiply_tuple(world_point);
+        let local_normal = self.local_normal_at(&local_point);
         let mut world_normal = self.transform.inverse().transpose().multiply_tuple(&local_normal);
         world_normal.w = 0.0;
         world_normal.normalize()

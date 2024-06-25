@@ -29,6 +29,53 @@ impl Cone {
             closed,
         }
     }
+    pub fn local_intersect(&self, trans_ray: &Ray) -> Vec<Intersection> {
+        let mut xs: Vec<Intersection> = vec![];
+        let minimum = self.minimum;
+        let maximum = self.maximum;
+        let a = trans_ray.direction.x * trans_ray.direction.x - trans_ray.direction.y * trans_ray.direction.y + trans_ray.direction.z * trans_ray.direction.z;
+        let b = 2.0 * trans_ray.origin.x * trans_ray.direction.x - 2.0 * trans_ray.origin.y * trans_ray.direction.y + 2.0 * trans_ray.origin.z * trans_ray.direction.z;
+
+        if a.abs() < EPSILON && b.abs() < EPSILON {
+            self.intersect_caps(&trans_ray).iter().for_each(|i| xs.push(i.clone()));
+            return xs;
+        }
+
+        let c = trans_ray.origin.x * trans_ray.origin.x - trans_ray.origin.y * trans_ray.origin.y + trans_ray.origin.z * trans_ray.origin.z;
+
+        if a.abs() < EPSILON {
+            let t = -c / (2.0 * b);
+            let y = trans_ray.origin.y + t * trans_ray.direction.y;
+            if minimum < y && y < maximum {
+                xs.push(Intersection::new(t, self.id));
+                return xs;
+            }
+        }
+
+        let discriminant = b * b - 4.0 * a * c;
+        if discriminant < 0.0 {
+            return vec![];
+        }
+
+        let mut t0 = (-b - discriminant.sqrt()) / (2.0 * a);
+        let mut t1 = (-b + discriminant.sqrt()) / (2.0 * a);
+        if t0 > t1 {
+            std::mem::swap(&mut t0, &mut t1);
+        }
+
+        let y0 = trans_ray.origin.y + t0 * trans_ray.direction.y;
+        if minimum < y0 && y0 < maximum {
+            xs.push(Intersection::new(t0, self.id));
+        }
+        let y1 = trans_ray.origin.y + t1 * trans_ray.direction.y;
+        if minimum < y1 && y1 < maximum {
+            xs.push(Intersection::new(t1, self.id));
+        }
+
+        self.intersect_caps(&trans_ray).iter().for_each(|i| xs.push(i.clone()));
+
+        xs
+    }
 
     // Check if the intersection at `t` is within the radius of the cone
 // at the end caps
@@ -93,51 +140,7 @@ impl Cone {
 impl Object for Cone {
     fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
         let trans_ray = ray.transform(&self.transform.inverse());
-        let mut xs: Vec<Intersection> = vec![];
-        let minimum = self.minimum;
-        let maximum = self.maximum;
-        let a = trans_ray.direction.x * trans_ray.direction.x - trans_ray.direction.y * trans_ray.direction.y + trans_ray.direction.z * trans_ray.direction.z;
-        let b = 2.0 * trans_ray.origin.x * trans_ray.direction.x - 2.0 * trans_ray.origin.y * trans_ray.direction.y + 2.0 * trans_ray.origin.z * trans_ray.direction.z;
-
-        if a.abs() < EPSILON && b.abs() < EPSILON {
-            self.intersect_caps(&trans_ray).iter().for_each(|i| xs.push(i.clone()));
-            return xs;
-        }
-
-        let c = trans_ray.origin.x * trans_ray.origin.x - trans_ray.origin.y * trans_ray.origin.y + trans_ray.origin.z * trans_ray.origin.z;
-
-        if a.abs() < EPSILON {
-            let t = -c / (2.0 * b);
-            let y = trans_ray.origin.y + t * trans_ray.direction.y;
-            if minimum < y && y < maximum {
-                xs.push(Intersection::new(t, self.id));
-                return xs;
-            }
-        }
-
-        let discriminant = b * b - 4.0 * a * c;
-        if discriminant < 0.0 {
-            return vec![];
-        }
-
-        let mut t0 = (-b - discriminant.sqrt()) / (2.0 * a);
-        let mut t1 = (-b + discriminant.sqrt()) / (2.0 * a);
-        if t0 > t1 {
-            std::mem::swap(&mut t0, &mut t1);
-        }
-
-        let y0 = trans_ray.origin.y + t0 * trans_ray.direction.y;
-        if minimum < y0 && y0 < maximum {
-            xs.push(Intersection::new(t0, self.id));
-        }
-        let y1 = trans_ray.origin.y + t1 * trans_ray.direction.y;
-        if minimum < y1 && y1 < maximum {
-            xs.push(Intersection::new(t1, self.id));
-        }
-
-        self.intersect_caps(&trans_ray).iter().for_each(|i| xs.push(i.clone()));
-
-        xs
+        self.local_intersect(&trans_ray)
     }
 
     fn normal_at(&self, world_point: &Tuple) -> Tuple {

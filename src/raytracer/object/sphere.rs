@@ -34,16 +34,11 @@ impl Sphere {
             material: m,
         }
     }
-}
 
-const ORIGIN: Tuple = Tuple { x: 0.0, y: 0.0, z: 0.0, w: 1.0 };
-
-impl Object for Sphere {
-    fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
-        let trans_ray = ray.transform(&self.transform.inverse());
-        let sphere_to_ray = trans_ray.origin.subtract(&ORIGIN);
-        let a = trans_ray.direction.dot(&trans_ray.direction);
-        let b = 2.0 * trans_ray.direction.dot(&sphere_to_ray);
+    pub fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
+        let sphere_to_ray = ray.origin.subtract(&ORIGIN);
+        let a = ray.direction.dot(&ray.direction);
+        let b = 2.0 * ray.direction.dot(&sphere_to_ray);
         let c = sphere_to_ray.dot(&sphere_to_ray) - 1.0;
         let discriminant: f64 = b * b - 4.0 * a * c;
         if discriminant < 0.0 {
@@ -56,9 +51,22 @@ impl Object for Sphere {
         }
     }
 
+    pub fn local_normal_at(&self, local_point: &Tuple) -> Tuple {
+        local_point.subtract(&Tuple::point(0.0, 0.0, 0.0))
+    }
+}
+
+const ORIGIN: Tuple = Tuple { x: 0.0, y: 0.0, z: 0.0, w: 1.0 };
+
+impl Object for Sphere {
+    fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
+        let trans_ray = ray.transform(&self.transform.inverse());
+        self.local_intersect(&trans_ray)
+    }
+
     fn normal_at(&self, world_point: &Tuple) -> Tuple {
         let local_point = self.transform.inverse().multiply_tuple(world_point);
-        let local_normal = local_point.subtract(&Tuple::point(0.0, 0.0, 0.0));
+        let local_normal = self.local_normal_at(&local_point);
         let mut world_normal = self.transform.inverse().transpose().multiply_tuple(&local_normal);
         world_normal.w = 0.0;
         world_normal.normalize()

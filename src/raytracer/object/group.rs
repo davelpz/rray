@@ -6,6 +6,7 @@ use crate::raytracer::object::Object;
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 use crate::raytracer::object::db::{get_object, insert_sentinel, replace_sentinel};
+use crate::raytracer::object::{world_to_object, normal_to_world};
 
 pub struct Group {
     pub id: usize,
@@ -43,17 +44,8 @@ impl Group {
         xs
     }
 
-    pub fn local_normal_at(&self) -> Tuple {
+    pub fn local_normal_at(&self, _vector: &Tuple) -> Tuple {
         panic!("Groups do not have normals")
-    }
-
-    pub fn world_to_object(object_id: usize, world_point: &Tuple) -> Tuple {
-        let object = get_object(object_id);
-        let mut point = world_point.clone();
-        if let Some(parent_id) = object.get_parent_id() {
-            point = Group::world_to_object(parent_id, &point);
-        }
-        object.get_transform().inverse().multiply_tuple(&point)
     }
 }
 
@@ -64,11 +56,9 @@ impl Object for Group {
     }
 
     fn normal_at(&self, world_point: &Tuple) -> Tuple {
-        let local_point = self.transform.inverse().multiply_tuple(world_point);
-        let local_normal = self.local_normal_at();
-        let mut world_normal = self.transform.inverse().transpose().multiply_tuple(&local_normal);
-        world_normal.w = 0.0;
-        world_normal.normalize()
+        let local_point = world_to_object(self.id, world_point);
+        let local_normal = self.local_normal_at(&local_point);
+        normal_to_world(self.id, &local_normal)
     }
 
     fn get_transform(&self) -> &Matrix {
@@ -116,6 +106,7 @@ mod tests {
     use crate::raytracer::ray::Ray;
     use crate::raytracer::scene::Scene;
     use crate::tuple::Tuple;
+    use crate::raytracer::object::{world_to_object, normal_to_world};
 
     #[test]
     fn intersecting_a_ray_with_an_empty_group() {
@@ -179,7 +170,31 @@ mod tests {
 
         scene.add_object(Arc::new(g1));
 
-        let p = Group::world_to_object(s_id, &Tuple::point(-2.0, 0.0, -10.0));
+        let p = world_to_object(s_id, &Tuple::point(-2.0, 0.0, -10.0));
         assert_eq!(p, Tuple::point(0.0, 0.0, -1.0));
+    }
+
+    #[test]
+    fn converting_a_normal_from_object_to_world_space() {
+        let mut scene = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+
+        let mut g1 = Group::new();
+        g1.set_transform(Matrix::rotate_y(std::f64::consts::PI / 2.0));
+
+        let mut g2 = Group::new();
+        g2.set_transform(Matrix::scale(1.0, 2.0, 3.0));
+
+        let mut s = Sphere::new();
+        let s_id = s.get_id();
+        s.set_transform(Matrix::translate(5.0, 0.0, 0.0));
+        let s: Arc<dyn Object + Send> = Arc::new(s);
+        g2.add_child(s);
+
+        g1.add_child(Arc::new(g2));
+
+        scene.add_object(Arc::new(g1));
+
+        let n = normal_to_world(s_id, &Tuple::vector(3.0_f64.sqrt() / 3.0, 3.0_f64.sqrt() / 3.0, 3.0_f64.sqrt() / 3.0));
+        assert_eq!(n, Tuple::vector(0.28571428571428575, 0.42857142857142855, -0.8571428571428571));
     }
 }
