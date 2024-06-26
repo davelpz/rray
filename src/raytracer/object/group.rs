@@ -99,6 +99,7 @@ mod tests {
     use std::sync::Arc;
     use crate::color::Color;
     use crate::matrix::Matrix;
+    use crate::raytracer::camera::Camera;
     use crate::raytracer::light::Light;
     use crate::raytracer::object::group::Group;
     use crate::raytracer::object::Object;
@@ -107,6 +108,7 @@ mod tests {
     use crate::raytracer::scene::Scene;
     use crate::tuple::Tuple;
     use crate::raytracer::object::{world_to_object, normal_to_world};
+    use crate::raytracer::object::cylinder::Cylinder;
     use crate::raytracer::object::db::get_object;
 
     #[test]
@@ -217,5 +219,62 @@ mod tests {
         let s = get_object(s_id);
         let n = s.normal_at(&Tuple::point(1.7321, 1.1547, -5.5774));
         assert_eq!(n, Tuple::vector(0.28570368184140726, 0.42854315178114105, -0.8571605294481017));
+    }
+
+    fn hexagon_corner() -> Sphere {
+        let mut corner = Sphere::new();
+        corner.set_transform(Matrix::translate(0.0, 0.0, -1.0) * Matrix::scale(0.25, 0.25, 0.25));
+        corner
+    }
+
+    fn hexagon_edge() -> Cylinder {
+        let mut edge = Cylinder::new(0.0, 1.0, true);
+        edge.set_transform(Matrix::translate(0.0, 0.0, -1.0)
+            * Matrix::rotate_y(-std::f64::consts::PI / 6.0)
+            * Matrix::rotate_z(-std::f64::consts::PI / 2.0)
+            * Matrix::scale(0.25, 1.0, 0.25));
+        edge
+    }
+
+    fn hexagon_side() -> Group {
+        let mut side = Group::new();
+        side.add_child(Arc::new(hexagon_corner()));
+        side.add_child(Arc::new(hexagon_edge()));
+        side
+    }
+
+    fn hexagon() -> Group {
+        let mut hex = Group::new();
+        for n in 0..6 {
+            let mut side = hexagon_side();
+            side.set_transform(Matrix::rotate_y(n as f64 * std::f64::consts::PI / 3.0));
+            hex.add_child(Arc::new(side));
+        }
+        hex
+    }
+
+    fn degrees_to_radians(degrees: f64) -> f64 {
+        degrees * std::f64::consts::PI / 180.0
+    }
+
+    #[test]
+    #[ignore]
+    fn constructing_a_hexagon() {
+        use crate::color::Color;
+
+        let mut c = Camera::new(800, 800, std::f64::consts::PI / 3.0);
+        let from = Tuple::point(0.0, 2.0, -5.0);
+        let to = Tuple::point(0.0, 0.0, 0.0);
+        let up = Tuple::vector(0.0, 1.0, 0.0);
+        c.transform = Matrix::view_transform(from, to, up);
+
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut g = hexagon();
+        g.set_transform(Matrix::rotate_x(degrees_to_radians(-20.0)));
+        w.add_object(Arc::new(g));
+
+        let image = c.render(&w);
+
+        image.write_to_file("canvas.png");
     }
 }
