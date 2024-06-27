@@ -59,6 +59,61 @@ pub fn normal_to_world(object_id: usize, object_normal: &Tuple) -> Tuple {
     normal
 }
 
+pub struct AABB {
+    pub min: Tuple,
+    pub max: Tuple,
+}
+
+impl AABB {
+pub fn intersect(&self, r: &Ray) -> bool {
+    // Calculate the intersection of the ray with the x planes of the AABB
+    let mut tmin = (self.min.x - r.origin.x) / r.direction.x;
+    let mut tmax = (self.max.x - r.origin.x) / r.direction.x;
+    // Ensure tmin is less than tmax
+    if tmin > tmax {
+        std::mem::swap(&mut tmin, &mut tmax);
+    }
+
+    // Calculate the intersection of the ray with the y planes of the AABB
+    let mut tymin = (self.min.y - r.origin.y) / r.direction.y;
+    let mut tymax = (self.max.y - r.origin.y) / r.direction.y;
+    // Ensure tymin is less than tymax
+    if tymin > tymax {
+        std::mem::swap(&mut tymin, &mut tymax);
+    }
+
+    // If the ray misses the AABB, return false
+    if tmin > tymax || tymin > tmax {
+        return false;
+    }
+
+    // Update tmin to ensure the ray intersects the AABB in all three dimensions
+    if tymin > tmin {
+        tmin = tymin;
+    }
+
+    // Update tmax to ensure the ray intersects the AABB in all three dimensions
+    if tymax < tmax {
+        tmax = tymax;
+    }
+
+    // Calculate the intersection of the ray with the z planes of the AABB
+    let mut tzmin = (self.min.z - r.origin.z) / r.direction.z;
+    let mut tzmax = (self.max.z - r.origin.z) / r.direction.z;
+    // Ensure tzmin is less than tzmax
+    if tzmin > tzmax {
+        std::mem::swap(&mut tzmin, &mut tzmax);
+    }
+
+    // If the ray misses the AABB, return false
+    if tmin > tzmax || tzmin > tmax {
+        return false;
+    }
+
+    // If the ray intersects the AABB in all three dimensions, return true
+    true
+}}
+
 #[cfg(test)]
 mod test {
     use std::sync::Arc;
