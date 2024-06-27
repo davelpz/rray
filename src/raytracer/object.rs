@@ -4,7 +4,7 @@ pub(crate) mod cone;
 pub(crate) mod cube;
 pub(crate) mod cylinder;
 pub(crate) mod db;
-mod group;
+pub(crate) mod group;
 
 use std::fmt::{Debug, Formatter};
 use crate::matrix::Matrix;

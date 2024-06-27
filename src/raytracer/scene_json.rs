@@ -32,10 +32,11 @@ pub struct SceneObject {
     #[serde(rename = "type")]
     pub object_type: String,
     pub transforms: Option<Vec<TransformJson>>,
-    pub material: MaterialJson,
+    pub material: Option<MaterialJson>,
     pub minimum: Option<f64>,
     pub maximum: Option<f64>,
     pub closed: Option<bool>,
+    pub children: Option<Vec<SceneObject>>,
 }
 
 #[derive(Deserialize, Clone)]
@@ -55,7 +56,7 @@ pub struct TransformJson {
     pub zy: Option<f64>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct MaterialJson {
     pub pattern: PatternJson,
     pub ambient: Option<f64>,
@@ -65,6 +66,21 @@ pub struct MaterialJson {
     pub reflective: Option<f64>,
     pub transparency: Option<f64>,
     pub refractive_index: Option<f64>,
+}
+
+impl Default for MaterialJson {
+    fn default() -> Self {
+        MaterialJson {
+            pattern: PatternJson::default(),
+            ambient: Some(0.1),
+            diffuse: Some(0.9),
+            specular: Some(0.9),
+            shininess: Some(200.0),
+            reflective: Some(0.0),
+            transparency: Some(0.0),
+            refractive_index: Some(1.0),
+        }
+    }
 }
 
 #[derive(Deserialize, Clone)]
@@ -175,5 +191,56 @@ mod tests {
         "#;
         let scene = create_scene_from_json_str(json_string);
         assert!(scene.is_some());
+    }
+
+    #[test]
+    fn test_group_from_json() {
+        let json_string = r#"
+            {
+                "camera": {
+                    "fov": 90,
+                    "from": [0.0, 0.0, 0.0],
+                    "to": [0.0, 0.0, 1.0],
+                    "up": [0.0, 1.0, 0.0]
+                },
+                "lights": [
+                    {
+                        "type": "point",
+                        "color": [1.0, 1.0, 1.0],
+                        "position": [0.0, 0.0, 0.0]
+                    }
+                ],
+                "scene": [
+                   {
+                        "type": "group",
+                        "children": [
+                            {
+                                "type": "sphere"
+                            },
+                            {
+                                "type": "cube"
+                            },
+                            {
+                                "type": "cone"
+                            },
+                            {
+                                "type": "plane"
+                            },
+                            {
+                                "type": "cylinder"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "sphere"
+                    }
+                ]
+            }
+        "#;
+        let scene = create_scene_from_json_str(json_string);
+        assert!(scene.is_some());
+        let scene = scene.unwrap();
+        assert_eq!(scene.scene.len(), 2);
+        assert_eq!(scene.scene[0].children.as_ref().unwrap().len(), 5);
     }
 }

@@ -12,6 +12,7 @@ use crate::raytracer::object::cylinder::Cylinder;
 use crate::raytracer::object::Object;
 use crate::raytracer::object::plane::Plane;
 use crate::raytracer::object::sphere::Sphere;
+use crate::raytracer::object::group::Group;
 use crate::raytracer::scene::{Scene};
 use crate::raytracer::scene_json::{MaterialJson, PatternJson, SceneJson, SceneObject, TransformJson};
 
@@ -145,6 +146,18 @@ fn create_material(material: &MaterialJson) -> Material {
     m
 }
 
+fn create_group(scene_object: &SceneObject) -> Arc<dyn Object> {
+    let mut g = Group::new();
+    if scene_object.children.is_some() {
+        let children = scene_object.children.as_ref().unwrap();
+        for child in children {
+            let s = create_shape(&child);
+            g.add_child(s);
+        }
+    }
+    Arc::new(g)
+}
+
 fn create_shape(scene_object: &SceneObject) -> Arc<dyn Object> {
     let mut s: Arc<dyn Object> = match scene_object.object_type.as_str() {
         "sphere" => Arc::new(Sphere::new()),
@@ -163,10 +176,11 @@ fn create_shape(scene_object: &SceneObject) -> Arc<dyn Object> {
             let closed = scene_object.closed.unwrap_or(false);
             Arc::new(Cone::new(minimum, maximum, closed))
         },
+        "group" => create_group(scene_object),
         _ => Arc::new(Sphere::new()),
     };
     Arc::get_mut(&mut s).unwrap().set_transform(create_transforms(&scene_object.transforms.clone().unwrap_or(vec![])));
-    Arc::get_mut(&mut s).unwrap().set_material(create_material(&scene_object.material));
+    Arc::get_mut(&mut s).unwrap().set_material(create_material(&scene_object.material.clone().unwrap_or_default()));
     s
 }
 
