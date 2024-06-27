@@ -1,14 +1,28 @@
 #![allow(dead_code)]
 
-pub const EPSILON: f64 = 0.00001;
+use crate::EPSILON;
 use crate::tuple::Tuple;
 use std::ops::Mul;
+use std::sync::Mutex;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Matrix {
     pub rows: usize,
     pub cols: usize,
     pub data: Vec<f64>,
+    inverse_cache: Mutex<Option<Box<Matrix>>>,
+}
+
+impl Clone for Matrix {
+    fn clone(&self) -> Self {
+        let data = self.data.clone();
+        Matrix {
+            rows: self.rows,
+            cols: self.cols,
+            data,
+            inverse_cache: Mutex::new(None), // Initialize a new Mutex for the clone
+        }
+    }
 }
 
 impl PartialEq for Matrix {
@@ -20,7 +34,7 @@ impl PartialEq for Matrix {
 impl Matrix {
     pub fn new(rows: usize, cols: usize) -> Matrix {
         let data = vec![0.0; rows * cols];
-        Matrix { rows, cols, data }
+        Matrix { rows, cols, data, inverse_cache: Mutex::new(None)}
     }
 
     pub fn get(&self, row: usize, col: usize) -> f64 {
@@ -131,6 +145,14 @@ impl Matrix {
     }
 
     pub fn inverse(&self) -> Matrix {
+        let mut inverse_cache = self.inverse_cache.lock().unwrap();
+
+        // If the inverse is already cached, return it
+        if let Some(inverse) = &*inverse_cache {
+            return (**inverse).clone();
+        }
+
+        // Otherwise, calculate the inverse
         let det = self.determinant();
         let mut result = Matrix::new(self.rows, self.cols);
         for i in 0..self.rows {
@@ -139,7 +161,12 @@ impl Matrix {
                 result.set(j, i, c / det);
             }
         }
-        result
+        let inverse = result;
+
+        // Cache the inverse
+        *inverse_cache = Some(Box::new(inverse.clone()));
+
+        inverse
     }
 
     pub fn translate(x: f64, y: f64, z: f64) -> Matrix {

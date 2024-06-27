@@ -1,14 +1,16 @@
-#[allow(dead_code)]
-
 use crate::color::Color;
 use crate::matrix::Matrix;
-use crate::pattern::Pattern;
-use crate::shape::Shape;
+use crate::raytracer::material::pattern::Pattern;
 use crate::tuple::Tuple;
+use crate::raytracer::object::db::get_object;
+use crate::raytracer::object::world_to_object;
+
+pub(crate) mod pattern;
+mod noise;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Material {
-    pub pattern: Pattern,
+    pub pattern: pattern::Pattern,
     pub ambient: f64,
     pub diffuse: f64,
     pub specular: f64,
@@ -33,47 +35,53 @@ impl Material {
     }
 }
 
-pub fn pattern_at_object(shape: &Shape, world_point: &Tuple) -> Color {
-    let object_point = shape.transform.inverse().multiply_tuple(world_point);
-    shape.material.pattern.pattern_at(&object_point)
+pub fn pattern_at_object(shape: usize, world_point: &Tuple) -> Color {
+    let object_point = world_to_object(shape, world_point);
+    get_object(shape).get_material().pattern.pattern_at(&object_point)
 }
-
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
     use crate::color::Color;
     use crate::tuple::Tuple;
-    use crate::light::Light;
-    use crate::light::lighting;
-    use crate::material;
-    use crate::material::{Material};
     use crate::matrix::Matrix;
-    use crate::pattern::Pattern;
-    use crate::shape::Shape;
+    use crate::raytracer::light::{Light, lighting};
+    use crate::raytracer::material::Material;
+    use crate::raytracer::material::pattern_at_object;
+    use crate::raytracer::material::pattern::Pattern;
+    use crate::raytracer::object::sphere::Sphere;
+    use crate::raytracer::scene::Scene;
 
     #[test]
     fn surface_in_shadow() {
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let m = Material::default();
         let position = Tuple::point(0.0, 0.0, 0.0);
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
         let in_shadow = true;
-        let mut shape = Shape::sphere();
+        let mut shape = Sphere::new();
         shape.material = m;
-        let result = lighting(&shape,  &light, &position, &eyev, &normalv, in_shadow);
+        w.add_object(Arc::new(shape));
+        let id = w.ids[0];
+        let result = lighting(id,  &light, &position, &eyev, &normalv, in_shadow);
         assert_eq!(result, Color::new(0.1, 0.1, 0.1));
     }
 
     #[test]
     fn test_pattern() {
-        let mut shape = Shape::sphere();
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut shape = Sphere::new();
         shape.transform = Matrix::scale(2.0, 2.0, 2.0);
         let mut m = Material::default();
         m.pattern = Pattern::test();
         m.pattern.transform = Matrix::translate(0.5, 1.0, 1.5);
         shape.material = m;
-        let c = material::pattern_at_object(&shape, &Tuple::point(2.5, 3.0, 3.5));
+        w.add_object(Arc::new(shape));
+        let id = w.ids[0];
+        let c = pattern_at_object(id, &Tuple::point(2.5, 3.0, 3.5));
         assert_eq!(c, Color::new(0.75, 0.5, 0.25));
     }
 }

@@ -1,8 +1,7 @@
 #![allow(dead_code)]
 
 use std::ops::Mul;
-
-const EPSILON: f64 = 0.00001;
+use crate::EPSILON;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
@@ -22,6 +21,10 @@ impl PartialEq for Color {
 impl Color {
     pub fn new(r: f64, g: f64, b: f64) -> Color {
         Color { r, g, b }
+    }
+
+    pub fn white() -> Color {
+        Color::new(1.0, 1.0, 1.0)
     }
 
     pub fn add(&self, other: &Color) -> Color {

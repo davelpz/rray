@@ -1,7 +1,6 @@
-mod noise;
-
 use crate::color::Color;
 use crate::matrix::Matrix;
+use crate::raytracer::material::noise;
 use crate::tuple::Tuple;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -98,35 +97,35 @@ impl Pattern {
             PatternType::Solid(color) => {
                 color.clone()
             },
-            PatternType::Stripe(a,b) => {
+            PatternType::Stripe(a, b) => {
                 if (pattern_point.x.floor() as i32) % 2 == 0 {
                     a.pattern_at(&pattern_point)
                 } else {
                     b.pattern_at(&pattern_point)
                 }
             },
-            PatternType::Gradient(a,b) => {
+            PatternType::Gradient(a, b) => {
                 let a = a.pattern_at(&pattern_point);
                 let b = b.pattern_at(&pattern_point);
                 let distance = b.subtract(&a);
                 let fraction = pattern_point.x - pattern_point.x.floor();
                 a.add(&distance.multiply(fraction))
             },
-            PatternType::Ring(a,b) => {
+            PatternType::Ring(a, b) => {
                 if (pattern_point.x.powi(2) + pattern_point.z.powi(2)).sqrt().floor() as i32 % 2 == 0 {
                     a.pattern_at(&pattern_point)
                 } else {
                     b.pattern_at(&pattern_point)
                 }
             },
-            PatternType::Checker(a,b) => {
+            PatternType::Checker(a, b) => {
                 if (pattern_point.x.floor() + pattern_point.y.floor() + pattern_point.z.floor()) as i32 % 2 == 0 {
                     a.pattern_at(&pattern_point)
                 } else {
                     b.pattern_at(&pattern_point)
                 }
             },
-            PatternType::Blend(a,b, scale) => {
+            PatternType::Blend(a, b, scale) => {
                 let a = a.pattern_at(&pattern_point);
                 let b = b.pattern_at(&pattern_point);
                 a.multiply(1.0-scale).add(&b.multiply(*scale))
@@ -144,7 +143,7 @@ impl Pattern {
                 let new_point = Tuple::new(new_x, new_y, new_z, pattern_point.w);
                 a.pattern_at(&new_point)
             },
-            PatternType::Noise(a,b, scale, octaves, persistence) => {
+            PatternType::Noise(a, b, scale, octaves, persistence) => {
                 let noise = noise::octave_perlin(pattern_point.x, pattern_point.y, pattern_point.z, *octaves, *persistence);
                 let noise = noise * scale;
                 if noise <= 0.0 {
@@ -159,10 +158,17 @@ impl Pattern {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
     use crate::color::Color;
     use crate::matrix::Matrix;
+    use crate::raytracer::intersection::Intersection;
+    use crate::raytracer::light::Light;
     use crate::tuple::Tuple;
-    use crate::pattern::{Pattern};
+    use crate::raytracer::material::noise::get_noise_3d;
+    use crate::raytracer::material::pattern::Pattern;
+    use crate::raytracer::object::sphere::Sphere;
+    use crate::raytracer::ray::Ray;
+    use crate::raytracer::scene::Scene;
 
     #[test]
     fn stripe_pattern_is_constant_in_y() {
@@ -249,8 +255,6 @@ mod tests {
         assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 1.01)), Color::new(0.0, 0.0, 0.0));
     }
 
-    use crate::pattern::noise::get_noise_3d;
-
     #[test]
     #[ignore]
     fn test_fastnoise() {
@@ -272,17 +276,16 @@ mod tests {
         println!("min: {}, max {}", min, max);
     }
 
-    use crate::shape::Shape;
-    use crate::ray::Ray;
-    use crate::ray::Intersection;
-
     #[test]
     fn schlick_reflectance_under_total_internal_reflection() {
-        let shape = Shape::glass_sphere();
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::white()));
+        let shape = Sphere::glass_sphere();
+        w.add_object(Arc::new(shape));
+        let id = w.ids[0];
         let r = Ray::new(Tuple::point(0.0, 0.0, 2_f64.sqrt()/2.0), Tuple::vector(0.0, 1.0, 0.0));
         let xs = vec![
-            Intersection::new(-2.0_f64.sqrt() / 2.0, &shape),
-            Intersection::new(2.0_f64.sqrt() / 2.0, &shape)
+            Intersection::new(-2.0_f64.sqrt() / 2.0, id),
+            Intersection::new(2.0_f64.sqrt() / 2.0, id)
         ];
         let comps = xs[1].prepare_computations(&r, &xs);
         let reflectance = comps.schlick();
@@ -291,26 +294,32 @@ mod tests {
 
     #[test]
     fn schlick_reflectance_with_perpendicular_viewing_angle() {
-        let shape = Shape::glass_sphere();
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::white()));
+        let shape = Sphere::glass_sphere();
+        w.add_object(Arc::new(shape));
+        let id = w.ids[0];
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 1.0, 0.0));
         let xs = vec![
-            Intersection::new(-1.0, &shape),
-            Intersection::new(1.0, &shape)
+            Intersection::new(-1.0, id),
+            Intersection::new(1.0, id)
         ];
         let comps = xs[1].prepare_computations(&r, &xs);
         let reflectance = comps.schlick();
-        assert!((reflectance - 0.04).abs() < crate::ray::EPSILON);
+        assert!((reflectance - 0.04).abs() < crate::EPSILON);
     }
 
     #[test]
     fn schlick_approximation_with_small_angle_and_n2_greater_than_n1() {
-        let shape = Shape::glass_sphere();
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::white()));
+        let shape = Sphere::glass_sphere();
+        w.add_object(Arc::new(shape));
+        let id = w.ids[0];
         let r = Ray::new(Tuple::point(0.0, 0.99, -2.0), Tuple::vector(0.0, 0.0, 1.0));
         let xs = vec![
-            Intersection::new(1.8589, &shape)
+            Intersection::new(1.8589, id)
         ];
         let comps = xs[0].prepare_computations(&r, &xs);
         let reflectance = comps.schlick();
-        assert!((reflectance - 0.48873).abs() < crate::ray::EPSILON);
+        assert!((reflectance - 0.48873).abs() < crate::EPSILON);
     }
 }
