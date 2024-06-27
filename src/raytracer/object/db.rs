@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
-use crate::raytracer::object::Object;
+use crate::raytracer::object::{AABB, Object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 
@@ -88,5 +88,9 @@ impl Object for Sentinel {
 
     fn set_parent_id(&mut self, id: usize) {
         self.parent_id = Some(id);
+    }
+
+    fn get_aabb(&self) -> AABB {
+        AABB::new(Tuple::point(0.0, 0.0, 0.0), Tuple::point(0.0, 0.0, 0.0))
     }
 }

@@ -1,7 +1,7 @@
 use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
-use crate::raytracer::object::{normal_to_world, Object, world_to_object};
+use crate::raytracer::object::{AABB, normal_to_world, Object, world_to_object};
 use crate::raytracer::ray::Ray;
 use crate::EPSILON;
 use crate::raytracer::object::db::get_next_id;
@@ -79,5 +79,11 @@ impl Object for Plane {
 
     fn set_parent_id(&mut self, id: usize) {
         self.parent_id = Some(id);
+    }
+
+    fn get_aabb(&self) -> AABB {
+        let min = Tuple::point(f64::NEG_INFINITY, 0.0, f64::NEG_INFINITY);
+        let max = Tuple::point(f64::INFINITY, 0.0, f64::INFINITY);
+        AABB::new(min, max)
     }
 }

@@ -2,7 +2,7 @@ use std::sync::Arc;
 use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
-use crate::raytracer::object::Object;
+use crate::raytracer::object::{AABB, Object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 use crate::raytracer::object::db::{get_object, get_next_id, add_object};
@@ -47,6 +47,8 @@ impl Group {
     pub fn local_normal_at(&self, _vector: &Tuple) -> Tuple {
         panic!("Groups do not have normals")
     }
+
+
 }
 
 impl Object for Group {
@@ -90,6 +92,10 @@ impl Object for Group {
 
     fn set_parent_id(&mut self, id: usize) {
         self.parent_id = Some(id);
+    }
+
+    fn get_aabb(&self) -> AABB {
+        todo!()
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
-use crate::raytracer::object::{normal_to_world, Object, world_to_object};
+use crate::raytracer::object::{AABB, normal_to_world, Object, world_to_object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 use crate::EPSILON;
@@ -151,5 +151,12 @@ impl Object for Cylinder {
 
     fn set_parent_id(&mut self, id: usize) {
         self.parent_id = Some(id);
+    }
+
+    fn get_aabb(&self) -> AABB {
+        AABB::new(
+            Tuple::point(-1.0, self.minimum, -1.0),
+            Tuple::point(1.0, self.maximum, 1.0),
+        )
     }
 }

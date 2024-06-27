@@ -1,7 +1,7 @@
 use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
-use crate::raytracer::object::{normal_to_world, Object, world_to_object};
+use crate::raytracer::object::{AABB, normal_to_world, Object, world_to_object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 use crate::EPSILON;
@@ -179,5 +179,12 @@ impl Object for Cone {
 
     fn set_parent_id(&mut self, id: usize) {
         self.parent_id = Some(id);
+    }
+
+    fn get_aabb(&self) -> AABB {
+        let limit = self.minimum.abs().max(self.maximum.abs());
+        let min = Tuple::point(-limit, self.minimum, -limit);
+        let max = Tuple::point(limit, self.maximum, limit);
+        AABB { min, max }
     }
 }

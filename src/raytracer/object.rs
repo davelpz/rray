@@ -7,6 +7,7 @@ pub(crate) mod db;
 pub(crate) mod group;
 
 use std::fmt::{Debug, Formatter};
+use crate::EPSILON;
 use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
@@ -25,6 +26,7 @@ pub trait Object: Sync + Send {
     fn get_id(&self) -> usize;
     fn get_parent_id(&self) -> Option<usize>;
     fn set_parent_id(&mut self, id: usize);
+    fn get_aabb(&self) -> AABB;
 }
 
 impl PartialEq for dyn Object {
@@ -59,60 +61,80 @@ pub fn normal_to_world(object_id: usize, object_normal: &Tuple) -> Tuple {
     normal
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct AABB {
     pub min: Tuple,
     pub max: Tuple,
 }
 
 impl AABB {
-pub fn intersect(&self, r: &Ray) -> bool {
-    // Calculate the intersection of the ray with the x planes of the AABB
-    let mut tmin = (self.min.x - r.origin.x) / r.direction.x;
-    let mut tmax = (self.max.x - r.origin.x) / r.direction.x;
-    // Ensure tmin is less than tmax
-    if tmin > tmax {
-        std::mem::swap(&mut tmin, &mut tmax);
+    pub fn new(min: Tuple, max: Tuple) -> AABB {
+        AABB { min, max }
     }
 
-    // Calculate the intersection of the ray with the y planes of the AABB
-    let mut tymin = (self.min.y - r.origin.y) / r.direction.y;
-    let mut tymax = (self.max.y - r.origin.y) / r.direction.y;
-    // Ensure tymin is less than tymax
-    if tymin > tymax {
-        std::mem::swap(&mut tymin, &mut tymax);
+    fn check_axis(origin: f64, direction: f64, min: f64, max: f64) -> (f64, f64) {
+        let tmin_numerator = min - origin;
+        let tmax_numerator = max - origin;
+
+        let (mut tmin, mut tmax) = if direction.abs() >= EPSILON {
+            (tmin_numerator / direction, tmax_numerator / direction)
+        } else {
+            (tmin_numerator * f64::INFINITY, tmax_numerator * f64::INFINITY)
+        };
+
+        if tmin > tmax {
+            std::mem::swap(&mut tmin, &mut tmax);
+        }
+
+        (tmin, tmax)
     }
 
-    // If the ray misses the AABB, return false
-    if tmin > tymax || tymin > tmax {
-        return false;
+    pub fn intersect(&self, r: &Ray) -> bool {
+        let (tmin_x, tmax_x) = AABB::check_axis(r.origin.x, r.direction.x, self.min.x, self.max.x);
+        let (tmin_y, tmax_y) = AABB::check_axis(r.origin.y, r.direction.y, self.min.y, self.max.y);
+        let (tmin_z, tmax_z) = AABB::check_axis(r.origin.z, r.direction.z, self.min.z, self.max.z);
+
+        let tmin = tmin_x.max(tmin_y.max(tmin_z));
+        let tmax = tmax_x.min(tmax_y.min(tmax_z));
+
+        tmin <= tmax
     }
 
-    // Update tmin to ensure the ray intersects the AABB in all three dimensions
-    if tymin > tmin {
-        tmin = tymin;
+    fn adjust_min_max(&mut self, x: f64, y:f64, z: f64) {
+        self.min = Tuple::point(self.min.x.min(x),
+                                self.min.y.min(y),
+                                self.min.z.min(z));
+        self.max = Tuple::point(self.max.x.max(x),
+                                self.max.y.max(y),
+                                self.max.z.max(z));
     }
 
-    // Update tmax to ensure the ray intersects the AABB in all three dimensions
-    if tymax < tmax {
-        tmax = tymax;
+    pub fn adjust_aabb(&mut self, aabb: &AABB) {
+        self.adjust_min_max(aabb.min.x, aabb.min.y, aabb.min.z);
+        self.adjust_min_max(aabb.max.x, aabb.max.y, aabb.max.z);
     }
 
-    // Calculate the intersection of the ray with the z planes of the AABB
-    let mut tzmin = (self.min.z - r.origin.z) / r.direction.z;
-    let mut tzmax = (self.max.z - r.origin.z) / r.direction.z;
-    // Ensure tzmin is less than tzmax
-    if tzmin > tzmax {
-        std::mem::swap(&mut tzmin, &mut tzmax);
+    pub fn apply_transform(&self, transform: &Matrix) -> AABB {
+          let corners = [
+            Tuple::point(self.min.x, self.min.y, self.min.z),
+            Tuple::point(self.min.x, self.min.y, self.max.z),
+            Tuple::point(self.min.x, self.max.y, self.min.z),
+            Tuple::point(self.min.x, self.max.y, self.max.z),
+            Tuple::point(self.max.x, self.min.y, self.min.z),
+            Tuple::point(self.max.x, self.min.y, self.max.z),
+            Tuple::point(self.max.x, self.max.y, self.min.z),
+            Tuple::point(self.max.x, self.max.y, self.max.z),
+        ];
+
+        let mut aabb = AABB::new(Tuple::point(f64::INFINITY, f64::INFINITY, f64::INFINITY), Tuple::point(f64::NEG_INFINITY, f64::NEG_INFINITY, f64::NEG_INFINITY));
+        for corner in corners.iter() {
+            let transformed = transform.multiply_tuple(corner);
+            aabb.adjust_min_max(transformed.x, transformed.y, transformed.z);
+        }
+        aabb
     }
 
-    // If the ray misses the AABB, return false
-    if tmin > tzmax || tzmin > tmax {
-        return false;
-    }
-
-    // If the ray intersects the AABB in all three dimensions, return true
-    true
-}}
+}
 
 #[cfg(test)]
 mod test {
