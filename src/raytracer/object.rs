@@ -62,10 +62,14 @@ pub fn normal_to_world(object_id: usize, object_normal: &Tuple) -> Tuple {
 #[cfg(test)]
 mod test {
     use std::sync::Arc;
+    use crate::color::Color;
     use crate::matrix::Matrix;
+    use crate::raytracer::light::Light;
+    use crate::raytracer::object::db::get_object;
     use crate::raytracer::object::Object;
     use crate::raytracer::object::sphere::Sphere;
     use crate::raytracer::ray::Ray;
+    use crate::raytracer::scene::Scene;
     use crate::tuple::Tuple;
 
     #[test]
@@ -130,8 +134,10 @@ mod test {
 
     #[test]
     fn normal_at_surface_point() {
+        let mut scene = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
         let s = Arc::new(Sphere::new());
-        let s: Arc<dyn Object> = s;
+        let sid = scene.add_object(s);
+        let s: Arc<dyn Object> = get_object(sid);
         let point = Tuple::point(1.0, 0.0, 0.0);
         let expected_normal = Tuple::vector(1.0, 0.0, 0.0);
         assert_eq!(s.normal_at(&point), expected_normal);
@@ -147,8 +153,10 @@ mod test {
 
     #[test]
     fn normal_at_non_axial_point() {
+        let mut scene = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
         let s = Arc::new(Sphere::new());
-        let s: Arc<dyn Object> = s;
+        let sid = scene.add_object(s);
+        let s: Arc<dyn Object> = get_object(sid);
         let sqrt_of_three_over_three = 3f64.sqrt() / 3.0;
         let point = Tuple::point(sqrt_of_three_over_three, sqrt_of_three_over_three, sqrt_of_three_over_three);
         let expected_normal = Tuple::vector(sqrt_of_three_over_three, sqrt_of_three_over_three, sqrt_of_three_over_three);
