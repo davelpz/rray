@@ -74,7 +74,6 @@ impl Object for Group {
     }
 
     fn set_material(&mut self, _material: Material) {
-        panic!("Groups do not have materials")
     }
 
     fn debug_string(&self) -> String {
