@@ -39,6 +39,9 @@ pub struct SceneObject {
     pub maximum: Option<f64>,
     pub closed: Option<bool>,
     pub children: Option<Vec<SceneObject>>,
+    pub p1: Option<Vec<f64>>,
+    pub p2: Option<Vec<f64>>,
+    pub p3: Option<Vec<f64>>,
 }
 
 #[derive(Deserialize, Clone)]

@@ -5,6 +5,7 @@ pub(crate) mod cube;
 pub(crate) mod cylinder;
 pub(crate) mod db;
 pub(crate) mod group;
+pub(crate) mod triangle;
 
 use std::fmt::{Debug, Formatter};
 use crate::EPSILON;

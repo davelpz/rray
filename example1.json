@@ -179,6 +179,44 @@
       }
     },
     {
+      "type": "triangle",
+      "p1": [0.0, 2.0, 0.0],
+      "p2": [1.0, 0.0, 0.0],
+      "p3": [-1.0, 0.0, 0.0],
+      "transforms": [
+        {
+          "type": "rotate",
+          "axis": "y",
+          "angle": -30
+        },
+        {
+          "type": "translate",
+          "x": -3.0,
+          "y": 0.0,
+          "z": 2.0
+        }
+      ],
+      "material": {
+          "pattern": {
+            "type": "solid",
+            "color": [0.75, 0.75, 0.75],
+            "transforms": [
+              {
+                "type": "scale",
+                "x": 0.5,
+                "y": 0.5,
+                "z": 0.5
+              }
+            ]
+          },
+          "ambient": 0.1,
+          "diffuse": 0.9,
+          "specular": 0.0,
+          "shininess": 200,
+          "reflective": 0.9
+        }
+    },
+    {
       "type" : "group",
       "transforms": [
         {

@@ -13,6 +13,7 @@ use crate::raytracer::object::Object;
 use crate::raytracer::object::plane::Plane;
 use crate::raytracer::object::sphere::Sphere;
 use crate::raytracer::object::group::Group;
+use crate::raytracer::object::triangle::Triangle;
 use crate::raytracer::scene::{Scene};
 use crate::raytracer::scene_json::{MaterialJson, PatternJson, SceneJson, SceneObject, TransformJson};
 
@@ -180,6 +181,15 @@ fn create_shape(scene_object: &SceneObject) -> Arc<dyn Object> {
             Arc::new(Cone::new(minimum, maximum, closed))
         },
         "group" => create_group(scene_object),
+        "triangle" => {
+            let point = scene_object.p1.clone().unwrap_or(vec![0.0, 0.0, 0.0]);
+            let p1 = point_from_vec(&point);
+            let point = scene_object.p2.clone().unwrap_or(vec![0.0, 0.0, 0.0]);
+            let p2 = point_from_vec(&point);
+            let point = scene_object.p3.clone().unwrap_or(vec![0.0, 0.0, 0.0]);
+            let p3 = point_from_vec(&point);
+            Arc::new(Triangle::new(p1, p2, p3))
+        }
         _ => Arc::new(Sphere::new()),
     };
     Arc::get_mut(&mut s).unwrap().set_transform(create_transforms(&scene_object.transforms.clone().unwrap_or(vec![])));
