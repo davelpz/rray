@@ -151,8 +151,11 @@ fn create_group(scene_object: &SceneObject) -> Arc<dyn Object> {
     if scene_object.children.is_some() {
         let children = scene_object.children.as_ref().unwrap();
         for child in children {
-            let s = create_shape(&child);
-            g.add_child(s);
+            let hide = child.hidden.unwrap_or(false);
+            if !hide {
+                let s = create_shape(&child);
+                g.add_child(s);
+            }
         }
     }
     Arc::new(g)
@@ -193,8 +196,11 @@ pub fn render_scene(scene: SceneJson, width: usize, height: usize, file: &str) {
         color_from_vec(&scene.lights[0].color)));
 
     for scene_object in scene.scene.iter() {
-        let s = create_shape(scene_object);
-        w.add_object(s);
+        let hide = scene_object.hidden.unwrap_or(false);
+        if !hide {
+            let s = create_shape(scene_object);
+            w.add_object(s);
+        }
     }
 
     let image = c.render(&w);

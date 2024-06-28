@@ -1,7 +1,8 @@
-use serde::Deserialize;
-use serde_json;
 use std::fs;
 use std::path::Path;
+
+use serde::Deserialize;
+use serde_json;
 
 #[derive(Deserialize)]
 pub struct SceneJson {
@@ -31,6 +32,7 @@ pub struct LightJson {
 pub struct SceneObject {
     #[serde(rename = "type")]
     pub object_type: String,
+    pub hidden: Option<bool>,
     pub transforms: Option<Vec<TransformJson>>,
     pub material: Option<MaterialJson>,
     pub minimum: Option<f64>,
@@ -119,7 +121,10 @@ pub fn create_scene_from_json_str(json_string: &str) -> Option<SceneJson> {
     let scene: Result<SceneJson, _> = serde_json::from_str(json_string);
     match scene {
         Ok(s) => Some(s),
-        Err(_) => None,
+        Err(err) => {
+            println!("Error: {}", err);
+            None
+        }
     }
 }
 
@@ -157,6 +162,7 @@ mod tests {
                 "scene": [
                     {
                         "type": "sphere",
+                        "hidden": true,
                         "transforms": [
                             {
                                 "type": "translate",
@@ -191,6 +197,8 @@ mod tests {
         "#;
         let scene = create_scene_from_json_str(json_string);
         assert!(scene.is_some());
+        let scene = scene.unwrap();
+        assert_eq!(scene.scene.len(), 1);
     }
 
     #[test]
