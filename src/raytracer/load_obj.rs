@@ -1,34 +1,91 @@
 use std::sync::Arc;
+use tobj::Mesh;
 use crate::raytracer::object::group::Group;
+use crate::raytracer::object::triangle::Triangle;
+use crate::tuple::Tuple;
 
-pub fn load_obj_file(file: &str) -> Group {
-    let mut master_group = Group::new();
-    let (models, materials) =
-        tobj::load_obj(
-            file,
-            &tobj::LoadOptions::default()
-        ).expect("Failed to OBJ load file");
-
-    for (i, m) in models.iter().enumerate() {
-        let mesh = &m.mesh;
-        let sub_group = Group::new();
-
-        let mut next_face = 0;
-        for face in 0..mesh.face_arities.len() {
-            let end = next_face + mesh.face_arities[face] as usize;
-            let face_indices = &mesh.indices[next_face..end];
-
-            next_face = end;
+fn get_faces(mesh: &Mesh) -> Vec<Vec<Tuple>> {
+    let mut faces: Vec<Vec<Tuple>> = vec![];
+    let mut next_face = 0;
+    for face in 0..mesh.face_arities.len() {
+        let end = next_face + mesh.face_arities[face] as usize;
+        let face_indices = &mesh.indices[next_face..end];
+        let mut face: Vec<Tuple> = vec![];
+        //let mut vertex = 0;
+        for f in face_indices {
+            let x: f64 = mesh.positions[3 * *f as usize] as f64;
+            let y: f64 = mesh.positions[3 * *f as usize + 1] as f64;
+            let z: f64 = mesh.positions[3 * *f as usize + 2] as f64;
+            //println!("face: {}, vertex: {},  x: {}, y: {}, z: {}", faces.len(), vertex, x, y, z);
+            face.push(Tuple::point(x, y, z));
+            //vertex += 1;
         }
+        faces.push(face);
 
-        master_group.add_child(Arc::new(sub_group));
+        next_face = end;
     }
 
-    master_group
+    faces
+}
+
+fn convert_face_to_triangles(vertexes: &Vec<Tuple>) -> Vec<Triangle> {
+    let mut triangles: Vec<Triangle> = vec![];
+
+    for i in 1..vertexes.len() - 1 {
+        triangles.push(Triangle::new(vertexes[0], vertexes[i], vertexes[i + 1]));
+    }
+
+    triangles
+}
+
+fn create_group(mesh: &Mesh) -> Group {
+    let mut group = Group::new();
+    let faces: Vec<Vec<Tuple>> = get_faces(mesh);
+    for f in faces.iter() {
+        let triangles = convert_face_to_triangles(f);
+        for t in triangles {
+            group.add_child(Arc::new(t));
+        }
+    }
+
+    group
+}
+
+pub fn load_obj_file(file: &str) -> Group {
+    let (models, _materials) = tobj::load_obj(file, &tobj::LoadOptions::default())
+        .expect("Failed to OBJ load file");
+
+    match models.len() {
+        0 => panic!("No models found in file"),
+        1 => create_group(&models[0].mesh),
+        _ => {
+            let mut master_group = Group::new();
+            for m in models {
+                master_group.add_child(Arc::new(create_group(&m.mesh)));
+            }
+            master_group
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+    use crate::matrix::Matrix;
+    use crate::raytracer::camera::Camera;
+    use crate::raytracer::light::Light;
+    use crate::raytracer::material::pattern::Pattern;
+    use crate::raytracer::object::plane::Plane;
+    use crate::raytracer::scene::Scene;
+    use crate::tuple::Tuple;
+
+    #[test]
+    fn test_load_obj_file() {
+        let obj_file = "examples/teapot-low.obj";
+        let group = super::load_obj_file(obj_file);
+        assert_eq!(group.child_ids.len(), 1);
+    }
+
     #[test]
     fn test_parse_vertex() {
         let obj_file = "examples/teapot-low.obj";
@@ -151,5 +208,66 @@ mod tests {
                 println!("    material.{} = {}", k, v);
             }
         }
+    }
+
+    #[test]
+    #[ignore]
+    fn test_render_model() {
+        use crate::color::Color;
+
+        let mut c = Camera::new(400, 200, std::f64::consts::PI / 3.0);
+        let from = Tuple::point(0.0, 1.5, -5.0);
+        let to = Tuple::point(0.0, 1.0, 0.0);
+        let up = Tuple::vector(0.0, 1.0, 0.0);
+        c.transform = Matrix::view_transform(from, to, up);
+
+        let mut w = Scene::new(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+
+        let mut floor = Plane::new();
+        floor.transform = Matrix::translate(0.0, 0.0, 0.0);
+        floor.material.pattern = Pattern::stripe(Pattern::solid(Color::new(1.0, 0.5, 0.5), Matrix::identity(4)),
+                                                 Pattern::solid(Color::new(0.5, 1.0, 0.5), Matrix::identity(4)),
+                                                 Matrix::scale(0.1, 0.1, 0.1).multiply(&Matrix::rotate_y(std::f64::consts::PI / 4.0)));
+        floor.material.specular = 0.0;
+        w.add_object(Arc::new(floor));
+
+        let mut left_wall = Plane::new();
+        left_wall.material.pattern = Pattern::gradient(Pattern::solid(Color::new(1.0, 0.5, 0.5), Matrix::identity(4)),
+                                                       Pattern::solid(Color::new(0.5, 1.0, 0.5), Matrix::identity(4)),
+                                                       Matrix::identity(4)
+                                                           .multiply(&Matrix::translate(124.0, 124.0, 124.0)
+                                                               .multiply(&Matrix::scale(7.0, 7.0, 7.0))
+                                                           ));
+        left_wall.transform = Matrix::identity(4)
+            .multiply(&Matrix::rotate_y(std::f64::consts::PI / -4.0))
+            .multiply(&Matrix::translate(0.0, 0.0, 5.0))
+            .multiply(&Matrix::rotate_x(std::f64::consts::PI / 2.0))
+        ;
+        left_wall.material.specular = 0.0;
+        w.add_object(Arc::new(left_wall));
+
+        let mut right_wall = Plane::new();
+        right_wall.transform = Matrix::identity(4)
+            .multiply(&Matrix::rotate_y(std::f64::consts::PI / 4.0))
+            .multiply(&Matrix::translate(0.0, 0.0, 5.0))
+            .multiply(&Matrix::rotate_x(std::f64::consts::PI / 2.0))
+        ;
+        right_wall.material.pattern = Pattern::solid(Color::new(1.0, 0.9, 0.9), Matrix::identity(4));
+        right_wall.material.specular = 0.0;
+        w.add_object(Arc::new(right_wall));
+
+        let mut group = super::load_obj_file("examples/teapot-low.obj");
+        group.transform = Matrix::identity(4)
+            .multiply(&Matrix::rotate_y(std::f64::consts::PI))
+            .multiply(&Matrix::scale(0.10, 0.10, 0.10))
+            .multiply(&Matrix::rotate_x(std::f64::consts::PI / -2.0))
+        ;
+        w.add_object(Arc::new(group));
+
+        let image = c.render(&w);
+        //let image = c.render_sequential(&w);
+        //assert_eq!(image.pixel_at(5, 5), Color::new(0.38066, 0.47583, 0.2855));
+
+        image.write_to_file("canvas.png");
     }
 }

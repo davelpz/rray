@@ -6,6 +6,7 @@ use crate::raytracer::object::{AABB, normal_to_world, Object, world_to_object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 
+#[derive(Debug, PartialEq)]
 pub struct Triangle {
     pub id: usize,
     pub parent_id: Option<usize>,

@@ -10,7 +10,7 @@ mod noise;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Material {
-    pub pattern: pattern::Pattern,
+    pub pattern: Pattern,
     pub ambient: f64,
     pub diffuse: f64,
     pub specular: f64,
