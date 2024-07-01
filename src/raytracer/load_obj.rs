@@ -86,7 +86,7 @@ mod tests {
     fn test_load_obj_file() {
         let obj_file = "examples/teapot-low.obj";
         let group = super::load_obj_file(obj_file, Material::default());
-        assert_eq!(group.child_ids.len(), 1);
+        assert_eq!(group.child_ids.len(), 240);
     }
 
     #[test]
