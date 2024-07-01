@@ -1,3 +1,31 @@
+use std::sync::Arc;
+use crate::raytracer::object::group::Group;
+
+pub fn load_obj_file(file: &str) -> Group {
+    let mut master_group = Group::new();
+    let (models, materials) =
+        tobj::load_obj(
+            file,
+            &tobj::LoadOptions::default()
+        ).expect("Failed to OBJ load file");
+
+    for (i, m) in models.iter().enumerate() {
+        let mesh = &m.mesh;
+        let sub_group = Group::new();
+
+        let mut next_face = 0;
+        for face in 0..mesh.face_arities.len() {
+            let end = next_face + mesh.face_arities[face] as usize;
+            let face_indices = &mesh.indices[next_face..end];
+
+            next_face = end;
+        }
+
+        master_group.add_child(Arc::new(sub_group));
+    }
+
+    master_group
+}
 
 #[cfg(test)]
 mod tests {
