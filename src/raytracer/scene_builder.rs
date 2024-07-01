@@ -4,6 +4,7 @@ use crate::matrix::Matrix;
 use crate::tuple::Tuple;
 use crate::raytracer::camera::Camera;
 use crate::raytracer::light::Light;
+use crate::raytracer::load_obj::load_obj_file;
 use crate::raytracer::material::Material;
 use crate::raytracer::material::pattern::Pattern;
 use crate::raytracer::object::cone::Cone;
@@ -189,7 +190,11 @@ fn create_shape(scene_object: &SceneObject) -> Arc<dyn Object> {
             let point = scene_object.p3.clone().unwrap_or(vec![0.0, 0.0, 0.0]);
             let p3 = point_from_vec(&point);
             Arc::new(Triangle::new(p1, p2, p3))
-        }
+        },
+        "obj_file" => {
+            let file = scene_object.obj_file.clone().unwrap_or("".to_string());
+            Arc::new(load_obj_file(&file,create_material(&scene_object.material.clone().unwrap_or_default())))
+        },
         _ => Arc::new(Sphere::new()),
     };
     Arc::get_mut(&mut s).unwrap().set_transform(create_transforms(&scene_object.transforms.clone().unwrap_or(vec![])));

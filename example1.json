@@ -276,6 +276,7 @@
           "minimum" : -1.0,
           "maximum" : 1.0,
           "closed" : true,
+          "hidden" : false,
           "transforms": [
             {
               "type": "scale",
@@ -363,8 +364,8 @@
             },
             {
               "type": "translate",
-              "x": -1.5,
-              "y": 0.33,
+              "x": 1.45,
+              "y": 1.30,
               "z": -0.75
             }
           ],
@@ -381,6 +382,47 @@
             "transparency": 0.9,
             "refractive_index": 1.52
           }
+        },
+        {
+          "type": "obj_file",
+          "obj_file": "examples/teapot.obj",
+          "material" : {
+            "pattern": {
+              "type": "solid",
+              "color" : [0.302, 0.71, 0.98]
+            },
+            "ambient": 0.1,
+            "diffuse": 0.7,
+            "specular": 0.9,
+            "shininess": 300,
+            "reflective": 0.0,
+            "transparency": 0.0,
+            "refractive_index": 1.52
+          },
+          "transforms": [
+            {
+              "type": "rotate",
+              "axis": "x",
+              "angle": -90
+            },
+            {
+              "type": "rotate",
+              "axis": "y",
+              "angle": 130
+            },
+            {
+              "type": "scale",
+              "x": 0.05,
+              "y": 0.05,
+              "z": 0.05
+            },
+            {
+              "type": "translate",
+              "x": -1.75,
+              "y": 0.0,
+              "z": 0.0
+            }
+          ]
         }
       ]
     }

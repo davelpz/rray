@@ -42,6 +42,7 @@ pub struct SceneObject {
     pub p1: Option<Vec<f64>>,
     pub p2: Option<Vec<f64>>,
     pub p3: Option<Vec<f64>>,
+    pub obj_file: Option<String>,
 }
 
 #[derive(Deserialize, Clone)]

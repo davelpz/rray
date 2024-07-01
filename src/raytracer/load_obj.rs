@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use tobj::Mesh;
+use crate::raytracer::material::Material;
 use crate::raytracer::object::group::Group;
 use crate::raytracer::object::triangle::Triangle;
 use crate::tuple::Tuple;
@@ -38,12 +39,13 @@ fn convert_face_to_triangles(vertexes: &Vec<Tuple>) -> Vec<Triangle> {
     triangles
 }
 
-fn create_group(mesh: &Mesh) -> Group {
+fn create_group(mesh: &Mesh, material: Material) -> Group {
     let mut group = Group::new();
     let faces: Vec<Vec<Tuple>> = get_faces(mesh);
     for f in faces.iter() {
         let triangles = convert_face_to_triangles(f);
-        for t in triangles {
+        for mut t in triangles {
+            t.material = material.clone();
             group.add_child(Arc::new(t));
         }
     }
@@ -51,17 +53,17 @@ fn create_group(mesh: &Mesh) -> Group {
     group
 }
 
-pub fn load_obj_file(file: &str) -> Group {
+pub fn load_obj_file(file: &str, material: Material) -> Group {
     let (models, _materials) = tobj::load_obj(file, &tobj::LoadOptions::default())
-        .expect("Failed to OBJ load file");
+       .expect(&format!("Failed to OBJ load file: {}", file));
 
     match models.len() {
-        0 => panic!("No models found in file"),
-        1 => create_group(&models[0].mesh),
+        0 => panic!("No models found in file: {}", file),
+        1 => create_group(&models[0].mesh, material),
         _ => {
             let mut master_group = Group::new();
             for m in models {
-                master_group.add_child(Arc::new(create_group(&m.mesh)));
+                master_group.add_child(Arc::new(create_group(&m.mesh, material.clone())));
             }
             master_group
         }
@@ -74,6 +76,7 @@ mod tests {
     use crate::matrix::Matrix;
     use crate::raytracer::camera::Camera;
     use crate::raytracer::light::Light;
+    use crate::raytracer::material::Material;
     use crate::raytracer::material::pattern::Pattern;
     use crate::raytracer::object::plane::Plane;
     use crate::raytracer::scene::Scene;
@@ -82,7 +85,7 @@ mod tests {
     #[test]
     fn test_load_obj_file() {
         let obj_file = "examples/teapot-low.obj";
-        let group = super::load_obj_file(obj_file);
+        let group = super::load_obj_file(obj_file, Material::default());
         assert_eq!(group.child_ids.len(), 1);
     }
 
@@ -215,7 +218,7 @@ mod tests {
     fn test_render_model() {
         use crate::color::Color;
 
-        let mut c = Camera::new(400, 200, std::f64::consts::PI / 3.0);
+        let mut c = Camera::new(800, 400, std::f64::consts::PI / 3.0);
         let from = Tuple::point(0.0, 1.5, -5.0);
         let to = Tuple::point(0.0, 1.0, 0.0);
         let up = Tuple::vector(0.0, 1.0, 0.0);
@@ -256,9 +259,11 @@ mod tests {
         right_wall.material.specular = 0.0;
         w.add_object(Arc::new(right_wall));
 
-        let mut group = super::load_obj_file("examples/teapot-low.obj");
+        let mut material = Material::default();
+        material.pattern = Pattern::solid(Color::new(0.302, 0.71, 0.98), Matrix::identity(4));
+        let mut group = super::load_obj_file("examples/teapot-low.obj", material);
         group.transform = Matrix::identity(4)
-            .multiply(&Matrix::rotate_y(std::f64::consts::PI))
+            //.multiply(&Matrix::rotate_y(std::f64::consts::PI))
             .multiply(&Matrix::scale(0.10, 0.10, 0.10))
             .multiply(&Matrix::rotate_x(std::f64::consts::PI / -2.0))
         ;
