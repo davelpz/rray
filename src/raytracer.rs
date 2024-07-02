@@ -9,3 +9,4 @@ mod camera;
 pub(crate) mod scene_builder;
 pub(crate) mod scene_json;
 mod load_obj;
+mod scene_builder_yaml;
