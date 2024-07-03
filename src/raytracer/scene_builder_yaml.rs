@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::Path;
+use std::sync::Arc;
 use crate::raytracer::scene::Scene;
 use yaml_rust2::{Yaml, YamlLoader, YamlEmitter};
 use yaml_rust2::yaml::{Array, Hash};
@@ -7,7 +8,18 @@ use crate::color::Color;
 use crate::matrix::Matrix;
 use crate::raytracer::camera::Camera;
 use crate::raytracer::light::Light;
+use crate::raytracer::object::cone::Cone;
+use crate::raytracer::object::cube::Cube;
+use crate::raytracer::object::cylinder::Cylinder;
+use crate::raytracer::object::Object;
+use crate::raytracer::object::plane::Plane;
+use crate::raytracer::object::sphere::Sphere;
+use crate::raytracer::object::triangle::Triangle;
 use crate::tuple::Tuple;
+use crate::raytracer::load_obj::load_obj_file;
+use crate::raytracer::material::Material;
+use crate::raytracer::material::pattern::Pattern;
+use crate::raytracer::object::group::Group;
 
 fn degrees_to_radians(degrees: f64) -> f64 {
     degrees * std::f64::consts::PI / 180.0
@@ -45,7 +57,6 @@ fn print_type(node: &Yaml) {
         Yaml::Alias(value) => println!("It's an Alias with value: {}", value),
         Yaml::Null => println!("It's a Null"),
         Yaml::BadValue => println!("It's a BadValue"),
-        _ => println!("Unknown or new variant of Yaml"),
     }
 }
 
@@ -54,6 +65,14 @@ fn get_f64(node: &Yaml) -> f64 {
         Yaml::Real(value) => value.parse::<f64>().unwrap(),
         Yaml::Integer(value) => *value as f64,
         _ => panic!("{:?} not a number", node),
+    }
+}
+
+fn get_f64_default(node: &Yaml, default: f64) -> f64 {
+    match node {
+        Yaml::Real(value) => value.parse::<f64>().unwrap(),
+        Yaml::Integer(value) => *value as f64,
+        _ => default,
     }
 }
 
@@ -73,13 +92,13 @@ fn create_camera(doc: &Yaml, width: usize, height: usize) -> Camera {
     let mut c = Camera::new(
         width,
         height,
-        degrees_to_radians(fov)
+        degrees_to_radians(fov),
     );
 
     c.transform = Matrix::view_transform(
         point_from_vec(from),
         point_from_vec(to),
-        vector_from_vec(up)
+        vector_from_vec(up),
     );
 
     c
@@ -104,8 +123,204 @@ fn create_light(doc: &Yaml) -> Light {
 
     Light::new_point_light(
         point_from_vec(position),
-        color_from_vec(color)
+        color_from_vec(color),
     )
+}
+
+fn create_group(shape: &Yaml) -> Arc<dyn Object> {
+    let mut group = Group::new();
+    let children = shape["children"].as_vec().expect("children not found");
+
+    for child in children {
+        let hidden = child["hidden"].as_bool().unwrap_or(false);
+        if !hidden {
+            group.add_child(create_shape(child));
+        }
+    }
+
+    Arc::new(group)
+}
+
+fn create_matrix(transform: &Yaml) -> Matrix {
+    let transform_type = transform["type"].as_str().expect("transform type not found");
+    match transform_type {
+        "translate" => {
+            let amount = transform["amount"].as_vec().expect("amount not found");
+            let x = get_f64(&amount[0]);
+            let y = get_f64(&amount[1]);
+            let z = get_f64(&amount[2]);
+            Matrix::translate(x, y, z)
+        }
+        "scale" => {
+            let amount = transform["amount"].as_vec().expect("amount not found");
+            let x = get_f64(&amount[0]);
+            let y = get_f64(&amount[1]);
+            let z = get_f64(&amount[2]);
+            Matrix::scale(x, y, z)
+        }
+        "rotate" => {
+            let angle = degrees_to_radians(get_f64(&transform["angle"]));
+            let axis = transform["axis"].as_str().expect("axis not found");
+            match axis {
+                "x" => Matrix::rotate_x(angle),
+                "y" => Matrix::rotate_y(angle),
+                "z" => Matrix::rotate_z(angle),
+                _ => panic!("Unknown axis: {}", axis),
+            }
+        }
+        "shear" => {
+            let xy = get_f64(&transform["xy"]);
+            let xz = get_f64(&transform["xz"]);
+            let yx = get_f64(&transform["yx"]);
+            let yz = get_f64(&transform["yz"]);
+            let zx = get_f64(&transform["zx"]);
+            let zy = get_f64(&transform["zy"]);
+            Matrix::shear(xy, xz, yx, yz, zx, zy)
+        }
+        _ => panic!("Unknown transform type: {}", transform_type),
+    }
+}
+
+fn create_transforms(transforms: &Array) -> Matrix {
+    let mut m = Matrix::identity(4);
+    for t in transforms.iter().rev() {
+        m = m * create_matrix(t);
+    }
+    m
+}
+
+fn create_pattern(pattern: &Yaml) -> Pattern {
+    let transform = create_transforms(&pattern["transforms"].as_vec().unwrap_or(&vec![]));
+    println!("Pattern: {:?}", pattern);
+    let pattern_type = pattern["type"].as_str().expect("pattern type not found");
+    let color = &pattern["color"];
+    let black = vec![Yaml::Real("0.0".to_string()), Yaml::Real("0.0".to_string()), Yaml::Real("0.0".to_string())];
+    let color: &Array = if color.is_badvalue() {
+        &black
+    } else {
+        color.as_vec().unwrap()
+    };
+    let color_a = &pattern["color_a"];
+    let color_b = &pattern["color_b"];
+    let pattern_a = &pattern["pattern_a"];
+    let pattern_b = &pattern["pattern_b"];
+
+    match pattern_type {
+        "solid" => {
+            Pattern::solid(color_from_vec(color), transform)
+        }
+        "stripe" => {
+            Pattern::stripe(get_sub_pattern(&transform, color_a, pattern_a),
+                            get_sub_pattern(&transform, color_b, pattern_b),
+                            transform.clone())
+        }
+        "gradient" => {
+            Pattern::gradient(get_sub_pattern(&transform, color_a, pattern_a),
+                              get_sub_pattern(&transform, color_b, pattern_b),
+                              transform.clone())
+        }
+        "ring" => {
+            Pattern::ring(get_sub_pattern(&transform, color_a, pattern_a),
+                          get_sub_pattern(&transform, color_b, pattern_b),
+                          transform.clone())
+        }
+        "checker" => {
+            Pattern::checker(get_sub_pattern(&transform, color_a, pattern_a),
+                              get_sub_pattern(&transform, color_b, pattern_b),
+                              transform.clone())
+        }
+        "blend" => {
+            let scale = get_f64_default(&pattern["scale"], 0.5);
+            Pattern::blend(get_sub_pattern(&transform, color_a, pattern_a),
+                           get_sub_pattern(&transform, color_b, pattern_b),
+                           scale,
+                           transform.clone())
+        }
+        "perturbed" => {
+            let scale = get_f64_default(&pattern["scale"], 0.2);
+            let octaves = get_f64_default(&pattern["octaves"], 3.0);
+            let persistence = get_f64_default(&pattern["persistence"], 0.5);
+            Pattern::perturbed(get_sub_pattern(&transform, color_a, pattern_a),
+                               scale,
+                               octaves as usize,
+                               persistence,
+                               transform.clone())
+        }
+        "noise" => {
+            let octaves = get_f64_default(&pattern["octaves"], 1.0);
+            let persistence = get_f64_default(&pattern["persistence"], 1.0);
+            let scale = get_f64_default(&pattern["scale"], 1.0);
+            Pattern::noise(get_sub_pattern(&transform, color_a, pattern_a),
+                           get_sub_pattern(&transform, color_b, pattern_b),
+                           scale,
+                           octaves as usize,
+                           persistence,
+                           transform.clone())
+        }
+        _ => Pattern::solid(Color::new(0.0, 0.0, 0.0), transform.clone()),
+    }
+}
+
+fn get_sub_pattern(transform: &Matrix, color: &Yaml, pattern_yaml: &Yaml) -> Pattern {
+    let pattern = if color.is_array() {
+        Pattern::solid(color_from_vec(color.as_vec().unwrap()), transform.clone())
+    } else {
+        create_pattern(pattern_yaml)
+    };
+    pattern
+}
+
+fn create_material(material: &Yaml) -> Material {
+    let mut m = Material::default();
+    if !material.is_badvalue() {
+        m.ambient = get_f64_default(&material["ambient"], 0.1);
+        m.diffuse = get_f64_default(&material["diffuse"], 0.9);
+        m.specular = get_f64_default(&material["specular"], 0.9);
+        m.shininess = get_f64_default(&material["shininess"], 200.0);
+        m.reflective = get_f64_default(&material["reflective"], 0.0);
+        m.transparency = get_f64_default(&material["transparency"], 0.0);
+        m.refractive_index = get_f64_default(&material["refractive_index"], 1.0);
+        m.pattern = create_pattern(&material["pattern"]);
+    }
+    m
+}
+
+fn create_shape(shape: &Yaml) -> Arc<dyn Object> {
+    let object_type = shape["type"].as_str().expect("type not found");
+    println!("Creating object: {}", object_type);
+    let mut s: Arc<dyn Object> = match object_type {
+        "sphere" => Arc::new(Sphere::new()),
+        "glass_sphere" => Arc::new(Sphere::glass_sphere()),
+        "plane" => Arc::new(Plane::new()),
+        "cube" => Arc::new(Cube::new()),
+        "cylinder" => {
+            let minimum = get_f64_default(&shape["minimum"], -f64::INFINITY);
+            let maximum = get_f64_default(&shape["maximum"], f64::INFINITY);
+            let closed = shape["closed"].as_bool().unwrap_or(false);
+            Arc::new(Cylinder::new(minimum, maximum, closed))
+        }
+        "cone" => {
+            let minimum = get_f64_default(&shape["minimum"], -f64::INFINITY);
+            let maximum = get_f64_default(&shape["maximum"], f64::INFINITY);
+            let closed = shape["closed"].as_bool().unwrap_or(false);
+            Arc::new(Cone::new(minimum, maximum, closed))
+        }
+        "triangle" => {
+            let p1 = point_from_vec(&shape["p1"].as_vec().unwrap());
+            let p2 = point_from_vec(&shape["p2"].as_vec().unwrap());
+            let p3 = point_from_vec(&shape["p3"].as_vec().unwrap());
+            Arc::new(Triangle::new(p1, p2, p3))
+        }
+        "obj_file" => {
+            let file = shape["obj_file"].as_str().unwrap();
+            Arc::new(load_obj_file(file, Material::default()))
+        }
+        "group" => create_group(shape),
+        _ => panic!("Unknown object type: {}", object_type),
+    };
+    Arc::get_mut(&mut s).unwrap().set_transform(create_transforms(shape["transforms"].as_vec().unwrap_or(&vec![])));
+    Arc::get_mut(&mut s).unwrap().set_material(create_material(&shape["material"]));
+    s
 }
 
 pub fn render_scene_from_str(contents: &str, width: usize, height: usize, png_file: &str) {
@@ -114,17 +329,20 @@ pub fn render_scene_from_str(contents: &str, width: usize, height: usize, png_fi
     let doc = &docs[0];
 
     let camera = create_camera(doc, width, height);
-    let scene = Scene::new(create_light(doc));
+    let mut scene = Scene::new(create_light(doc));
 
     let scene_yaml = doc["scene"].as_vec().expect("scene not found");
 
     for scene_object in scene_yaml {
-        let object_type = scene_object["type"].as_str().expect("type not found");
-        println!("object_type: {}", object_type);
+        let hidden = scene_object["hidden"].as_bool().unwrap_or(false);
+        if !hidden {
+            let shape = create_shape(scene_object);
+            scene.add_object(shape);
+        }
     }
 
     let image = camera.render(&scene);
-    //image.write_to_file(png_file);
+    image.write_to_file(png_file);
 }
 
 pub fn render_scene_from_file(path: &str, width: usize, height: usize, png_file: &str) {
@@ -144,6 +362,6 @@ mod tests {
     #[test]
     #[ignore]
     fn test_render_scene_from_file() {
-        render_scene_from_file("example1.yaml", 800, 600, "canvas.png");
+        render_scene_from_file("example1.yaml", 800, 400, "canvas.png");
     }
 }

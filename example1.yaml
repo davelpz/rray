@@ -100,6 +100,7 @@ scene:
       shininess: 200
       reflective: 0
   - type: triangle
+    hidden: false
     p1: [0, 2, 0]
     p2: [1, 0, 0]
     p3: [-1, 0, 0]
@@ -122,6 +123,7 @@ scene:
       shininess: 200
       reflective: 0.9
   - type: group
+    hidden: false
     transforms:
       - type: translate
         amount: [-0.15, 0, 0]
@@ -173,6 +175,7 @@ scene:
           specular: 0.3
           shininess: 200
       - type: cone
+        hidden: false
         minimum: -1
         maximum: 0
         closed: true
@@ -197,6 +200,7 @@ scene:
           specular: 0.6
           shininess: 200
       - type: sphere
+        hidden: false
         transforms:
           - type: scale
             amount: [0.33, 0.33, 0.33]
@@ -215,6 +219,7 @@ scene:
           refractive_index: 1.52
       - type: obj_file
         obj_file: examples/teapot.obj
+        hidden: true
         material:
           pattern:
             type: solid
