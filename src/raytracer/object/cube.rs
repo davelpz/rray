@@ -33,8 +33,8 @@ impl Cube {
         if tmin > tmax {
             vec![]
         } else {
-            vec![Intersection::new(tmin, self.id),
-                 Intersection::new(tmax, self.id)]
+            vec![Intersection::new(tmin, self.id, 0.0, 0.0),
+                 Intersection::new(tmax, self.id, 0.0, 0.0)]
         }
     }
 
@@ -53,7 +53,7 @@ impl Cube {
         }
     }
 
-    pub fn local_normal_at(&self, local_point: &Tuple) -> Tuple {
+    pub fn local_normal_at(&self, local_point: &Tuple, _hit: &Intersection) -> Tuple {
         let maxc = local_point.x.abs().max(local_point.y.abs()).max(local_point.z.abs());
         if maxc == local_point.x.abs() {
             Tuple::vector(local_point.x, 0.0, 0.0)
@@ -71,9 +71,9 @@ impl Object for Cube {
         self.local_intersect(&trans_ray)
     }
 
-    fn normal_at(&self, world_point: &Tuple) -> Tuple {
+    fn normal_at(&self, world_point: &Tuple, _hit: &Intersection) -> Tuple {
         let local_point = world_to_object(self.id, world_point);
-        let local_normal = self.local_normal_at(&local_point);
+        let local_normal = self.local_normal_at(&local_point, _hit);
         normal_to_world(self.id, &local_normal)
     }
 
@@ -118,6 +118,7 @@ impl Object for Cube {
 
 #[cfg(test)]
 mod tests {
+    use crate::raytracer::intersection::Intersection;
     use crate::raytracer::ray::Ray;
     use crate::tuple::Tuple;
     use super::Cube;
@@ -218,7 +219,7 @@ mod tests {
         for i in 0..8 {
             let p = points[i];
             let n = normals[i];
-            let normal = c.local_normal_at(&p);
+            let normal = c.local_normal_at(&p, &Intersection::new(0.0, 0, 0.0, 0.0));
             assert_eq!(normal, n);
         }
     }

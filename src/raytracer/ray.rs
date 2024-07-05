@@ -77,28 +77,28 @@ mod tests {
         w.add_object(Arc::new(s));
         let id = w.ids[0];
 
-        let i1 = super::Intersection { t: 1.0, object: id };
-        let i2 = super::Intersection { t: 2.0, object: id };
+        let i1 = super::Intersection { t: 1.0, object: id, u: 0.0, v: 0.0};
+        let i2 = super::Intersection { t: 2.0, object: id, u: 0.0, v: 0.0};
         let xs = vec![i1, i2];
         let i = super::hit(&xs);
         assert_eq!(i.unwrap().t, 1.0);
 
-        let i1 = super::Intersection { t: -1.0, object: id };
-        let i2 = super::Intersection { t: 1.0, object: id };
+        let i1 = super::Intersection { t: -1.0, object: id, u: 0.0, v: 0.0};
+        let i2 = super::Intersection { t: 1.0, object: id, u: 0.0, v: 0.0};
         let xs = vec![i1, i2];
         let i = super::hit(&xs);
         assert_eq!(i.unwrap().t, 1.0);
 
-        let i1 = super::Intersection { t: -2.0, object: id };
-        let i2 = super::Intersection { t: -1.0, object: id };
+        let i1 = super::Intersection { t: -2.0, object: id, u: 0.0, v: 0.0};
+        let i2 = super::Intersection { t: -1.0, object: id, u: 0.0, v: 0.0};
         let xs = vec![i1, i2];
         let i = super::hit(&xs);
         assert_eq!(i, None);
 
-        let i1 = super::Intersection { t: 5.0, object: id };
-        let i2 = super::Intersection { t: 7.0, object: id };
-        let i3 = super::Intersection { t: -3.0, object: id };
-        let i4 = super::Intersection { t: 2.0, object: id };
+        let i1 = super::Intersection { t: 5.0, object: id, u: 0.0, v: 0.0};
+        let i2 = super::Intersection { t: 7.0, object: id, u: 0.0, v: 0.0};
+        let i3 = super::Intersection { t: -3.0, object: id, u: 0.0, v: 0.0};
+        let i4 = super::Intersection { t: 2.0, object: id, u: 0.0, v: 0.0};
         let xs = vec![i1, i2, i3, i4];
         let i = super::hit(&xs);
         assert_eq!(i.unwrap().t, 2.0);
@@ -131,7 +131,7 @@ mod tests {
         s.transform = Matrix::translate(0.0, 0.0, 1.0);
         w.add_object(Arc::new(s));
         let id = w.ids[0];
-        let i = super::Intersection { t: 5.0, object: id };
+        let i = super::Intersection { t: 5.0, object: id, u: 0.0, v: 0.0};
         let xs = vec![i];
         let comps = xs[0].prepare_computations(&r, &xs);
         assert!(comps.over_point.z < -crate::EPSILON / 2.0);
@@ -204,7 +204,7 @@ mod tests {
                 if let Some(hit) = super::hit(&xs) {
                     let point = r.position(hit.t);
                     let hit_object = get_object(hit.object);
-                    let normal = hit_object.normal_at(&point);
+                    let normal = hit_object.normal_at(&point, hit);
                     let eye = r.direction.negate();
                     let color = lighting(hit.object, &light, &point, &eye, &normal, false);
                     canvas.write_pixel(x, y, color);
@@ -222,7 +222,7 @@ mod tests {
         let s = Sphere::new();
         w.add_object(Arc::new(s));
         let id = w.ids[0];
-        let i = super::Intersection { t: 4.0, object: id };
+        let i = super::Intersection { t: 4.0, object: id, u: 0.0, v: 0.0};
         let xs = vec![i];
         let comps = xs[0].prepare_computations(&r, &xs);
         assert_eq!(comps.t, xs[0].t);
@@ -240,7 +240,7 @@ mod tests {
         let s = Sphere::new();
         w.add_object(Arc::new(s));
         let id = w.ids[0];
-        let xs = vec![super::Intersection { t: 1.0, object: id }];
+        let xs = vec![super::Intersection { t: 1.0, object: id, u: 0.0, v: 0.0}];
         let comps = xs[0].prepare_computations(&r, &xs);
         assert_eq!(comps.t, xs[0].t);
         assert_eq!(comps.object, xs[0].object);
@@ -257,7 +257,7 @@ mod tests {
         w.add_object(Arc::new(s));
         let id = w.ids[0];
         let r = Ray::new(Tuple::point(0.0, 1.0, -1.0), Tuple::vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0));
-        let xs = vec![super::Intersection { t: 2.0_f64.sqrt(), object: id }];
+        let xs = vec![super::Intersection { t: 2.0_f64.sqrt(), object: id, u: 0.0, v: 0.0}];
         let comps = xs[0].prepare_computations(&r, &xs);
         assert_eq!(comps.reflectv, Tuple::vector(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0));
     }
@@ -285,12 +285,12 @@ mod tests {
 
         let r = Ray::new(Tuple::point(0.0, 0.0, -4.0), Tuple::vector(0.0, 0.0, 1.0));
         let xs = vec![
-            super::Intersection { t: 2.0, object: aid },
-            super::Intersection { t: 2.75, object: bid },
-            super::Intersection { t: 3.25, object: cid },
-            super::Intersection { t: 4.75, object: bid },
-            super::Intersection { t: 5.25, object: cid },
-            super::Intersection { t: 6.0, object: aid },
+            super::Intersection { t: 2.0, object: aid, u: 0.0, v: 0.0},
+            super::Intersection { t: 2.75, object: bid, u: 0.0, v: 0.0},
+            super::Intersection { t: 3.25, object: cid, u: 0.0, v: 0.0},
+            super::Intersection { t: 4.75, object: bid, u: 0.0, v: 0.0},
+            super::Intersection { t: 5.25, object: cid, u: 0.0, v: 0.0},
+            super::Intersection { t: 6.0, object: aid, u: 0.0, v: 0.0},
         ];
 
         let expected_n1 = vec![1.0, 1.5, 2.0, 2.5, 2.5, 1.5];
@@ -311,7 +311,7 @@ mod tests {
         s.transform = Matrix::translate(0.0, 0.0, 1.0);
         w.add_object(Arc::new(s));
         let id = w.ids[0];
-        let i = super::Intersection { t: 5.0, object: id };
+        let i = super::Intersection { t: 5.0, object: id, u: 0.0, v: 0.0};
         let xs = vec![i];
         let comps = xs[0].prepare_computations(&r, &xs);
         assert!(comps.under_point.z > crate::EPSILON / 2.0);

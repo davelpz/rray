@@ -6,6 +6,7 @@ pub(crate) mod cylinder;
 pub(crate) mod db;
 pub(crate) mod group;
 pub(crate) mod triangle;
+pub(crate) mod smooth_triangle;
 
 use std::fmt::{Debug, Formatter};
 use crate::EPSILON;
@@ -18,7 +19,7 @@ use crate::tuple::Tuple;
 
 pub trait Object: Sync + Send {
     fn intersect(&self, ray: &Ray) -> Vec<Intersection>;
-    fn normal_at(&self, point: &Tuple) -> Tuple;
+    fn normal_at(&self, point: &Tuple, hit: &Intersection) -> Tuple;
     fn get_transform(&self) -> &Matrix;
     fn get_material(&self) -> &Material;
     fn set_transform(&mut self, transform: Matrix);
@@ -142,6 +143,7 @@ mod test {
     use std::sync::Arc;
     use crate::color::Color;
     use crate::matrix::Matrix;
+    use crate::raytracer::intersection::Intersection;
     use crate::raytracer::light::Light;
     use crate::raytracer::object::db::get_object;
     use crate::raytracer::object::Object;
@@ -218,15 +220,15 @@ mod test {
         let s: Arc<dyn Object> = get_object(sid);
         let point = Tuple::point(1.0, 0.0, 0.0);
         let expected_normal = Tuple::vector(1.0, 0.0, 0.0);
-        assert_eq!(s.normal_at(&point), expected_normal);
+        assert_eq!(s.normal_at(&point, &Intersection::new(0.0,sid,0.0,0.0)), expected_normal);
 
         let point = Tuple::point(0.0, 1.0, 0.0);
         let expected_normal = Tuple::vector(0.0, 1.0, 0.0);
-        assert_eq!(s.normal_at(&point), expected_normal);
+        assert_eq!(s.normal_at(&point, &Intersection::new(0.0,sid,0.0,0.0)), expected_normal);
 
         let point = Tuple::point(0.0, 0.0, 1.0);
         let expected_normal = Tuple::vector(0.0, 0.0, 1.0);
-        assert_eq!(s.normal_at(&point), expected_normal);
+        assert_eq!(s.normal_at(&point, &Intersection::new(0.0,sid,0.0,0.0)), expected_normal);
     }
 
     #[test]
@@ -238,7 +240,7 @@ mod test {
         let sqrt_of_three_over_three = 3f64.sqrt() / 3.0;
         let point = Tuple::point(sqrt_of_three_over_three, sqrt_of_three_over_three, sqrt_of_three_over_three);
         let expected_normal = Tuple::vector(sqrt_of_three_over_three, sqrt_of_three_over_three, sqrt_of_three_over_three);
-        assert_eq!(s.normal_at(&point), expected_normal);
-        assert_eq!(s.normal_at(&point).magnitude(), 1.0);
+        assert_eq!(s.normal_at(&point, &Intersection::new(0.0,sid,0.0,0.0)), expected_normal);
+        assert_eq!(s.normal_at(&point, &Intersection::new(0.0,sid,0.0,0.0)).magnitude(), 1.0);
     }
 }

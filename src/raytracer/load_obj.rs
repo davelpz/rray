@@ -2,8 +2,33 @@ use std::sync::Arc;
 use tobj::Mesh;
 use crate::raytracer::material::Material;
 use crate::raytracer::object::group::Group;
+use crate::raytracer::object::smooth_triangle::SmoothTriangle;
 use crate::raytracer::object::triangle::Triangle;
 use crate::tuple::Tuple;
+
+fn get_normals(mesh: &Mesh) -> Vec<Vec<Tuple>> {
+    let mut normals: Vec<Vec<Tuple>> = vec![];
+    let mut next_normal = 0;
+    for normal_index in 0..mesh.face_arities.len() {
+        let end = next_normal + mesh.face_arities[normal_index] as usize;
+        let normal_indices = &mesh.normal_indices[next_normal..end];
+        let mut normal: Vec<Tuple> = vec![];
+        //let mut vertex = 0;
+        for n in normal_indices {
+            let x: f64 = mesh.normals[3 * *n as usize] as f64;
+            let y: f64 = mesh.normals[3 * *n as usize + 1] as f64;
+            let z: f64 = mesh.normals[3 * *n as usize + 2] as f64;
+            //println!("normal: {}, vertex: {},  x: {}, y: {}, z: {}", normals.len(), vertex, x, y, z);
+            normal.push(Tuple::vector(x, y, z));
+            //vertex += 1;
+        }
+        normals.push(normal);
+
+        next_normal = end;
+    }
+
+    normals
+}
 
 fn get_faces(mesh: &Mesh) -> Vec<Vec<Tuple>> {
     let mut faces: Vec<Vec<Tuple>> = vec![];
@@ -39,14 +64,36 @@ fn convert_face_to_triangles(vertexes: &Vec<Tuple>) -> Vec<Triangle> {
     triangles
 }
 
+fn convert_face_to_triangles_with_normals(vertexes: &Vec<Tuple>, normals: &Vec<Tuple>) -> Vec<SmoothTriangle> {
+    let mut triangles: Vec<SmoothTriangle> = vec![];
+
+    for i in 1..vertexes.len() - 1 {
+        triangles.push(SmoothTriangle::new(vertexes[0], vertexes[i], vertexes[i + 1],
+                                            normals[0], normals[i], normals[i + 1]));
+    }
+
+    triangles
+}
+
 fn create_group(mesh: &Mesh, material: Material) -> Group {
     let mut group = Group::new();
     let faces: Vec<Vec<Tuple>> = get_faces(mesh);
-    for f in faces.iter() {
-        let triangles = convert_face_to_triangles(f);
-        for mut t in triangles {
-            t.material = material.clone();
-            group.add_child(Arc::new(t));
+    if mesh.normal_indices.is_empty() {
+        for f in faces.iter() {
+            let triangles = convert_face_to_triangles(f);
+            for mut t in triangles {
+                t.material = material.clone();
+                group.add_child(Arc::new(t));
+            }
+        }
+    } else {
+        let normals: Vec<Vec<Tuple>> = get_normals(mesh);
+        for (f, n) in faces.iter().zip(normals.iter()) {
+            let triangles = convert_face_to_triangles_with_normals(f,n);
+            for mut t in triangles {
+                t.material = material.clone();
+                group.add_child(Arc::new(t));
+            }
         }
     }
 

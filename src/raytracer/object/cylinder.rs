@@ -48,11 +48,11 @@ impl Cylinder {
 
             let y0 = ray.origin.y + t0 * ray.direction.y;
             if self.minimum < y0 && y0 < self.maximum {
-                xs.push(Intersection::new(t0, self.id));
+                xs.push(Intersection::new(t0, self.id, 0.0, 0.0));
             }
             let y1 = ray.origin.y + t1 * ray.direction.y;
             if self.minimum < y1 && y1 < self.maximum {
-                xs.push(Intersection::new(t1, self.id));
+                xs.push(Intersection::new(t1, self.id, 0.0, 0.0));
             }
         }
 
@@ -82,20 +82,20 @@ impl Cylinder {
         // the ray with the plane at y = minimum
         let t = (self.minimum - ray.origin.y) / ray.direction.y;
         if Cylinder::check_cap(ray, t) {
-            xs.push(Intersection::new(t, self.id));
+            xs.push(Intersection::new(t, self.id, 0.0, 0.0));
         }
 
         // Check for an intersection with the upper end cap by intersecting
         // the ray with the plane at y = maximum
         let t = (self.maximum - ray.origin.y) / ray.direction.y;
         if Cylinder::check_cap(ray, t) {
-            xs.push(Intersection::new(t, self.id));
+            xs.push(Intersection::new(t, self.id, 0.0, 0.0));
         }
 
         xs
     }
 
-    pub fn local_normal_at(&self, local_point: &Tuple) -> Tuple {
+    pub fn local_normal_at(&self, local_point: &Tuple, _hit: &Intersection) -> Tuple {
         // Compute the square of the distance from the y-axis
         let dist = local_point.x * local_point.x + local_point.z * local_point.z;
 
@@ -115,9 +115,9 @@ impl Object for Cylinder {
         self.local_intersect(&trans_ray)
     }
 
-    fn normal_at(&self, world_point: &Tuple) -> Tuple {
+    fn normal_at(&self, world_point: &Tuple, _hit: &Intersection) -> Tuple {
         let local_point = world_to_object(self.id, world_point);
-        let local_normal = self.local_normal_at(&local_point);
+        let local_normal = self.local_normal_at(&local_point, _hit);
         normal_to_world(self.id, &local_normal)
     }
 

@@ -46,12 +46,12 @@ impl Sphere {
         } else {
             let t1: f64 = (-b - discriminant.sqrt()) / (2.0 * a);
             let t2: f64 = (-b + discriminant.sqrt()) / (2.0 * a);
-            vec![Intersection { t: t1, object: self.id },
-                 Intersection { t: t2, object: self.id}]
+            vec![Intersection { t: t1, object: self.id, u: 0.0, v: 0.0},
+                 Intersection { t: t2, object: self.id, u: 0.0, v: 0.0}]
         }
     }
 
-    pub fn local_normal_at(&self, local_point: &Tuple) -> Tuple {
+    pub fn local_normal_at(&self, local_point: &Tuple, _hit: &Intersection) -> Tuple {
         local_point.subtract(&Tuple::point(0.0, 0.0, 0.0))
     }
 }
@@ -64,9 +64,9 @@ impl Object for Sphere {
         self.local_intersect(&trans_ray)
     }
 
-    fn normal_at(&self, world_point: &Tuple) -> Tuple {
+    fn normal_at(&self, world_point: &Tuple, _hit: &Intersection) -> Tuple {
         let local_point = world_to_object(self.id, world_point);
-        let local_normal = self.local_normal_at(&local_point);
+        let local_normal = self.local_normal_at(&local_point, _hit);
         normal_to_world(self.id, &local_normal)
     }
 

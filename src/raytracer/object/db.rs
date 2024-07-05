@@ -56,7 +56,7 @@ impl Object for Sentinel {
         vec![]
     }
 
-    fn normal_at(&self, _point: &Tuple) -> Tuple {
+    fn normal_at(&self, _point: &Tuple, _hit: &Intersection) -> Tuple {
         Tuple::vector(0.0, 0.0, 0.0)
     }
 

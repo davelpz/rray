@@ -7,7 +7,7 @@ use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 
 #[derive(Debug, PartialEq)]
-pub struct Triangle {
+pub struct SmoothTriangle {
     pub id: usize,
     pub parent_id: Option<usize>,
     pub transform: Matrix,
@@ -15,17 +15,20 @@ pub struct Triangle {
     pub p1: Tuple,
     pub p2: Tuple,
     pub p3: Tuple,
+    pub n1: Tuple,
+    pub n2: Tuple,
+    pub n3: Tuple,
     pub e1: Tuple,
     pub e2: Tuple,
     pub normal: Tuple,
 }
 
-impl Triangle {
-    pub fn new(p1: Tuple, p2: Tuple, p3: Tuple) -> Triangle {
+impl SmoothTriangle {
+    pub fn new(p1: Tuple, p2: Tuple, p3: Tuple, n1: Tuple, n2: Tuple, n3: Tuple) -> SmoothTriangle {
         let e1 = p2.subtract(&p1);
         let e2 = p3.subtract(&p1);
         let normal = e2.cross(&e1).normalize();
-        Triangle {
+        SmoothTriangle {
             id: get_next_id(),
             parent_id: None,
             transform: Matrix::identity(4),
@@ -33,14 +36,17 @@ impl Triangle {
             p1,
             p2,
             p3,
+            n1,
+            n2,
+            n3,
             e1,
             e2,
             normal,
         }
     }
 
-    pub fn local_normal_at(&self, _local_point: &Tuple, _hit: &Intersection) -> Tuple {
-        self.normal
+    pub fn local_normal_at(&self, _local_point: &Tuple, hit: &Intersection) -> Tuple {
+        self.n2 * hit.u + self.n3 * hit.v + self.n1 * (1.0 - hit.u - hit.v)
     }
 
     pub fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
@@ -68,7 +74,7 @@ impl Triangle {
     }
 }
 
-impl Object for Triangle {
+impl Object for SmoothTriangle {
     fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
         let trans_ray = ray.transform(&self.transform.inverse());
         self.local_intersect(&trans_ray)
@@ -128,16 +134,24 @@ impl Object for Triangle {
 
 #[cfg(test)]
 mod tests {
-    use crate::raytracer::object::triangle::Triangle;
+    use std::sync::Arc;
+    use crate::color::Color;
+    use crate::raytracer::intersection::Intersection;
+    use crate::raytracer::light::Light;
+    use crate::raytracer::object::db::get_object;
+    use crate::raytracer::object::smooth_triangle::SmoothTriangle;
     use crate::raytracer::ray::Ray;
     use crate::tuple::Tuple;
 
     #[test]
    fn intersecting_a_ray_parallel_to_the_triangle() {
-         let t = Triangle::new(
+         let t = SmoothTriangle::new(
               Tuple::point(0.0, 1.0, 0.0),
               Tuple::point(-1.0, 0.0, 0.0),
               Tuple::point(1.0, 0.0, 0.0),
+                Tuple::vector(0.0, 1.0, 0.0),
+                Tuple::vector(-1.0, 0.0, 0.0),
+                Tuple::vector(1.0, 0.0, 0.0),
          );
          let r = Ray::new(
               Tuple::point(0.0, -1.0, -2.0),
@@ -149,10 +163,13 @@ mod tests {
 
     #[test]
     fn a_ray_misses_the_p1_p3_edge() {
-        let t = Triangle::new(
+        let t = SmoothTriangle::new(
             Tuple::point(0.0, 1.0, 0.0),
             Tuple::point(-1.0, 0.0, 0.0),
             Tuple::point(1.0, 0.0, 0.0),
+            Tuple::vector(0.0, 1.0, 0.0),
+            Tuple::vector(-1.0, 0.0, 0.0),
+            Tuple::vector(1.0, 0.0, 0.0),
         );
         let r = Ray::new(
             Tuple::point(1.0, 1.0, -2.0),
@@ -164,10 +181,13 @@ mod tests {
 
     #[test]
     fn a_ray_misses_the_p1_p2_edge() {
-        let t = Triangle::new(
+        let t = SmoothTriangle::new(
             Tuple::point(0.0, 1.0, 0.0),
             Tuple::point(-1.0, 0.0, 0.0),
             Tuple::point(1.0, 0.0, 0.0),
+            Tuple::vector(0.0, 1.0, 0.0),
+            Tuple::vector(-1.0, 0.0, 0.0),
+            Tuple::vector(1.0, 0.0, 0.0),
         );
         let r = Ray::new(
             Tuple::point(-1.0, 1.0, -2.0),
@@ -179,10 +199,13 @@ mod tests {
 
     #[test]
     fn a_ray_misses_the_p2_p3_edge() {
-        let t = Triangle::new(
+        let t = SmoothTriangle::new(
             Tuple::point(0.0, 1.0, 0.0),
             Tuple::point(-1.0, 0.0, 0.0),
             Tuple::point(1.0, 0.0, 0.0),
+            Tuple::vector(0.0, 1.0, 0.0),
+            Tuple::vector(-1.0, 0.0, 0.0),
+            Tuple::vector(1.0, 0.0, 0.0),
         );
         let r = Ray::new(
             Tuple::point(0.0, -1.0, -2.0),
@@ -194,10 +217,13 @@ mod tests {
 
     #[test]
     fn a_ray_strikes_a_triangle() {
-        let t = Triangle::new(
+        let t = SmoothTriangle::new(
             Tuple::point(0.0, 1.0, 0.0),
             Tuple::point(-1.0, 0.0, 0.0),
             Tuple::point(1.0, 0.0, 0.0),
+            Tuple::vector(0.0, 1.0, 0.0),
+            Tuple::vector(-1.0, 0.0, 0.0),
+            Tuple::vector(1.0, 0.0, 0.0),
         );
         let r = Ray::new(
             Tuple::point(0.0, 0.5, -2.0),
@@ -206,5 +232,65 @@ mod tests {
         let xs = t.local_intersect(&r);
         assert_eq!(xs.len(), 1);
         assert_eq!(xs[0].t, 2.0);
+    }
+
+    #[test]
+    fn intersection_with_a_smooth_triangle_stores_uv() {
+        let r = Ray::new(
+            Tuple::point(-0.2, 0.3, -2.0),
+            Tuple::vector(0.0, 0.0, 1.0),
+        );
+        let tri = SmoothTriangle::new(
+            Tuple::point(0.0, 1.0, 0.0),
+            Tuple::point(-1.0, 0.0, 0.0),
+            Tuple::point(1.0, 0.0, 0.0),
+            Tuple::vector(0.0, 1.0, 0.0),
+            Tuple::vector(-1.0, 0.0, 0.0),
+            Tuple::vector(1.0, 0.0, 0.0),
+        );
+        let xs = tri.local_intersect(&r);
+        assert_eq!(xs.len(), 1);
+        assert!((xs[0].u - 0.45).abs() < crate::EPSILON);
+        assert!((xs[0].v - 0.25).abs() < crate::EPSILON);
+    }
+
+    #[test]
+    fn smooth_triangle_uses_u_v_to_interpolate_the_normal() {
+        let mut scene = crate::raytracer::scene::Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let tri = SmoothTriangle::new(
+            Tuple::point(0.0, 1.0, 0.0),
+            Tuple::point(-1.0, 0.0, 0.0),
+            Tuple::point(1.0, 0.0, 0.0),
+            Tuple::vector(0.0, 1.0, 0.0),
+            Tuple::vector(-1.0, 0.0, 0.0),
+            Tuple::vector(1.0, 0.0, 0.0),
+        );
+        let tri_id = scene.add_object(Arc::new(tri));
+        let tri = get_object(tri_id);
+        let i = Intersection { t: 0.0, object: tri_id, u: 0.45, v: 0.25 };
+        let n = tri.normal_at(&Tuple::point(0.0, 0.0, 0.0), &i);
+        assert_eq!(n, Tuple::vector(-0.5547, 0.83205, 0.0));
+    }
+
+    #[test]
+    fn preparing_the_normal_on_a_smooth_triangle() {
+        let mut scene = crate::raytracer::scene::Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let tri = SmoothTriangle::new(
+            Tuple::point(0.0, 1.0, 0.0),
+            Tuple::point(-1.0, 0.0, 0.0),
+            Tuple::point(1.0, 0.0, 0.0),
+            Tuple::vector(0.0, 1.0, 0.0),
+            Tuple::vector(-1.0, 0.0, 0.0),
+            Tuple::vector(1.0, 0.0, 0.0),
+        );
+        let tri_id = scene.add_object(Arc::new(tri));
+        let i = Intersection { t: 0.0, object: tri_id, u: 0.45, v: 0.25 };
+        let r = Ray::new(
+            Tuple::point(-0.2, 0.3, -2.0),
+            Tuple::vector(0.0, 0.0, 1.0),
+        );
+        let xs = vec![i];
+        let comps = xs[0].prepare_computations(&r, &xs);
+        assert_eq!(comps.normalv, Tuple::vector(-0.5547, 0.83205, 0.0));
     }
 }

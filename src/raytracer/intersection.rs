@@ -7,18 +7,20 @@ use crate::raytracer::object::db::get_object;
 pub struct Intersection {
     pub t: f64,
     pub object: usize,
+    pub u: f64,
+    pub v: f64,
 }
 
 impl Intersection {
-    pub fn new(t: f64, object: usize) -> Intersection {
-        Intersection { t, object }
+    pub fn new(t: f64, object: usize, u: f64, v: f64) -> Intersection {
+        Intersection { t, object, u, v }
     }
 
     pub fn prepare_computations(&self, r: &Ray, xs: &Vec<Intersection>) -> Computations {
         let point = r.position(self.t);
         let eyev = r.direction.negate();
         let object = get_object(self.object);
-        let normalv = object.normal_at(&point);
+        let normalv = object.normal_at(&point, self);
         let inside = normalv.dot(&eyev) < 0.0;
         let normalv = if inside { normalv.negate() } else { normalv };
         let over_point = point.add(&normalv.multiply(EPSILON));

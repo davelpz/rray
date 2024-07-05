@@ -284,8 +284,8 @@ mod tests {
         let id = w.ids[0];
         let r = Ray::new(Tuple::point(0.0, 0.0, 2_f64.sqrt()/2.0), Tuple::vector(0.0, 1.0, 0.0));
         let xs = vec![
-            Intersection::new(-2.0_f64.sqrt() / 2.0, id),
-            Intersection::new(2.0_f64.sqrt() / 2.0, id)
+            Intersection::new(-2.0_f64.sqrt() / 2.0, id, 0.0, 0.0),
+            Intersection::new(2.0_f64.sqrt() / 2.0, id, 0.0, 0.0)
         ];
         let comps = xs[1].prepare_computations(&r, &xs);
         let reflectance = comps.schlick();
@@ -300,8 +300,8 @@ mod tests {
         let id = w.ids[0];
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 1.0, 0.0));
         let xs = vec![
-            Intersection::new(-1.0, id),
-            Intersection::new(1.0, id)
+            Intersection::new(-1.0, id, 0.0, 0.0),
+            Intersection::new(1.0, id, 0.0, 0.0)
         ];
         let comps = xs[1].prepare_computations(&r, &xs);
         let reflectance = comps.schlick();
@@ -316,7 +316,7 @@ mod tests {
         let id = w.ids[0];
         let r = Ray::new(Tuple::point(0.0, 0.99, -2.0), Tuple::vector(0.0, 0.0, 1.0));
         let xs = vec![
-            Intersection::new(1.8589, id)
+            Intersection::new(1.8589, id, 0.0, 0.0)
         ];
         let comps = xs[0].prepare_computations(&r, &xs);
         let reflectance = comps.schlick();

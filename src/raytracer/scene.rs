@@ -188,7 +188,7 @@ mod tests {
         let w = Scene::default_scene();
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
         let shape = w.get_object_at_index(0);
-        let xs = vec![Intersection{t: 4.0, object: shape.get_id()}];
+        let xs = vec![Intersection{t: 4.0, object: shape.get_id(), u: 0.0, v: 0.0}];
         let comps = xs[0].prepare_computations(&r, &xs);
         let c = w.shade_hit(&comps,5);
         assert_eq!(c, Color::new(0.38066, 0.47583, 0.2855));
@@ -200,7 +200,7 @@ mod tests {
         w.light = Light::new_point_light(Tuple::point(0.0, 0.25, 0.0), Color::new(1.0, 1.0, 1.0));
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
         let shape = w.get_object_at_index(1);
-        let xs = vec![Intersection{t: 0.5, object: shape.get_id()}];
+        let xs = vec![Intersection{t: 0.5, object: shape.get_id(), u: 0.0, v: 0.0}];
         let comps = xs[0].prepare_computations(&r, &xs);
         let c = w.shade_hit(&comps,5);
         assert_eq!(c, Color::new(0.9049844720832575, 0.9049844720832575, 0.9049844720832575));
@@ -216,7 +216,7 @@ mod tests {
         w.add_object(Arc::new(s2));
         let s2_id = w.ids[1];
         let r = Ray::new(Tuple::point(0.0, 0.0, 5.0), Tuple::vector(0.0, 0.0, 1.0));
-        let xs = vec![Intersection{t: 4.0, object: s2_id}];
+        let xs = vec![Intersection{t: 4.0, object: s2_id, u: 0.0, v: 0.0}];
         let comps = xs[0].prepare_computations(&r, &xs);
         let c = w.shade_hit(&comps,5);
         assert_eq!(c, Color::new(0.1, 0.1, 0.1));
@@ -311,7 +311,7 @@ mod tests {
         let s2_id = w.ids[1];
 
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
-        let xs = vec![Intersection{t: 1.0, object: s2_id}];
+        let xs = vec![Intersection{t: 1.0, object: s2_id, u: 0.0, v: 0.0}];
         let comps = xs[0].prepare_computations(&r, &xs);
         let color = w.reflected_color(&comps, 5);
         assert_eq!(color, Color::new(0.0, 0.0, 0.0));
@@ -339,7 +339,7 @@ mod tests {
         let s3_id = w.ids[2];
 
         let r = Ray::new(Tuple::point(0.0, 0.0, -3.0), Tuple::vector(0.0, -2.0_f64.sqrt()/2.0, 2.0_f64.sqrt()/2.0));
-        let xs = vec![Intersection{t: 2.0_f64.sqrt(), object: s3_id}];
+        let xs = vec![Intersection{t: 2.0_f64.sqrt(), object: s3_id, u: 0.0, v: 0.0}];
         let comps = xs[0].prepare_computations(&r, &xs);
         let color = w.reflected_color(&comps, 5);
         assert_eq!(color, Color::new(0.190332201495133, 0.23791525186891627, 0.14274915112134975));
@@ -368,7 +368,7 @@ mod tests {
         let s3_id = w.ids[2];
 
         let r = Ray::new(Tuple::point(0.0, 0.0, -3.0), Tuple::vector(0.0, -2.0_f64.sqrt()/2.0, 2.0_f64.sqrt()/2.0));
-        let xs = vec![Intersection{t: 2.0_f64.sqrt(), object: s3_id}];
+        let xs = vec![Intersection{t: 2.0_f64.sqrt(), object: s3_id, u: 0.0, v: 0.0}];
         let comps = xs[0].prepare_computations(&r, &xs);
         let color = w.shade_hit(&comps,5);
         assert_eq!(color, Color::new(0.8767572837020907, 0.924340334075874, 0.8291742333283075));
@@ -417,7 +417,7 @@ mod tests {
         let s3_id = w.ids[2];
 
         let r = Ray::new(Tuple::point(0.0, 0.0, -3.0), Tuple::vector(0.0, -2.0_f64.sqrt()/2.0, 2.0_f64.sqrt()/2.0));
-        let xs = vec![Intersection{t: 2.0_f64.sqrt(), object: s3_id}];
+        let xs = vec![Intersection{t: 2.0_f64.sqrt(), object: s3_id, u: 0.0, v: 0.0}];
         let comps = xs[0].prepare_computations(&r, &xs);
         let color = w.reflected_color(&comps,0);
         assert_eq!(color, Color::new(0.0, 0.0, 0.0));
@@ -428,7 +428,7 @@ mod tests {
         let w = Scene::default_scene();
         let shape = w.get_object_at_index(0);
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
-        let xs = vec![Intersection{t: 4.0, object: shape.get_id()}, Intersection{t: 6.0, object: shape.get_id()}];
+        let xs = vec![Intersection{t: 4.0, object: shape.get_id(), u:0.0, v:0.0}, Intersection{t: 6.0, object: shape.get_id(), u: 0.0, v: 0.0}];
         let comps = xs[0].prepare_computations(&r, &xs);
         let c = w.refracted_color(&comps,5);
         assert_eq!(c, Color::new(0.0, 0.0, 0.0));
@@ -454,7 +454,7 @@ mod tests {
 
         let shape = s1_id;
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
-        let xs = vec![Intersection{t: 4.0, object: shape}, Intersection{t: 6.0, object: shape}];
+        let xs = vec![Intersection{t: 4.0, object: shape,u:0.0, v:0.0}, Intersection{t: 6.0, object: shape, u: 0.0, v: 0.0}];
         let comps = xs[0].prepare_computations(&r, &xs);
         let c = w.refracted_color(&comps,0);
         assert_eq!(c, Color::new(0.0, 0.0, 0.0));
@@ -480,7 +480,7 @@ mod tests {
 
         let shape = s1_id;
         let r = Ray::new(Tuple::point(0.0, 0.0, 2_f64.sqrt()/2.0), Tuple::vector(0.0, 1.0, 0.0));
-        let xs = vec![Intersection{t: -2_f64.sqrt()/2.0, object: shape}, Intersection{t: 2_f64.sqrt()/2.0, object: shape}];
+        let xs = vec![Intersection{t: -2_f64.sqrt()/2.0, object: shape, u:0.0, v:0.0}, Intersection{t: 2_f64.sqrt()/2.0, object: shape, u:0.0, v:0.0}];
         let comps = xs[1].prepare_computations(&r, &xs);
         let c = w.refracted_color(&comps,5);
         assert_eq!(c, Color::new(0.0, 0.0, 0.0));
@@ -508,10 +508,10 @@ mod tests {
 
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.1), Tuple::vector(0.0, 1.0, 0.0));
         let xs = vec![
-            Intersection{t: -0.9899, object: s1_id},
-            Intersection{t: -0.4899, object: s2_id},
-            Intersection{t: 0.4899, object: s2_id},
-            Intersection{t: 0.9899, object: s1_id}
+            Intersection{t: -0.9899, object: s1_id, u: 0.0, v: 0.0},
+            Intersection{t: -0.4899, object: s2_id, u: 0.0, v: 0.0},
+            Intersection{t: 0.4899, object: s2_id, u: 0.0, v: 0.0},
+            Intersection{t: 0.9899, object: s1_id, u: 0.0, v: 0.0}
         ];
         let comps = xs[2].prepare_computations(&r, &xs);
         let c = w.refracted_color(&comps,5);
@@ -548,7 +548,7 @@ mod tests {
 
         let ray = Ray::new(Tuple::point(0.0, 0.0, -3.0), Tuple::vector(0.0, -2.0_f64.sqrt()/2.0, 2.0_f64.sqrt()/2.0));
         let xs = vec![
-            Intersection{t: 2.0_f64.sqrt(), object: floor_id}
+            Intersection{t: 2.0_f64.sqrt(), object: floor_id, u: 0.0, v: 0.0},
         ];
         let comps = xs[0].prepare_computations(&ray, &xs);
         let c = w.shade_hit(&comps,5);
@@ -585,7 +585,7 @@ mod tests {
         w.add_object(Arc::new(s3));
 
         let ray = Ray::new(Tuple::point(0.0, 0.0, -3.0), Tuple::vector(0.0, -2.0_f64.sqrt()/2.0, 2.0_f64.sqrt()/2.0));
-        let xs = vec![Intersection::new(2.0_f64.sqrt(), floor_id)];
+        let xs = vec![Intersection::new(2.0_f64.sqrt(), floor_id, 0.0, 0.0)];
         let comps = xs[0].prepare_computations(&ray, &xs);
         let c = w.shade_hit(&comps,5);
         assert_eq!(c, Color::new(0.9259077639258646, 0.6864251822976762, 0.6764160604069138));

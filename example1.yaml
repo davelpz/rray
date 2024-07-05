@@ -218,7 +218,7 @@ scene:
           transparency: 0.9
           refractive_index: 1.52
       - type: obj_file
-        obj_file: examples/teapot-low.obj
+        obj_file: examples/teapot.obj
         hidden: false
         material:
           pattern:

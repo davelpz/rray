@@ -65,7 +65,7 @@ impl Group {
         xs
     }
 
-    pub fn local_normal_at(&self, _vector: &Tuple) -> Tuple {
+    pub fn local_normal_at(&self, _vector: &Tuple, _hit: &Intersection) -> Tuple {
         panic!("Groups do not have normals")
     }
 
@@ -78,9 +78,9 @@ impl Object for Group {
         self.local_intersect(&trans_ray)
     }
 
-    fn normal_at(&self, world_point: &Tuple) -> Tuple {
+    fn normal_at(&self, world_point: &Tuple, _hit: &Intersection) -> Tuple {
         let local_point = world_to_object(self.id, world_point);
-        let local_normal = self.local_normal_at(&local_point);
+        let local_normal = self.local_normal_at(&local_point, _hit);
         normal_to_world(self.id, &local_normal)
     }
 
@@ -146,6 +146,7 @@ mod tests {
     use crate::color::Color;
     use crate::matrix::Matrix;
     use crate::raytracer::camera::Camera;
+    use crate::raytracer::intersection::Intersection;
     use crate::raytracer::light::Light;
     use crate::raytracer::object::{normal_to_world, world_to_object};
     use crate::raytracer::object::cylinder::Cylinder;
@@ -263,7 +264,7 @@ mod tests {
         scene.add_object(Arc::new(g1));
 
         let s = get_object(s_id);
-        let n = s.normal_at(&Tuple::point(1.7321, 1.1547, -5.5774));
+        let n = s.normal_at(&Tuple::point(1.7321, 1.1547, -5.5774), &Intersection::new(0.0, s_id, 0.0, 0.0));
         assert_eq!(n, Tuple::vector(0.28570368184140726, 0.42854315178114105, -0.8571605294481017));
     }
 

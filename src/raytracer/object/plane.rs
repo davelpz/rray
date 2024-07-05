@@ -29,10 +29,10 @@ impl Plane {
             vec![]
         } else {
             let t = -ray.origin.y / ray.direction.y;
-            vec![Intersection { t, object: self.id }]
+            vec![Intersection { t, object: self.id, u: 0.0, v: 0.0}]
         }
     }
-    pub fn local_normal_at(&self, _local_point: &Tuple) -> Tuple {
+    pub fn local_normal_at(&self, _local_point: &Tuple, _hit: &Intersection) -> Tuple {
         Tuple::vector(0.0, 1.0, 0.0)
     }
 }
@@ -43,9 +43,9 @@ impl Object for Plane {
         self.local_intersect(&trans_ray)
     }
 
-    fn normal_at(&self, world_point: &Tuple) -> Tuple {
+    fn normal_at(&self, world_point: &Tuple, _hit: &Intersection) -> Tuple {
         let local_point = world_to_object(self.id, world_point);
-        let local_normal = self.local_normal_at(&local_point);
+        let local_normal = self.local_normal_at(&local_point, _hit);
         normal_to_world(self.id, &local_normal)
     }
 

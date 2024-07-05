@@ -47,7 +47,7 @@ impl Cone {
             let t = -c / (2.0 * b);
             let y = trans_ray.origin.y + t * trans_ray.direction.y;
             if minimum < y && y < maximum {
-                xs.push(Intersection::new(t, self.id));
+                xs.push(Intersection::new(t, self.id, 0.0, 0.0));
                 return xs;
             }
         }
@@ -65,11 +65,11 @@ impl Cone {
 
         let y0 = trans_ray.origin.y + t0 * trans_ray.direction.y;
         if minimum < y0 && y0 < maximum {
-            xs.push(Intersection::new(t0, self.id));
+            xs.push(Intersection::new(t0, self.id, 0.0, 0.0));
         }
         let y1 = trans_ray.origin.y + t1 * trans_ray.direction.y;
         if minimum < y1 && y1 < maximum {
-            xs.push(Intersection::new(t1, self.id));
+            xs.push(Intersection::new(t1, self.id, 0.0, 0.0));
         }
 
         self.intersect_caps(&trans_ray).iter().for_each(|i| xs.push(i.clone()));
@@ -102,20 +102,20 @@ impl Cone {
         // the ray with the plane at y = minimum
         let t = (minimum - ray.origin.y) / ray.direction.y;
         if Cone::check_cap(ray, t) {
-            xs.push(Intersection::new(t, self.id));
+            xs.push(Intersection::new(t, self.id, 0.0, 0.0));
         }
 
         // Check for an intersection with the upper end cap by intersecting
         // the ray with the plane at y = maximum
         let t = (maximum - ray.origin.y) / ray.direction.y;
         if Cone::check_cap(ray, t) {
-            xs.push(Intersection::new(t, self.id));
+            xs.push(Intersection::new(t, self.id, 0.0, 0.0));
         }
 
         xs
     }
 
-    pub fn local_normal_at(&self, local_point: &Tuple) -> Tuple {
+    pub fn local_normal_at(&self, local_point: &Tuple, _hit: &Intersection) -> Tuple {
         let minimum = self.minimum;
         let maximum = self.maximum;
 
@@ -143,9 +143,9 @@ impl Object for Cone {
         self.local_intersect(&trans_ray)
     }
 
-    fn normal_at(&self, world_point: &Tuple) -> Tuple {
+    fn normal_at(&self, world_point: &Tuple, _hit: &Intersection) -> Tuple {
         let local_point = world_to_object(self.id, world_point);
-        let local_normal = self.local_normal_at(&local_point);
+        let local_normal = self.local_normal_at(&local_point, _hit);
         normal_to_world(self.id, &local_normal)
     }
 
