@@ -1,25 +1,27 @@
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
-use crate::raytracer::scene::Scene;
-use yaml_rust2::{Yaml, YamlLoader, YamlEmitter};
+
+use yaml_rust2::{Yaml, YamlLoader};
 use yaml_rust2::yaml::{Array, Hash};
+
 use crate::color::Color;
 use crate::matrix::Matrix;
 use crate::raytracer::camera::Camera;
 use crate::raytracer::light::Light;
+use crate::raytracer::load_obj::load_obj_file;
+use crate::raytracer::material::Material;
+use crate::raytracer::material::pattern::Pattern;
 use crate::raytracer::object::cone::Cone;
 use crate::raytracer::object::cube::Cube;
 use crate::raytracer::object::cylinder::Cylinder;
+use crate::raytracer::object::group::Group;
 use crate::raytracer::object::Object;
 use crate::raytracer::object::plane::Plane;
 use crate::raytracer::object::sphere::Sphere;
 use crate::raytracer::object::triangle::Triangle;
+use crate::raytracer::scene::Scene;
 use crate::tuple::Tuple;
-use crate::raytracer::load_obj::load_obj_file;
-use crate::raytracer::material::Material;
-use crate::raytracer::material::pattern::Pattern;
-use crate::raytracer::object::group::Group;
 
 fn degrees_to_radians(degrees: f64) -> f64 {
     degrees * std::f64::consts::PI / 180.0
@@ -46,6 +48,7 @@ fn vector_from_vec(v: &Array) -> Tuple {
     Tuple::vector(x, y, z)
 }
 
+#[allow(dead_code)]
 fn print_type(node: &Yaml) {
     match node {
         Yaml::Real(value) => println!("It's a Real with value: {}", value),
@@ -191,7 +194,6 @@ fn create_transforms(transforms: &Array) -> Matrix {
 
 fn create_pattern(pattern: &Yaml) -> Pattern {
     let transform = create_transforms(&pattern["transforms"].as_vec().unwrap_or(&vec![]));
-    println!("Pattern: {:?}", pattern);
     let pattern_type = pattern["type"].as_str().expect("pattern type not found");
     let color = &pattern["color"];
     let black = vec![Yaml::Real("0.0".to_string()), Yaml::Real("0.0".to_string()), Yaml::Real("0.0".to_string())];
@@ -287,7 +289,6 @@ fn create_material(material: &Yaml) -> Material {
 
 fn create_shape(shape: &Yaml) -> Arc<dyn Object> {
     let object_type = shape["type"].as_str().expect("type not found");
-    println!("Creating object: {}", object_type);
     let mut s: Arc<dyn Object> = match object_type {
         "sphere" => Arc::new(Sphere::new()),
         "glass_sphere" => Arc::new(Sphere::glass_sphere()),
@@ -313,7 +314,7 @@ fn create_shape(shape: &Yaml) -> Arc<dyn Object> {
         }
         "obj_file" => {
             let file = shape["obj_file"].as_str().unwrap();
-            Arc::new(load_obj_file(file, Material::default()))
+            Arc::new(load_obj_file(file, create_material(&shape["material"])))
         }
         "group" => create_group(shape),
         _ => panic!("Unknown object type: {}", object_type),
@@ -357,7 +358,7 @@ pub fn render_scene_from_file(path: &str, width: usize, height: usize, png_file:
 
 #[cfg(test)]
 mod tests {
-    use crate::raytracer::scene_builder_yaml::{render_scene_from_file};
+    use crate::raytracer::scene_builder_yaml::render_scene_from_file;
 
     #[test]
     #[ignore]
