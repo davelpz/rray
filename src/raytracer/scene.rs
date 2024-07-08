@@ -78,7 +78,6 @@ impl Scene {
     }
 
     pub fn shade_hit(&self, comps: &Computations, remaining: usize) -> Color {
-        // TODO: support multiple light sources, loop through all lights and sum the results
         let mut color = Color::new(0.0, 0.0, 0.0);
         for light in &self.light {
             let light_color= self.shade_hit_light(comps, light, remaining);
