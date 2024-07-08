@@ -80,20 +80,9 @@ impl Scene {
     pub fn shade_hit(&self, comps: &Computations, remaining: usize) -> Color {
         let mut surface = Color::new(0.0, 0.0, 0.0);
         for light in &self.light {
-            let light_color= self.shade_hit_light(comps, light, remaining);
+            let light_color= self.shade_hit_light(comps, light);
             surface = surface.add(&light_color);
         }
-        return surface;
-    }
-
-    fn shade_hit_light(&self, comps: &Computations, light: &Light, remaining: usize) -> Color {
-        let surface = lighting(
-            comps.object,
-            light,
-            &comps.over_point,
-            &comps.eyev,
-            &comps.normalv,
-            self.is_shadowed(&comps.over_point, light));
 
         let reflected = self.reflected_color(comps, remaining);
         let refracted = self.refracted_color(comps, remaining);
@@ -103,10 +92,20 @@ impl Scene {
 
         if material.reflective > 0.0 && material.transparency > 0.0 {
             let reflectance = comps.schlick();
-            return surface.add(&reflected.multiply(reflectance)).add(&refracted.multiply(1.0 - reflectance));
+            surface.add(&reflected.multiply(reflectance)).add(&refracted.multiply(1.0 - reflectance))
         } else {
             surface.add(&reflected).add(&refracted)
         }
+    }
+
+    fn shade_hit_light(&self, comps: &Computations, light: &Light) -> Color {
+        lighting(
+            comps.object,
+            light,
+            &comps.over_point,
+            &comps.eyev,
+            &comps.normalv,
+            self.is_shadowed(&comps.over_point, light))
     }
 
     pub fn is_shadowed(&self, point: &Tuple, light: &Light) -> bool {
