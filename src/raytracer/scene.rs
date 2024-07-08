@@ -78,12 +78,12 @@ impl Scene {
     }
 
     pub fn shade_hit(&self, comps: &Computations, remaining: usize) -> Color {
-        let mut color = Color::new(0.0, 0.0, 0.0);
+        let mut surface = Color::new(0.0, 0.0, 0.0);
         for light in &self.light {
             let light_color= self.shade_hit_light(comps, light, remaining);
-            color = color.add(&light_color);
+            surface = surface.add(&light_color);
         }
-        return color;
+        return surface;
     }
 
     fn shade_hit_light(&self, comps: &Computations, light: &Light, remaining: usize) -> Color {
