@@ -107,27 +107,31 @@ fn create_camera(doc: &Yaml, width: usize, height: usize) -> Camera {
     c
 }
 
-fn create_light(doc: &Yaml) -> Light {
+fn create_lights(doc: &Yaml) -> Vec<Light> {
+    let mut created_lights: Vec<Light> = vec![];
+
     let lights = doc["lights"].as_vec().expect("lights not found");
 
     if lights.is_empty() {
         panic!("No lights found in scene");
     }
 
-    //only supporting one light for now
-    let light = &lights[0];
-    let light_type = light["type"].as_str().expect("light.light_type not found");
-    let color = light["color"].as_vec().expect("light.color not found");
-    let position = light["position"].as_vec().expect("light.position not found");
+    for light in lights {
+        let light_type = light["type"].as_str().expect("light.light_type not found");
+        let color = light["color"].as_vec().expect("light.color not found");
+        let position = light["position"].as_vec().expect("light.position not found");
 
-    if light_type != "point" {
-        panic!("Only point lights are supported");
+        if light_type != "point" {
+            panic!("Only point lights are supported");
+        }
+
+        created_lights.push(Light::new_point_light(
+            point_from_vec(position),
+            color_from_vec(color),
+        ));
     }
 
-    Light::new_point_light(
-        point_from_vec(position),
-        color_from_vec(color),
-    )
+    created_lights
 }
 
 fn create_group(shape: &Yaml) -> Arc<dyn Object> {
@@ -330,7 +334,10 @@ pub fn render_scene_from_str(contents: &str, width: usize, height: usize, png_fi
     let doc = &docs[0];
 
     let camera = create_camera(doc, width * aa, height * aa);
-    let mut scene = Scene::new(create_light(doc));
+    let mut scene = Scene::new();
+    for light in create_lights(doc) {
+        scene.add_light(light);
+    }
 
     let scene_yaml = doc["scene"].as_vec().expect("scene not found");
 

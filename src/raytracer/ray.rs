@@ -72,7 +72,8 @@ mod tests {
 
     #[test]
     fn test_hit() {
-        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let s = Sphere::new();
         w.add_object(Arc::new(s));
         let id = w.ids[0];
@@ -125,7 +126,8 @@ mod tests {
 
     #[test]
     fn intersections_the_hit_should_offset_the_point() {
-        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
         let mut s = Sphere::new();
         s.transform = Matrix::translate(0.0, 0.0, 1.0);
@@ -141,7 +143,8 @@ mod tests {
     #[test]
     #[ignore]
     fn test_render() {
-        let mut w = Scene::new(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let ray_origin = Tuple::point(0.0, 0.0, -5.0);
         let wall_z = 10.0;
         let wall_size = 7.0;
@@ -175,7 +178,8 @@ mod tests {
     #[test]
     #[ignore]
     fn test_render2() {
-        let mut w = Scene::new(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let ray_origin = Tuple::point(0.0, 0.0, -5.0);
         let wall_z = 10.0;
         let wall_size = 7.0;
@@ -217,7 +221,8 @@ mod tests {
 
     #[test]
     fn test_prepare_computations() {
-        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
         let s = Sphere::new();
         w.add_object(Arc::new(s));
@@ -235,7 +240,8 @@ mod tests {
 
     #[test]
     fn test_prepare_computations_inside() {
-        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
         let s = Sphere::new();
         w.add_object(Arc::new(s));
@@ -252,7 +258,8 @@ mod tests {
 
     #[test]
     fn precomputing_the_reflection_vector() {
-        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let s = Plane::new();
         w.add_object(Arc::new(s));
         let id = w.ids[0];
@@ -264,7 +271,8 @@ mod tests {
 
     #[test]
     fn finding_n1_and_n2_at_various_intersections() {
-        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let mut a = Sphere::glass_sphere();
         a.transform = Matrix::scale(2.0, 2.0, 2.0);
         a.material.refractive_index = 1.5;
@@ -305,7 +313,8 @@ mod tests {
 
     #[test]
     fn underpoint_is_offset_below_the_surface() {
-        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
         let mut s = Sphere::glass_sphere();
         s.transform = Matrix::translate(0.0, 0.0, 1.0);

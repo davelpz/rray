@@ -214,7 +214,8 @@ mod test {
 
     #[test]
     fn normal_at_surface_point() {
-        let mut scene = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
+        let mut scene = Scene::new();
+        scene.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
         let s = Arc::new(Sphere::new());
         let sid = scene.add_object(s);
         let s: Arc<dyn Object> = get_object(sid);
@@ -233,7 +234,8 @@ mod test {
 
     #[test]
     fn normal_at_non_axial_point() {
-        let mut scene = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
+        let mut scene = Scene::new();
+        scene.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
         let s = Arc::new(Sphere::new());
         let sid = scene.add_object(s);
         let s: Arc<dyn Object> = get_object(sid);

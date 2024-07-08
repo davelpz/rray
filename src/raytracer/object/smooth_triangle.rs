@@ -256,7 +256,8 @@ mod tests {
 
     #[test]
     fn smooth_triangle_uses_u_v_to_interpolate_the_normal() {
-        let mut scene = crate::raytracer::scene::Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut scene = crate::raytracer::scene::Scene::new();
+        scene.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let tri = SmoothTriangle::new(
             Tuple::point(0.0, 1.0, 0.0),
             Tuple::point(-1.0, 0.0, 0.0),
@@ -274,7 +275,8 @@ mod tests {
 
     #[test]
     fn preparing_the_normal_on_a_smooth_triangle() {
-        let mut scene = crate::raytracer::scene::Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut scene = crate::raytracer::scene::Scene::new();
+        scene.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let tri = SmoothTriangle::new(
             Tuple::point(0.0, 1.0, 0.0),
             Tuple::point(-1.0, 0.0, 0.0),

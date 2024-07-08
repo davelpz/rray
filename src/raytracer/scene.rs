@@ -12,16 +12,20 @@ use crate::raytracer::ray::{hit, Ray};
 use crate::raytracer::object::db::{get_object, add_object};
 
 pub struct Scene {
-    pub light: Light,
+    pub light: Vec<Light>,
     pub ids: Vec<usize>,
 }
 
 impl Scene {
-    pub fn new(light: Light) -> Scene {
+    pub fn new() -> Scene {
         Scene {
-            light,
+            light: Vec::new(),
             ids: Vec::new(),
         }
+    }
+
+    pub fn add_light(&mut self, light: Light) {
+        self.light.push(light);
     }
 
     pub fn add_object(&mut self, object: Arc<dyn Object + Send>) -> usize {
@@ -39,7 +43,8 @@ impl Scene {
     #[allow(dead_code)]
     pub fn default_scene() -> Scene {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let mut scene = Scene::new(light);
+        let mut scene = Scene::new();
+        scene.add_light(light);
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::solid(Color::new(0.8, 1.0, 0.6), Matrix::identity(4));
         s1.material.diffuse = 0.7;
@@ -62,15 +67,34 @@ impl Scene {
         xs
     }
 
+    pub fn color_at(&self, r: &Ray, remaining: usize) -> Color {
+        let xs = self.intersect(r);
+        if let Some(hit) = xs.iter().find(|x| x.t >= 0.0) {
+            let comps = hit.prepare_computations(r,&xs);
+            self.shade_hit(&comps, remaining)
+        } else {
+            Color::new(0.0, 0.0, 0.0)
+        }
+    }
+
     pub fn shade_hit(&self, comps: &Computations, remaining: usize) -> Color {
         // TODO: support multiple light sources, loop through all lights and sum the results
+        let mut color = Color::new(0.0, 0.0, 0.0);
+        for light in &self.light {
+            let light_color= self.shade_hit_light(comps, light, remaining);
+            color = color.add(&light_color);
+        }
+        return color;
+    }
+
+    fn shade_hit_light(&self, comps: &Computations, light: &Light, remaining: usize) -> Color {
         let surface = lighting(
             comps.object,
-            &self.light,
+            light,
             &comps.over_point,
             &comps.eyev,
             &comps.normalv,
-            self.is_shadowed(&comps.over_point));
+            self.is_shadowed(&comps.over_point, light));
 
         let reflected = self.reflected_color(comps, remaining);
         let refracted = self.refracted_color(comps, remaining);
@@ -86,18 +110,8 @@ impl Scene {
         }
     }
 
-    pub fn color_at(&self, r: &Ray, remaining: usize) -> Color {
-        let xs = self.intersect(r);
-        if let Some(hit) = xs.iter().find(|x| x.t >= 0.0) {
-            let comps = hit.prepare_computations(r,&xs);
-            self.shade_hit(&comps, remaining)
-        } else {
-            Color::new(0.0, 0.0, 0.0)
-        }
-    }
-
-    pub fn is_shadowed(&self, point: &Tuple) -> bool {
-        let v = self.light.position - *point;
+    pub fn is_shadowed(&self, point: &Tuple, light: &Light) -> bool {
+        let v = light.position - *point;
         let distance = v.magnitude();
         let direction = v.normalize();
         let r = Ray::new(*point, direction);
@@ -166,9 +180,10 @@ mod tests {
 
     #[test]
     fn creating_a_world() {
-        let w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
         assert_eq!(w.ids.len(), 0);
-        assert_eq!(w.light, Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
+        assert_eq!(w.light[0], Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0)));
     }
 
     #[test]
@@ -197,7 +212,8 @@ mod tests {
     #[test]
     fn shading_an_intersection_from_the_inside() {
         let mut w = Scene::default_scene();
-        w.light = Light::new_point_light(Tuple::point(0.0, 0.25, 0.0), Color::new(1.0, 1.0, 1.0));
+        w.light.remove(0);
+        w.add_light(Light::new_point_light(Tuple::point(0.0, 0.25, 0.0), Color::new(1.0, 1.0, 1.0)));
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
         let shape = w.get_object_at_index(1);
         let xs = vec![Intersection{t: 0.5, object: shape.get_id(), u: 0.0, v: 0.0}];
@@ -208,7 +224,8 @@ mod tests {
 
     #[test]
     fn shade_hit_is_given_an_intersection_in_shadow() {
-        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let s1 = Sphere::new();
         let mut s2 = Sphere::new();
         s2.transform = Matrix::translate(0.0, 0.0, 10.0);
@@ -241,7 +258,8 @@ mod tests {
     #[test]
     fn the_color_with_an_intersection_behind_the_ray() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let mut w = Scene::new(light);
+        let mut w = Scene::new();
+        w.add_light(light);
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::solid(Color::new(0.8, 1.0, 0.6), Matrix::identity(4));
         s1.material.diffuse = 0.7;
@@ -269,34 +287,35 @@ mod tests {
     fn there_is_no_shadow_when_nothing_is_collinear_with_point_and_light() {
         let w = Scene::default_scene();
         let p = Tuple::point(0.0, 10.0, 0.0);
-        assert_eq!(w.is_shadowed(&p), false);
+        assert_eq!(w.is_shadowed(&p, &w.light[0]), false);
     }
 
     #[test]
     fn the_shadow_when_an_object_is_between_the_point_and_the_light() {
         let w = Scene::default_scene();
         let p = Tuple::point(10.0, -10.0, 10.0);
-        assert_eq!(w.is_shadowed(&p), true);
+        assert_eq!(w.is_shadowed(&p, &w.light[0]), true);
     }
 
     #[test]
     fn there_is_no_shadow_when_an_object_is_behind_the_light() {
         let w = Scene::default_scene();
         let p = Tuple::point(-20.0, 20.0, -20.0);
-        assert_eq!(w.is_shadowed(&p), false);
+        assert_eq!(w.is_shadowed(&p, &w.light[0]), false);
     }
 
     #[test]
     fn there_is_no_shadow_when_an_object_is_behind_the_point() {
         let w = Scene::default_scene();
         let p = Tuple::point(-2.0, 2.0, -2.0);
-        assert_eq!(w.is_shadowed(&p), false);
+        assert_eq!(w.is_shadowed(&p, &w.light[0]), false);
     }
 
     #[test]
     fn reflected_color_for_the_a_nonreflective_material() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let mut w = Scene::new(light);
+        let mut w = Scene::new();
+        w.add_light(light);
 
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::solid(Color::new(0.8, 1.0, 0.6), Matrix::identity(4));
@@ -320,7 +339,8 @@ mod tests {
     #[test]
     fn reflected_color_for_a_reflective_material() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let mut w = Scene::new(light);
+        let mut w = Scene::new();
+        w.add_light(light);
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::solid(Color::new(0.8, 1.0, 0.6), Matrix::identity(4));
         s1.material.diffuse = 0.7;
@@ -348,7 +368,8 @@ mod tests {
     #[test]
     fn shade_hit_for_a_reflective_material() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let mut w = Scene::new(light);
+        let mut w = Scene::new();
+        w.add_light(light);
 
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::solid(Color::new(0.8, 1.0, 0.6), Matrix::identity(4));
@@ -377,7 +398,8 @@ mod tests {
     #[test]
     fn color_at_with_mutually_reflective_surfaces() {
         let light = Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::new(1.0, 1.0, 1.0));
-        let mut w = Scene::new(light);
+        let mut w = Scene::new();
+        w.add_light(light);
 
         let mut lower = Plane::new();
         lower.material.reflective = 1.0;
@@ -397,7 +419,8 @@ mod tests {
     #[test]
     fn reflected_color_at_the_maximum_recursive_depth() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let mut w = Scene::new(light);
+        let mut w = Scene::new();
+        w.add_light(light);
 
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::solid(Color::new(0.8, 1.0, 0.6), Matrix::identity(4));
@@ -437,7 +460,8 @@ mod tests {
     #[test]
     fn refracted_color_at_the_maximum_recursive_depth() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let mut w = Scene::new(light);
+        let mut w = Scene::new();
+        w.add_light(light);
 
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::solid(Color::new(0.8, 1.0, 0.6), Matrix::identity(4));
@@ -463,7 +487,8 @@ mod tests {
     #[test]
     fn refracted_color_under_total_internal_reflection() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let mut w = Scene::new(light);
+        let mut w = Scene::new();
+        w.add_light(light);
 
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::solid(Color::new(0.8, 1.0, 0.6), Matrix::identity(4));
@@ -489,7 +514,8 @@ mod tests {
     #[test]
     fn refracted_color_with_a_recracted_ray() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let mut w = Scene::new(light);
+        let mut w = Scene::new();
+        w.add_light(light);
 
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::test();
@@ -521,7 +547,8 @@ mod tests {
     #[test]
     fn shade_hit_with_a_transparent_material() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let mut w = Scene::new(light);
+        let mut w = Scene::new();
+        w.add_light(light);
 
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::test();
@@ -558,7 +585,8 @@ mod tests {
     #[test]
     fn shade_hit_with_a_reflective_transparent_material() {
         let light = Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let mut w = Scene::new(light);
+        let mut w = Scene::new();
+        w.add_light(light);
 
         let mut s1 = Sphere::new();
         s1.material.pattern = Pattern::test();

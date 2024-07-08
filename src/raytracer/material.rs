@@ -55,7 +55,8 @@ mod tests {
 
     #[test]
     fn surface_in_shadow() {
-        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let m = Material::default();
         let position = Tuple::point(0.0, 0.0, 0.0);
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
@@ -72,7 +73,8 @@ mod tests {
 
     #[test]
     fn test_pattern() {
-        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
         let mut shape = Sphere::new();
         shape.transform = Matrix::scale(2.0, 2.0, 2.0);
         let mut m = Material::default();

@@ -202,7 +202,8 @@ mod tests {
 
     #[test]
     fn converting_a_point_from_world_to_object_space() {
-        let mut scene = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut scene = Scene::new();
+        scene.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
 
         let mut g1 = Group::new();
         g1.set_transform(Matrix::rotate_y(std::f64::consts::PI / 2.0));
@@ -226,7 +227,8 @@ mod tests {
 
     #[test]
     fn converting_a_normal_from_object_to_world_space() {
-        let mut scene = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut scene = Scene::new();
+        scene.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
 
         let mut g1 = Group::new();
         g1.set_transform(Matrix::rotate_y(std::f64::consts::PI / 2.0));
@@ -250,7 +252,9 @@ mod tests {
 
     #[test]
     fn finding_the_normal_on_a_child_object() {
-        let mut scene = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut scene = Scene::new();
+        scene.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+
         let mut g1 = Group::new();
         g1.set_transform(Matrix::rotate_y(std::f64::consts::PI / 2.0));
         let mut g2 = Group::new();
@@ -315,7 +319,9 @@ mod tests {
         let up = Tuple::vector(0.0, 1.0, 0.0);
         c.transform = Matrix::view_transform(from, to, up);
 
-        let mut w = Scene::new(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+
         let mut g = hexagon();
         g.set_transform(Matrix::rotate_x(degrees_to_radians(-20.0)));
         w.add_object(Arc::new(g));

@@ -278,7 +278,8 @@ mod tests {
 
     #[test]
     fn schlick_reflectance_under_total_internal_reflection() {
-        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::white()));
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::white()));
         let shape = Sphere::glass_sphere();
         w.add_object(Arc::new(shape));
         let id = w.ids[0];
@@ -294,7 +295,8 @@ mod tests {
 
     #[test]
     fn schlick_reflectance_with_perpendicular_viewing_angle() {
-        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::white()));
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::white()));
         let shape = Sphere::glass_sphere();
         w.add_object(Arc::new(shape));
         let id = w.ids[0];
@@ -310,7 +312,8 @@ mod tests {
 
     #[test]
     fn schlick_approximation_with_small_angle_and_n2_greater_than_n1() {
-        let mut w = Scene::new(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::white()));
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, 0.0), Color::white()));
         let shape = Sphere::glass_sphere();
         w.add_object(Arc::new(shape));
         let id = w.ids[0];
