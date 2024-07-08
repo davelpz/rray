@@ -322,6 +322,6 @@ mod tests {
 
         let image = c.render(&w);
 
-        image.write_to_file("canvas.png");
+        image.write_to_file("canvas.png", 1);
     }
 }

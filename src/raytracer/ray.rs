@@ -169,7 +169,7 @@ mod tests {
             }
         }
 
-        canvas.write_to_file("canvas.png");
+        canvas.write_to_file("canvas.png",1 );
     }
 
     #[test]
@@ -212,7 +212,7 @@ mod tests {
             }
         }
 
-        canvas.write_to_file("canvas.png");
+        canvas.write_to_file("canvas.png",1 );
     }
 
     #[test]

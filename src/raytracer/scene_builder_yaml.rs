@@ -324,12 +324,12 @@ fn create_shape(shape: &Yaml) -> Arc<dyn Object> {
     s
 }
 
-pub fn render_scene_from_str(contents: &str, width: usize, height: usize, png_file: &str) {
+pub fn render_scene_from_str(contents: &str, width: usize, height: usize, png_file: &str, aa: usize) {
     let docs = YamlLoader::load_from_str(contents).unwrap();
     // Multi document support, doc is a yaml::Yaml
     let doc = &docs[0];
 
-    let camera = create_camera(doc, width, height);
+    let camera = create_camera(doc, width * aa, height * aa);
     let mut scene = Scene::new(create_light(doc));
 
     let scene_yaml = doc["scene"].as_vec().expect("scene not found");
@@ -343,13 +343,13 @@ pub fn render_scene_from_str(contents: &str, width: usize, height: usize, png_fi
     }
 
     let image = camera.render(&scene);
-    image.write_to_file(png_file);
+    image.write_to_file(png_file, aa);
 }
 
-pub fn render_scene_from_file(path: &str, width: usize, height: usize, png_file: &str) {
+pub fn render_scene_from_file(path: &str, width: usize, height: usize, png_file: &str, aa: usize) {
     if Path::new(path).exists() {
         let contents = fs::read_to_string(path).expect("Something went wrong reading the file");
-        render_scene_from_str(&contents, width, height, png_file)
+        render_scene_from_str(&contents, width, height, png_file, aa)
     } else {
         panic!("File does not exist");
     }
@@ -363,6 +363,6 @@ mod tests {
     #[test]
     #[ignore]
     fn test_render_scene_from_file() {
-        render_scene_from_file("example1.yaml", 800, 400, "canvas.png");
+        render_scene_from_file("example1.yaml", 800, 400, "canvas.png",1);
     }
 }

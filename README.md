@@ -24,12 +24,32 @@ Before you begin, ensure you have met the following requirements:
 
 ## Getting Started
 
-To install rray, follow these steps:
+To build rray, follow these steps:
 
 ```bash
 cargo build --release
 ```
 
+The rray executable will be built in the target/release directory.
+
+rray has these arguments:
+
+```bash
+> rray % ./target/release/rray -h                      
+A simple raytracer
+
+Usage: rray [OPTIONS] --scene <SCENE>
+
+Options:
+  -W, --width <WIDTH>    Width of the generated image, default is 800 [default: 800]
+  -H, --height <HEIGHT>  Height of the generated image, default is 600 [default: 600]
+  -s, --scene <SCENE>    Scene file in YAML format
+  -o, --output <OUTPUT>  Name of the output file, default is output.png [default: output.png]
+  -a, --aa <AA>          Anti-aliasing level (default 1) (max 5) [default: 1]
+  -h, --help             Print help
+  -V, --version          Print version
+
+```
 ## Usage
 Create your scene file in yaml format. Here is an example:
 ```yaml
@@ -86,7 +106,7 @@ scene:
 Then run the raytracer with the following command:
 
 ```bash
-cargo run -r -- <width> <height> <scene.yaml> <output.png>
+./target/release/rray -W 800 -H 400 -s <scene file> -o test.png
 ```
 
 Get this image as output:

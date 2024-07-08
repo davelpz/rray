@@ -15,3 +15,4 @@ fastnoise-lite = { version = "1.1.1", features = ["f64"] }
 rand = "0.8.5"
 tobj = "4.0.2"
 yaml-rust2 = "0.8"
+clap = { version = "4.5.8", features = ["derive"] }

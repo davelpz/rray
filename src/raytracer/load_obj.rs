@@ -320,6 +320,6 @@ mod tests {
         //let image = c.render_sequential(&w);
         //assert_eq!(image.pixel_at(5, 5), Color::new(0.38066, 0.47583, 0.2855));
 
-        image.write_to_file("canvas.png");
+        image.write_to_file("canvas.png",1 );
     }
 }
