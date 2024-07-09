@@ -13,6 +13,7 @@ use crate::raytracer::load_obj::load_obj_file;
 use crate::raytracer::material::Material;
 use crate::raytracer::material::pattern::Pattern;
 use crate::raytracer::object::cone::Cone;
+use crate::raytracer::object::csg::{Csg, CsgOperation};
 use crate::raytracer::object::cube::Cube;
 use crate::raytracer::object::cylinder::Cylinder;
 use crate::raytracer::object::group::Group;
@@ -132,6 +133,17 @@ fn create_lights(doc: &Yaml) -> Vec<Light> {
     }
 
     created_lights
+}
+fn create_csg(shape: &Yaml) -> Arc<dyn Object> {
+    let operation_str = shape["operation"].as_str().expect("operation not found");
+    let operation: Result<CsgOperation, _> = operation_str.parse();
+    let operation = operation.expect(format!("Unknown operation: {}", operation_str).as_str());
+    let mut csg = Csg::new(operation);
+    let left = create_shape(&shape["left"]);
+    let right = create_shape(&shape["right"]);
+    csg.set_left(left);
+    csg.set_right(right);
+    Arc::new(csg)
 }
 
 fn create_group(shape: &Yaml) -> Arc<dyn Object> {
@@ -321,6 +333,7 @@ fn create_shape(shape: &Yaml) -> Arc<dyn Object> {
             Arc::new(load_obj_file(file, create_material(&shape["material"])))
         }
         "group" => create_group(shape),
+        "csg" => create_csg(shape),
         _ => panic!("Unknown object type: {}", object_type),
     };
     Arc::get_mut(&mut s).unwrap().set_transform(create_transforms(shape["transforms"].as_vec().unwrap_or(&vec![])));

@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use std::sync::{Arc, RwLock, RwLockReadGuard};
 use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
@@ -11,6 +12,19 @@ pub enum CsgOperation {
     Union,
     Intersection,
     Difference,
+}
+
+impl FromStr for CsgOperation {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "union" => Ok(CsgOperation::Union),
+            "intersection" => Ok(CsgOperation::Intersection),
+            "difference" => Ok(CsgOperation::Difference),
+            _ => Err(()),
+        }
+    }
 }
 
 pub struct Csg {
@@ -191,6 +205,13 @@ impl Object for Csg {
 
 #[cfg(test)]
 mod tests {
+    use crate::raytracer::camera::Camera;
+    use crate::raytracer::light::Light;
+    use crate::raytracer::material::pattern::Pattern;
+    use crate::raytracer::object::cube::Cube;
+    use crate::raytracer::object::plane::Plane;
+    use crate::raytracer::object::sphere::Sphere;
+    use crate::raytracer::scene::Scene;
     use super::*;
     #[test]
     fn evaluating_the_rule_for_a_csg_operation() {
@@ -271,5 +292,81 @@ mod tests {
         assert_eq!(result.len(), 2);
         assert_eq!(result[0], i0);
         assert_eq!(result[1], i1);
+    }
+
+    #[test]
+    #[ignore]
+    fn test_render_csg() {
+        use crate::color::Color;
+
+        let mut c = Camera::new(800, 400, std::f64::consts::PI / 3.0);
+        let from = Tuple::point(0.0, 1.5, -5.0);
+        let to = Tuple::point(0.0, 1.0, 0.0);
+        let up = Tuple::vector(0.0, 1.0, 0.0);
+        c.transform = Matrix::view_transform(from, to, up);
+
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+
+        let mut floor = Plane::new();
+        floor.transform = Matrix::translate(0.0, 0.0, 0.0);
+        floor.material.pattern = Pattern::stripe(Pattern::solid(Color::new(1.0, 0.5, 0.5), Matrix::identity(4)),
+                                                 Pattern::solid(Color::new(0.5, 1.0, 0.5), Matrix::identity(4)),
+                                                 Matrix::scale(0.1, 0.1, 0.1).multiply(&Matrix::rotate_y(std::f64::consts::PI / 4.0)));
+        floor.material.specular = 0.0;
+        w.add_object(Arc::new(floor));
+
+        let mut left_wall = Plane::new();
+        left_wall.material.pattern = Pattern::gradient(Pattern::solid(Color::new(1.0, 0.5, 0.5), Matrix::identity(4)),
+                                                       Pattern::solid(Color::new(0.5, 1.0, 0.5), Matrix::identity(4)),
+                                                       Matrix::identity(4)
+                                                           .multiply(&Matrix::translate(124.0, 124.0, 124.0)
+                                                               .multiply(&Matrix::scale(7.0, 7.0, 7.0))
+                                                           ));
+        left_wall.transform = Matrix::identity(4)
+            .multiply(&Matrix::rotate_y(std::f64::consts::PI / -4.0))
+            .multiply(&Matrix::translate(0.0, 0.0, 5.0))
+            .multiply(&Matrix::rotate_x(std::f64::consts::PI / 2.0))
+        ;
+        left_wall.material.specular = 0.0;
+        w.add_object(Arc::new(left_wall));
+
+        let mut right_wall = Plane::new();
+        right_wall.transform = Matrix::identity(4)
+            .multiply(&Matrix::rotate_y(std::f64::consts::PI / 4.0))
+            .multiply(&Matrix::translate(0.0, 0.0, 5.0))
+            .multiply(&Matrix::rotate_x(std::f64::consts::PI / 2.0))
+        ;
+        right_wall.material.pattern = Pattern::solid(Color::new(1.0, 0.9, 0.9), Matrix::identity(4));
+        right_wall.material.specular = 0.0;
+        w.add_object(Arc::new(right_wall));
+
+        let mut csg = Csg::new(CsgOperation::Difference);
+
+        let mut material = Material::default();
+        material.pattern = Pattern::solid(Color::new(0.302, 0.71, 0.98), Matrix::identity(4));
+        let mut sphere = Sphere::new();
+        sphere.material = material.clone();
+        sphere.transform = Matrix::identity(4)
+            .multiply(&Matrix::scale(0.6, 0.6, 0.6))
+            .multiply(&Matrix::translate(0.0, 1.0, 0.0))
+        ;
+        csg.set_right(Arc::new(sphere));
+
+        let mut sphere = Cube::new();
+        sphere.material = material.clone();
+        sphere.transform = Matrix::identity(4)
+            .multiply(&Matrix::scale(0.5, 0.5, 0.5))
+            .multiply(&Matrix::translate(0.0, 1.2, 0.0))
+        ;
+        csg.set_left(Arc::new(sphere));
+
+        w.add_object(Arc::new(csg));
+
+        let image = c.render(&w);
+        //let image = c.render_sequential(&w);
+        //assert_eq!(image.pixel_at(5, 5), Color::new(0.38066, 0.47583, 0.2855));
+
+        image.write_to_file("output.png",1 );
     }
 }
