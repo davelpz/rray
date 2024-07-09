@@ -123,6 +123,11 @@ impl Object for Triangle {
             self.p1.z.max(self.p2.z.max(self.p3.z)));
         AABB { min, max }
     }
+
+    fn includes(&self, object_id: usize) -> bool {
+        self.id == object_id
+    }
+
 }
 
 

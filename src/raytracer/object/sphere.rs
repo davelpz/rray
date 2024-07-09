@@ -107,4 +107,9 @@ impl Object for Sphere {
         let max = Tuple::point(1.0, 1.0, 1.0);
         AABB { min, max }
     }
+
+    fn includes(&self, object_id: usize) -> bool {
+        self.id == object_id
+    }
+
 }

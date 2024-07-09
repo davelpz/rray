@@ -93,4 +93,8 @@ impl Object for Sentinel {
     fn get_aabb(&self) -> AABB {
         AABB::new(Tuple::point(0.0, 0.0, 0.0), Tuple::point(0.0, 0.0, 0.0))
     }
+
+    fn includes(&self, _object_id: usize) -> bool {
+        false
+    }
 }

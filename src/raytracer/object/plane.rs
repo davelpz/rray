@@ -86,4 +86,9 @@ impl Object for Plane {
         let max = Tuple::point(f64::INFINITY, 0.0, f64::INFINITY);
         AABB::new(min, max)
     }
+
+    fn includes(&self, object_id: usize) -> bool {
+        self.id == object_id
+    }
+
 }

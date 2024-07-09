@@ -187,4 +187,8 @@ impl Object for Cone {
         let max = Tuple::point(limit, self.maximum, limit);
         AABB { min, max }
     }
+
+    fn includes(&self, object_id: usize) -> bool {
+        self.id == object_id
+    }
 }

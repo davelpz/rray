@@ -137,6 +137,16 @@ impl Object for Group {
 
         aabb
     }
+
+    fn includes(&self, object_id: usize) -> bool {
+        for child_id in &self.child_ids {
+            let child = get_object(*child_id);
+            if child.includes(object_id) {
+                return true;
+            }
+        }
+        false
+    }
 }
 
 #[cfg(test)]

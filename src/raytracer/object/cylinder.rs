@@ -159,4 +159,9 @@ impl Object for Cylinder {
             Tuple::point(1.0, self.maximum, 1.0),
         )
     }
+
+    fn includes(&self, object_id: usize) -> bool {
+        self.id == object_id
+    }
+
 }

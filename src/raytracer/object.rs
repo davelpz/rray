@@ -30,6 +30,7 @@ pub trait Object: Sync + Send {
     fn get_parent_id(&self) -> Option<usize>;
     fn set_parent_id(&mut self, id: usize);
     fn get_aabb(&self) -> AABB;
+    fn includes(&self, object_id: usize) -> bool;
 }
 
 impl PartialEq for dyn Object {
