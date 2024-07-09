@@ -353,13 +353,13 @@ mod tests {
         ;
         csg.set_right(Arc::new(sphere));
 
-        let mut sphere = Cube::new();
-        sphere.material = material.clone();
-        sphere.transform = Matrix::identity(4)
+        let mut cube = Cube::new();
+        cube.material = material.clone();
+        cube.transform = Matrix::identity(4)
             .multiply(&Matrix::scale(0.5, 0.5, 0.5))
             .multiply(&Matrix::translate(0.0, 1.2, 0.0))
         ;
-        csg.set_left(Arc::new(sphere));
+        csg.set_left(Arc::new(cube));
 
         w.add_object(Arc::new(csg));
 
