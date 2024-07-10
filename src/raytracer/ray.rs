@@ -2,6 +2,10 @@ use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::tuple::Tuple;
 
+/// Represents a ray in 3D space.
+///
+/// A ray is defined by an origin point and a direction vector. It can be used
+/// to trace paths through a scene, such as for ray tracing algorithms.
 #[derive(Debug, Clone)]
 pub struct Ray {
     pub origin: Tuple,
@@ -9,14 +13,45 @@ pub struct Ray {
 }
 
 impl Ray {
+    /// Constructs a new `Ray`.
+    ///
+    /// # Arguments
+    ///
+    /// * `origin` - A `Tuple` representing the origin point of the ray.
+    /// * `direction` - A `Tuple` representing the direction vector of the ray.
+    ///
+    /// # Returns
+    ///
+    /// A new instance of `Ray`.
     pub fn new(origin: Tuple, direction: Tuple) -> Ray {
         Ray { origin, direction }
     }
 
+    /// Calculates the position of a point along the ray at a given distance.
+    ///
+    /// # Arguments
+    ///
+    /// * `t` - The distance from the ray's origin to the point.
+    ///
+    /// # Returns
+    ///
+    /// A `Tuple` representing the point at distance `t` along the ray.
     pub fn position(&self, t: f64) -> Tuple {
         self.origin.add(&self.direction.multiply(t))
     }
 
+    /// Transforms the ray by a given matrix.
+    ///
+    /// This method applies a transformation to the ray's origin and direction,
+    /// effectively moving, scaling, or rotating the ray in 3D space.
+    ///
+    /// # Arguments
+    ///
+    /// * `matrix` - A `Matrix` representing the transformation to apply.
+    ///
+    /// # Returns
+    ///
+    /// A new `Ray` instance representing the transformed ray.
     pub fn transform(&self, matrix: &Matrix) -> Ray {
         Ray {
             origin: matrix.multiply_tuple(&self.origin),
