@@ -71,7 +71,7 @@ impl Csg {
         let left = get_object(self.left);
         let right = get_object(self.right);
         let mut xs = left.intersect(ray);
-        xs.extend(right.intersect(ray));
+        xs.append(&mut right.intersect(ray));
         xs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
         self.filter_intersections(&xs)
     }

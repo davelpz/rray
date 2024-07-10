@@ -21,6 +21,8 @@ impl Light {
     }
 }
 
+/// Computes the color of a point on an object with respect to a light source.
+/// Uses the Phong reflection model.
 pub fn lighting(object_id: usize, light: &Light, point: &Tuple, eyev: &Tuple, normalv: &Tuple, in_shadow: bool) -> Color {
     let object = get_object(object_id);
     let material = object.get_material();

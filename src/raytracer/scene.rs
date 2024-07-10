@@ -8,7 +8,7 @@ use crate::raytracer::intersection::Intersection;
 use crate::raytracer::light::{Light, lighting};
 use crate::raytracer::object::Object;
 use crate::raytracer::object::sphere::Sphere;
-use crate::raytracer::ray::{hit, Ray};
+use crate::raytracer::ray::Ray;
 use crate::raytracer::object::db::{get_object, add_object};
 
 pub struct Scene {
@@ -56,6 +56,9 @@ impl Scene {
         scene
     }
 
+    /// Returns a list of intersections for a ray and the objects in the scene
+    /// The intersections are sorted by distance from the ray origin
+    /// The intersections are returned in world space
     pub fn intersect(&self, r: &Ray) -> Vec<Intersection> {
         let mut xs: Vec<Intersection> = Vec::new();
         for i in &self.ids {
@@ -67,6 +70,7 @@ impl Scene {
         xs
     }
 
+    /// Returns the color of the object at the intersection point
     pub fn color_at(&self, r: &Ray, remaining: usize) -> Color {
         let xs = self.intersect(r);
         if let Some(hit) = xs.iter().find(|x| x.t >= 0.0) {
@@ -77,6 +81,9 @@ impl Scene {
         }
     }
 
+    /// Returns the color using the Phong reflection model
+    /// The color is calculated by summing the color of the light sources
+    /// and the color of the object
     pub fn shade_hit(&self, comps: &Computations, remaining: usize) -> Color {
         let mut surface = Color::new(0.0, 0.0, 0.0);
         for light in &self.light {
@@ -98,6 +105,7 @@ impl Scene {
         }
     }
 
+    /// Returns the color of intersection point for a single light source
     fn shade_hit_light(&self, comps: &Computations, light: &Light) -> Color {
         lighting(
             comps.object,
@@ -108,19 +116,35 @@ impl Scene {
             self.is_shadowed(&comps.over_point, light))
     }
 
+    /// Returns true if the point is in shadow
     pub fn is_shadowed(&self, point: &Tuple, light: &Light) -> bool {
         let v = light.position - *point;
         let distance = v.magnitude();
         let direction = v.normalize();
         let r = Ray::new(*point, direction);
         let intersections = self.intersect(&r);
-        let h = hit(&intersections);
+        let h = Scene::hit(&intersections);
         match h {
             Some(hit) => hit.t < distance,
             None => false
         }
     }
 
+    /// Returns the intersection with the smallest non-negative t value
+    /// If all intersections have negative t values, return None
+    pub fn hit(xs: &Vec<Intersection>) -> Option<&Intersection> {
+        let mut result = None;
+        let mut t = f64::MAX;
+        for x in xs {
+            if x.t >= 0.0 && x.t < t { //maybe take out check for t >= 0.0
+                t = x.t;
+                result = Some(x);
+            }
+        }
+        result
+    }
+
+    /// Returns the color contribution of reflected light
     pub fn reflected_color(&self, comps: &Computations, remaining: usize) -> Color {
         let object = get_object(comps.object);
         if remaining <= 0 || object.get_material().reflective == 0.0 {
@@ -132,6 +156,8 @@ impl Scene {
         color * object.get_material().reflective
     }
 
+    /// Returns the color contribution of refracted light
+    /// using Snell's Law to calculate the direction of the refracted ray
     pub fn refracted_color(&self, comps: &Computations, remaining: usize) -> Color {
         let object = get_object(comps.object);
         if remaining <= 0 || object.get_material().transparency == 0.0 {
@@ -175,6 +201,45 @@ mod tests {
     use crate::raytracer::ray::Ray;
     use crate::raytracer::scene::{Scene};
     use crate::tuple::Tuple;
+
+    #[test]
+    fn test_hit() {
+        let mut w = Scene::new();
+        w.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        let s = Sphere::new();
+        w.add_object(Arc::new(s));
+        let id = w.ids[0];
+
+        let i1 = super::Intersection { t: 1.0, object: id, u: 0.0, v: 0.0};
+        let i2 = super::Intersection { t: 2.0, object: id, u: 0.0, v: 0.0};
+        let xs = vec![i1, i2];
+        let i = Scene::hit(&xs);
+        assert_eq!(i.unwrap().t, 1.0);
+
+        let i1 = super::Intersection { t: -1.0, object: id, u: 0.0, v: 0.0};
+        let i2 = super::Intersection { t: 1.0, object: id, u: 0.0, v: 0.0};
+        let xs = vec![i1, i2];
+        let i = Scene::hit(&xs);
+        assert_eq!(i.unwrap().t, 1.0);
+
+        let i1 = super::Intersection { t: -2.0, object: id, u: 0.0, v: 0.0};
+        let i2 = super::Intersection { t: -1.0, object: id, u: 0.0, v: 0.0};
+        let xs = vec![i1, i2];
+        let i = Scene::hit(&xs);
+        assert_eq!(i, None);
+
+        let i1 = super::Intersection { t: 5.0, object: id, u: 0.0, v: 0.0};
+        let i2 = super::Intersection { t: 7.0, object: id, u: 0.0, v: 0.0};
+        let i3 = super::Intersection { t: -3.0, object: id, u: 0.0, v: 0.0};
+        let i4 = super::Intersection { t: 2.0, object: id, u: 0.0, v: 0.0};
+        let xs = vec![i1, i2, i3, i4];
+        let i = Scene::hit(&xs);
+        assert_eq!(i.unwrap().t, 2.0);
+
+        let xs = vec![];
+        let i = Scene::hit(&xs);
+        assert_eq!(i, None);
+    }
 
     #[test]
     fn creating_a_world() {

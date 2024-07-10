@@ -428,8 +428,8 @@ The pattern object has the following properties:
 - color: Color of the pattern (used by solid pattern)
 - color_a: color A
 - color_b: color B
-- pattern_a: sub-pattern A (used instead of color_a)
-- pattern_b: sub-pattern B (used instead of color_b)
+- pattern_a: sub-pattern A (can be used instead of color_a)
+- pattern_b: sub-pattern B (can be used instead of color_b)
 - scale: Scale of the pattern (used by perturbed, noise)
 - octaves: Number of octaves (used by perturbed, noise)
 - persistence: Persistence (used by perturbed, noise)

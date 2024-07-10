@@ -25,18 +25,6 @@ impl Ray {
     }
 }
 
-pub fn hit(xs: &Vec<Intersection>) -> Option<&Intersection> {
-    let mut result = None;
-    let mut t = f64::MAX;
-    for x in xs {
-        if x.t >= 0.0 && x.t < t { //maybe take out check for t >= 0.0
-            t = x.t;
-            result = Some(x);
-        }
-    }
-    result
-}
-
 #[cfg(test)]
 mod tests {
     use std::sync::Arc;
@@ -68,45 +56,6 @@ mod tests {
         assert_eq!(r.position(1.0), Tuple::point(3.0, 3.0, 4.0));
         assert_eq!(r.position(-1.0), Tuple::point(1.0, 3.0, 4.0));
         assert_eq!(r.position(2.5), Tuple::point(4.5, 3.0, 4.0));
-    }
-
-    #[test]
-    fn test_hit() {
-        let mut w = Scene::new();
-        w.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0)));
-        let s = Sphere::new();
-        w.add_object(Arc::new(s));
-        let id = w.ids[0];
-
-        let i1 = super::Intersection { t: 1.0, object: id, u: 0.0, v: 0.0};
-        let i2 = super::Intersection { t: 2.0, object: id, u: 0.0, v: 0.0};
-        let xs = vec![i1, i2];
-        let i = super::hit(&xs);
-        assert_eq!(i.unwrap().t, 1.0);
-
-        let i1 = super::Intersection { t: -1.0, object: id, u: 0.0, v: 0.0};
-        let i2 = super::Intersection { t: 1.0, object: id, u: 0.0, v: 0.0};
-        let xs = vec![i1, i2];
-        let i = super::hit(&xs);
-        assert_eq!(i.unwrap().t, 1.0);
-
-        let i1 = super::Intersection { t: -2.0, object: id, u: 0.0, v: 0.0};
-        let i2 = super::Intersection { t: -1.0, object: id, u: 0.0, v: 0.0};
-        let xs = vec![i1, i2];
-        let i = super::hit(&xs);
-        assert_eq!(i, None);
-
-        let i1 = super::Intersection { t: 5.0, object: id, u: 0.0, v: 0.0};
-        let i2 = super::Intersection { t: 7.0, object: id, u: 0.0, v: 0.0};
-        let i3 = super::Intersection { t: -3.0, object: id, u: 0.0, v: 0.0};
-        let i4 = super::Intersection { t: 2.0, object: id, u: 0.0, v: 0.0};
-        let xs = vec![i1, i2, i3, i4];
-        let i = super::hit(&xs);
-        assert_eq!(i.unwrap().t, 2.0);
-
-        let xs = vec![];
-        let i = super::hit(&xs);
-        assert_eq!(i, None);
     }
 
     #[test]
@@ -166,7 +115,7 @@ mod tests {
                 let position = Tuple::point(world_x, world_y, wall_z);
                 let r = Ray::new(ray_origin.clone(), position.subtract(&ray_origin).normalize());
                 let xs = object.intersect(&r);
-                if let Some(_i) = super::hit(&xs) {
+                if let Some(_i) = Scene::hit(&xs) {
                     canvas.write_pixel(x, y, color);
                 }
             }
@@ -205,7 +154,7 @@ mod tests {
                 let position = Tuple::point(world_x, world_y, wall_z);
                 let r = Ray::new(ray_origin.clone(), position.subtract(&ray_origin).normalize());
                 let xs = object.intersect(&r);
-                if let Some(hit) = super::hit(&xs) {
+                if let Some(hit) = Scene::hit(&xs) {
                     let point = r.position(hit.t);
                     let hit_object = get_object(hit.object);
                     let normal = hit_object.normal_at(&point, hit);
