@@ -50,12 +50,6 @@ impl Csg {
         }
     }
 
-    fn invalidate_aabb_cache(&self) {
-        // Invalidate the cache by acquiring a write lock and setting the value to None
-        let mut cache = self.aabb_cache.write().unwrap();
-        *cache = None;
-    }
-
     fn get_aabb_cache(&self) -> RwLockReadGuard<Option<AABB>> {
         self.aabb_cache.read().unwrap()
     }

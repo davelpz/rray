@@ -112,6 +112,485 @@ Then run the raytracer with the following command:
 Get this image as output:
 ![Generated Image](https://raw.githubusercontent.com/davelpz/rray/master/examples/test1.png)
 
+# Scene file format
+General structure
+```yaml
+camera:
+# Camera settings
+lights:
+# List of lights
+scene:
+# List of scene objects
+```
+## Camera
+The camera has the following properties:
+- fov: Field of view in degrees
+- from: Position of the camera
+- to: Point the camera is looking at
+- up: Up vector of the camera
+
+Example:
+```yaml
+camera:
+  fov: 60
+  from: [0, 2.5, -5.0]
+  to: [0,1,0]
+  up: [0,1,0]
+``` 
+## Lights
+The lights section is a list of light sources. Each light source has the following properties:
+- type: Type of light source (point only for now)
+- color: Color of the light source
+- position: Position of the light source (only for point lights)
+
+Example:
+```yaml
+lights:
+  - type: point
+    color: [1,1,1]
+    position: [-10,10,-10]
+```
+## Scene
+The scene section is a list of scene objects.
+### Scene objects
+Each scene object has the following properties:
+- type: Type of scene object (sphere, plane, cube, cylinder, cone, triangle, group, csg)
+- transforms: List of transformations to apply to the object
+- material: Material of the object
+- hidden: If the object is hidden (default false)
+- type specific properties
+#### Types
+Here are the types of scene objects:
+##### Sphere
+The sphere object has no specific properties.
+
+Example:
+```yaml
+  - type: sphere
+    transforms:
+     - type: translate
+       amount: [0, 0, 0]
+    material:
+     pattern:
+       type: solid
+       color: [1, 0, 0]
+     ambient: 0.1
+     diffuse: 0.9
+     specular: 0.9
+     shininess: 200
+     reflective: 0.9
+     transparency: 0.1
+     refractive_index: 1.5
+```
+##### Plane
+The plane object has no specific properties.
+
+Example:
+```yaml
+  - type: plane
+    transforms: []
+    material:
+      pattern:
+        type: checker
+        color_a: [ 0.25, 0.5, 0.5 ]
+        color_b: [ 0.5, 0.7, 0.7 ]
+        transforms:
+          - type: scale
+            amount: [1, 1, 1]
+      ambient: 0.1
+      diffuse: 0.9
+      specular: 0
+      shininess: 200
+```
+##### Cube
+The cube object has no specific properties.
+
+Example:
+```yaml
+  - type: cube
+    transforms:
+     - type: translate
+       amount: [0, 0, 0]
+    material:
+     pattern:
+       type: solid
+       color: [1, 0, 0]
+     ambient: 0.1
+     diffuse: 0.9
+     specular: 0.9
+     shininess: 200
+     reflective: 0.9
+     transparency: 0.1
+     refractive_index: 1.5
+```
+##### Cylinder
+The cylinder object has the following properties:
+- minimum: Minimum y value of the cylinder (default -infinity)
+- maximum: Maximum y value of the cylinder (default infinity)
+- closed: If the cylinder has caps (default false)
+
+Example:
+```yaml
+  - type: cylinder
+    minimum: 0
+    maximum: 1
+    closed: true
+    transforms:
+     - type: translate
+       amount: [0, 0, 0]
+    material:
+     pattern:
+       type: solid
+       color: [1, 0, 0]
+     ambient: 0.1
+     diffuse: 0.9
+     specular: 0.9
+     shininess: 200
+     reflective: 0.9
+     transparency: 0.1
+     refractive_index: 1.5
+```
+##### Cone
+The cone object has the following properties:
+- minimum: Minimum y value of the cone (default -infinity)
+- maximum: Maximum y value of the cone (default infinity)
+- closed: If the cone has caps (default false)
+
+Example:
+```yaml
+  - type: cone
+    minimum: 0
+    maximum: 1
+    closed: true
+    transforms:
+     - type: translate
+       amount: [0, 0, 0]
+    material:
+     pattern:
+       type: solid
+       color: [1, 0, 0]
+     ambient: 0.1
+     diffuse: 0.9
+     specular: 0.9
+     shininess: 200
+     reflective: 0.9
+     transparency: 0.1
+     refractive_index: 1.5
+```
+##### Triangle
+The triangle object has the following properties:
+- p1: First point of the triangle
+- p2: Second point of the triangle
+- p3: Third point of the triangle
+
+Example:
+```yaml
+  - type: triangle
+    p1: [0, 1, 0]
+    p2: [1, 0, 0]
+    p3: [0, 0, 1]
+    transforms:
+     - type: translate
+       amount: [0, 0, 0]
+    material:
+     pattern:
+       type: solid
+       color: [1, 0, 0]
+     ambient: 0.1
+     diffuse: 0.9
+     specular: 0.9
+     shininess: 200
+     reflective: 0.9
+     transparency: 0.1
+     refractive_index: 1.5
+```
+##### Group
+The group object has the following properties:
+- children: List of scene objects that are part of the group
+
+Example:
+```yaml
+  - type: group
+    transforms:
+     - type: translate
+       amount: [0, 1, 2]
+    children:
+      - type: sphere
+        transforms:
+         - type: translate
+           amount: [0, 0, 0]
+        material:
+         pattern:
+           type: solid
+           color: [1, 0, 0]
+         ambient: 0.1
+         diffuse: 0.9
+         specular: 0.9
+         shininess: 200
+         reflective: 0.9
+         transparency: 0.1
+         refractive_index: 1.5
+      - type: sphere
+        transforms:
+         - type: translate
+           amount: [0, 1, 0]
+        material:
+         pattern:
+           type: solid
+           color: [0, 1, 0]
+         ambient: 0.1
+         diffuse: 0.9
+         specular: 0.9
+         shininess: 200
+         reflective: 0.9
+         transparency: 0.1
+         refractive_index: 1.5
+```
+##### CSG
+The CSG object has the following properties:
+- operation: Type of operation (union, intersection, difference)
+- left: Left object
+- right: Right object
+
+Example:
+```yaml
+  - type: csg
+    operation: intersection
+    left:
+      type: sphere
+      transforms:
+       - type: translate
+         amount: [0, 0, 0]
+      material:
+       pattern:
+         type: solid
+         color: [1, 0, 0]
+       ambient: 0.1
+       diffuse: 0.9
+       specular: 0.9
+       shininess: 200
+       reflective: 0.9
+       transparency: 0.1
+       refractive_index: 1.5
+    right:
+      type: sphere
+      transforms:
+       - type: translate
+         amount: [0, 1, 0]
+      material:
+       pattern:
+         type: solid
+         color: [0, 1, 0]
+       ambient: 0.1
+       diffuse: 0.9
+       specular: 0.9
+       shininess: 200
+       reflective: 0.9
+       transparency: 0.1
+       refractive_index: 1.5
+```
+#### Materials
+Each material has the following properties:
+- pattern: Pattern of the material
+- ambient: Ambient coefficient
+- diffuse: Diffuse coefficient
+- specular: Specular coefficient
+- shininess: Shininess coefficient
+- reflective: Reflective coefficient
+- transparency: Transparency coefficient
+- refractive_index: Refractive index
+
+Example:
+```yaml
+    material:
+     pattern:
+       type: solid
+       color: [1, 0, 0]
+     ambient: 0.1
+     diffuse: 0.9
+     specular: 0.9
+     shininess: 200
+     reflective: 0.9
+     transparency: 0.1
+     refractive_index: 1.5
+```
+##### Pattern
+The pattern object has the following properties:
+- type: Type of pattern
+  - solid
+  - stripe
+  - gradient
+  - ring
+  - checker
+  - blend
+  - perturbed
+  - noise
+- color: Color of the pattern (used by solid pattern)
+- color_a: color A
+- color_b: color B
+- pattern_a: sub-pattern A (used instead of color_a)
+- pattern_b: sub-pattern B (used instead of color_b)
+- scale: Scale of the pattern (used by perturbed, noise)
+- octaves: Number of octaves (used by perturbed, noise)
+- persistence: Persistence (used by perturbed, noise)
+- transforms: List of transformations to apply to the pattern
+
+Examples:
+
+solid pattern:
+```yaml
+     pattern:
+       type: solid
+       color: [1, 0, 0]
+```
+
+stripe pattern:
+```yaml
+     pattern:
+       type: stripe
+       color_a: [1, 0, 0]
+       color_b: [0, 1, 0]
+       transforms: []
+```       
+
+gradient pattern:
+```yaml
+     pattern:
+       type: gradient
+       color_a: [1, 0, 0]
+       color_b: [0, 1, 0]
+       transforms: []
+```
+
+ring pattern:
+```yaml
+     pattern:
+       type: ring
+       color_a: [1, 0, 0]
+       color_b: [0, 1, 0]
+       transforms: []
+``` 
+
+checker pattern:
+```yaml
+     pattern:
+       type: checker
+       color_a: [ 0.25, 0.5, 0.5 ]
+       color_b: [ 0.5, 0.7, 0.7 ]
+       transforms:
+         - type: scale
+           amount: [1, 1, 1]
+```
+
+blend pattern:
+```yaml
+     pattern:
+       type: blend
+       pattern_a:
+         type: ring
+         color_a: [1, 0, 0]
+         color_b: [0, 1, 0]
+         transforms: []
+       pattern_b:
+         type: checker
+         color_a: [0, 1, 0]
+         color_b: [0, 0, 1]
+         transforms: []
+       transforms:
+         - type: scale
+           amount: [1, 1, 1]
+```
+
+perturbed pattern:
+```yaml
+     pattern:
+       type: perturbed
+       scale: 0.1
+       octaves: 5
+       persistence: 0.5
+       pattern_a:
+         type: stripe
+         color_a: [1, 0, 0]
+         color_b: [0, 1, 0]
+         transforms: []
+       transforms:
+         - type: scale
+           amount: [0.1, 0.1, 0.1]
+```
+
+noise pattern:
+```yaml
+     pattern:
+       type: noise
+       scale: 0.1
+       octaves: 5
+       persistence: 0.5 
+       color_a: [1, 0, 0]
+       color_b: [1, 1, 0]
+       transforms:
+         - type: scale
+           amount: [0.1, 0.1, 0.1]
+```
+#### Transformations
+Each transformation has the following properties:
+- type: Type of transformation
+  - translate
+  - scale
+  - rotate
+  - shear
+##### Translate
+The translate transformation has the following properties:
+- amount: Amount of transformation
+
+Example:
+```yaml
+    transforms:
+     - type: translate
+       amount: [0, 1, 2]
+```
+##### Scale
+The scale transformation has the following properties:
+- amount: Amount of transformation
+
+Example:
+```yaml
+    transforms:
+     - type: scale
+       amount: [0.5, 0.5, 0.5]
+```
+##### Rotate
+The rotate transformation has the following properties:
+- axis: Axis of rotation (x, y, z)
+- angle: Angle of rotation in degrees
+
+Example:
+```yaml
+    transforms:
+     - type: rotate
+       axis: y
+       angle: 45
+```
+##### Shear
+The shear transformation has the following properties:
+- xy: Amount of shear in the xy plane
+- xz: Amount of shear in the xz plane
+- yx: Amount of shear in the yx plane
+- yz: Amount of shear in the yz plane
+- zx: Amount of shear in the zx plane
+- zy: Amount of shear in the zy plane
+
+Example:
+```yaml
+    transforms:
+     - type: shear
+       xy: 1
+       xz: 2
+       yx: 1
+       yz: 3
+       zx: 1
+       zy: 5
+```
+
 
 ## Contributing
 
