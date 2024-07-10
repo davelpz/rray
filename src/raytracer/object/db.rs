@@ -7,10 +7,24 @@ use crate::raytracer::object::{AABB, Object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 
+// Global storage for all objects in the scene, allowing for thread-safe access.
 lazy_static! {
     static ref GLOBAL_OBJECTS: Arc<Mutex<Vec<Arc<dyn Object + Send>>>> = Arc::new(Mutex::new(Vec::new()));
 }
 
+/// Retrieves an object from the global storage by its ID.
+///
+/// # Arguments
+///
+/// * `id` - The unique identifier for the object.
+///
+/// # Returns
+///
+/// Returns an `Arc<dyn Object + Send>` pointing to the object if found.
+///
+/// # Panics
+///
+/// Panics if an object with the given ID does not exist.
 pub fn get_object(id: usize) -> Arc<dyn Object + Send> {
     let objects = GLOBAL_OBJECTS.lock().unwrap();
     if id < objects.len() {
@@ -20,18 +34,29 @@ pub fn get_object(id: usize) -> Arc<dyn Object + Send> {
     }
 }
 
+/// Returns the number of objects currently stored in global storage.
+///
+/// # Returns
+///
+/// The number of objects as `usize`.
 #[allow(dead_code)]
 fn number_of_objects() -> usize {
     let objects = GLOBAL_OBJECTS.lock().unwrap();
     objects.len()
 }
 
+/// Clears all objects from the global storage.
 #[allow(dead_code)]
 fn clear_global_objects() {
     let mut objects = GLOBAL_OBJECTS.lock().unwrap();
     objects.clear();
 }
 
+/// Generates a new unique ID for an object and stores a sentinel object in its place.
+///
+/// # Returns
+///
+/// The new unique ID as `usize`.
 pub fn get_next_id() -> usize {
     let mut objects = GLOBAL_OBJECTS.lock().unwrap();
     let id = objects.len();
@@ -40,12 +65,18 @@ pub fn get_next_id() -> usize {
     id
 }
 
+/// Adds an object to the global storage, replacing the sentinel object at its ID.
+///
+/// # Arguments
+///
+/// * `object` - An `Arc<dyn Object + Send>` pointing to the object to be added.
 pub fn add_object(object: Arc<dyn Object + Send>) {
     let mut objects = GLOBAL_OBJECTS.lock().unwrap();
     let id = object.get_id();
     objects[id] = object;
 }
 
+/// A placeholder object used to reserve an ID in the global storage.
 struct Sentinel {
     id: usize,
     parent_id: Option<usize>,

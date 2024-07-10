@@ -8,6 +8,12 @@ use rayon::prelude::ParallelIterator;
 use crate::raytracer::ray::Ray;
 use crate::raytracer::scene::Scene;
 
+/// Represents a camera in the raytracer scene.
+///
+/// The camera is defined by its horizontal size (`hsize`), vertical size (`vsize`),
+/// field of view (`field_of_view`), and a transformation matrix (`transform`) that
+/// positions and orients the camera in the scene. The `pixel_size`, `half_width`,
+/// and `half_height` are calculated based on the camera's field of view and aspect ratio.
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct Camera {
@@ -21,6 +27,17 @@ pub struct Camera {
 }
 
 impl Camera {
+    /// Constructs a new `Camera` with the given size and field of view.
+    ///
+    /// # Arguments
+    ///
+    /// * `hsize` - The horizontal size of the camera's view.
+    /// * `vsize` - The vertical size of the camera's view.
+    /// * `field_of_view` - The camera's field of view in radians.
+    ///
+    /// # Returns
+    ///
+    /// A new `Camera` instance.
     pub fn new(hsize: usize, vsize: usize, field_of_view: f64) -> Camera {
         let half_view = (field_of_view / 2.0).tan();
         let aspect = hsize as f64 / vsize as f64;
@@ -45,6 +62,16 @@ impl Camera {
         }
     }
 
+    /// Calculates the ray from the camera to a specific pixel on the canvas.
+    ///
+    /// # Arguments
+    ///
+    /// * `px` - The x-coordinate of the pixel on the canvas.
+    /// * `py` - The y-coordinate of the pixel on the canvas.
+    ///
+    /// # Returns
+    ///
+    /// A `Ray` instance representing the ray from the camera to the specified pixel.
     pub fn ray_for_pixel(&self, px: usize, py: usize) -> Ray {
         // the offset from the edge of the canvas to the pixel's center
         let xoffset = (px as f64 + 0.5) * self.pixel_size;
@@ -65,6 +92,18 @@ impl Camera {
         Ray::new(origin, direction)
     }
 
+    /// Renders the scene from the perspective of the camera.
+    ///
+    /// This method utilizes parallel processing to render the scene, improving performance
+    /// for large images. It returns a `Canvas` that represents the rendered image.
+    ///
+    /// # Arguments
+    ///
+    /// * `scene` - A reference to the `Scene` that will be rendered.
+    ///
+    /// # Returns
+    ///
+    /// A `Canvas` instance representing the rendered image.
     pub fn render(&self, scene: &Scene) -> Canvas {
         let image = Arc::new(Mutex::new(Canvas::new(self.hsize, self.vsize)));
         let bar = ProgressBar::new((self.vsize * self.hsize) as u64);
@@ -82,6 +121,16 @@ impl Camera {
     }
 }
 
+/// Generates an iterator over the coordinates of each pixel in the canvas.
+///
+/// # Arguments
+///
+/// * `vsize` - The vertical size of the canvas.
+/// * `hsize` - The horizontal size of the canvas.
+///
+/// # Returns
+///
+/// An iterator that yields tuples of (x, y) coordinates for each pixel.
 pub fn pixel_coordinates(vsize: usize, hsize: usize) -> impl Iterator<Item = (usize, usize)> {
     (0..vsize).flat_map(move |y| (0..hsize).map(move |x| (x, y)))
 }

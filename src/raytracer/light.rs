@@ -3,11 +3,17 @@ use crate::tuple::Tuple;
 use crate::raytracer::object::db::get_object;
 use crate::raytracer::material::pattern_at_object;
 
+/// Enum representing the different types of light sources.
+/// Currently only supports point lights.
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum LightType {
     Point,
 }
 
+/// Represents a light source in the scene.
+///
+/// This struct encapsulates the properties of a light source, including its type
+/// (e.g., point light), intensity (color and brightness), and position in the scene.
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub struct Light {
     pub light_type: LightType,
@@ -16,13 +22,40 @@ pub struct Light {
 }
 
 impl Light {
+    /// Constructs a new point light source.
+    ///
+    /// # Arguments
+    ///
+    /// * `position` - The position of the light source in 3D space.
+    /// * `intensity` - The color and intensity of the light.
+    ///
+    /// # Returns
+    ///
+    /// A new `Light` instance configured as a point light source.
     pub fn new_point_light(position: Tuple, intensity: Color) -> Light {
         Light { light_type: LightType::Point, intensity, position }
     }
 }
 
-/// Computes the color of a point on an object with respect to a light source.
-/// Uses the Phong reflection model.
+/// Computes the color at a point on an object, taking into account the light source,
+/// the viewer's position, and whether the point is in shadow.
+///
+/// This function implements the Phong reflection model to calculate the color of a point
+/// on an object's surface. It considers the object's material properties, the light's
+/// intensity and position, and whether the point is in shadow.
+///
+/// # Arguments
+///
+/// * `object_id` - The ID of the object being illuminated.
+/// * `light` - A reference to the light source illuminating the object.
+/// * `point` - The point on the object's surface being illuminated.
+/// * `eyev` - The vector from the point to the viewer's eye.
+/// * `normalv` - The normal vector at the point on the object's surface.
+/// * `in_shadow` - A boolean indicating whether the point is in shadow.
+///
+/// # Returns
+///
+/// The computed color at the given point on the object.
 pub fn lighting(object_id: usize, light: &Light, point: &Tuple, eyev: &Tuple, normalv: &Tuple, in_shadow: bool) -> Color {
     let object = get_object(object_id);
     let material = object.get_material();

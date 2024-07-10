@@ -3,6 +3,11 @@ use crate::raytracer::computations::Computations;
 use crate::raytracer::ray::Ray;
 use crate::raytracer::object::db::get_object;
 
+/// Represents an intersection point on an object.
+///
+/// This struct captures the intersection of a ray with an object in the scene,
+/// including the distance from the ray origin (`t`), the ID of the object intersected,
+/// and optional texture coordinates (`u`, `v`) for texture mapping.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Intersection {
     pub t: f64,
@@ -12,10 +17,36 @@ pub struct Intersection {
 }
 
 impl Intersection {
+    /// Creates a new `Intersection`.
+    ///
+    /// # Arguments
+    ///
+    /// * `t` - The distance from the ray origin to the intersection.
+    /// * `object` - The ID of the object intersected by the ray.
+    /// * `u` - The horizontal texture coordinate at the intersection.
+    /// * `v` - The vertical texture coordinate at the intersection.
+    ///
+    /// # Returns
+    ///
+    /// A new instance of `Intersection`.
     pub fn new(t: f64, object: usize, u: f64, v: f64) -> Intersection {
         Intersection { t, object, u, v }
     }
 
+    /// Prepares the computations for shading this intersection.
+    ///
+    /// This method calculates various geometric properties needed for shading,
+    /// such as the point of intersection, the eye vector, the normal vector,
+    /// whether the intersection is inside the object, and more.
+    ///
+    /// # Arguments
+    ///
+    /// * `r` - The ray that produced this intersection.
+    /// * `xs` - A list of all intersections with the object, for refraction calculations.
+    ///
+    /// # Returns
+    ///
+    /// A `Computations` struct containing the calculated properties.
     pub fn prepare_computations(&self, r: &Ray, xs: &Vec<Intersection>) -> Computations {
         let point = r.position(self.t);
         let eyev = r.direction.negate();
