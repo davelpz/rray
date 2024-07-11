@@ -6,6 +6,25 @@ use crate::raytracer::object::{AABB, normal_to_world, Object, world_to_object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 
+/// Represents a smooth triangle for use in a ray tracing context.
+///
+/// A smooth triangle is a triangle that allows for smooth shading across its surface by interpolating
+/// normal vectors at its vertices. This is useful for creating more realistic lighting effects, as it
+/// avoids the faceted look of flat shading.
+///
+/// # Fields
+///
+/// * `id` - A unique identifier for the smooth triangle, used for tracking and managing objects within the scene.
+/// * `parent_id` - An optional identifier for a parent object, allowing for hierarchical object composition.
+///   This can be `None` if the smooth triangle does not have a parent.
+/// * `transform` - A transformation matrix that applies translation, rotation, and scaling to the smooth triangle,
+///   positioning it within the 3D scene.
+/// * `material` - The material properties of the smooth triangle, defining how it interacts with light and shadows
+///   within the scene.
+/// * `p1`, `p2`, `p3` - The vertices of the triangle, represented as points in space.
+/// * `n1`, `n2`, `n3` - The normal vectors at each of the triangle's vertices, used for smooth shading.
+/// * `e1`, `e2` - Edge vectors of the triangle, calculated as `p2 - p1` and `p3 - p1` respectively.
+/// * `normal` - The normal vector of the triangle's plane, calculated from the cross product of `e2` and `e1`.
 #[derive(Debug, PartialEq)]
 pub struct SmoothTriangle {
     pub id: usize,
@@ -23,6 +42,12 @@ pub struct SmoothTriangle {
     pub normal: Tuple,
 }
 
+/// Implementation of `SmoothTriangle` functionalities.
+///
+/// Provides methods for creating a new `SmoothTriangle`, calculating intersections with rays,
+/// determining the normal at a point of intersection, and managing the triangle's transformation
+/// and material properties. It implements the `Object` trait, enabling `SmoothTriangle` instances
+/// to be treated as first-class objects within the ray tracing system.
 impl SmoothTriangle {
     pub fn new(p1: Tuple, p2: Tuple, p3: Tuple, n1: Tuple, n2: Tuple, n3: Tuple) -> SmoothTriangle {
         let e1 = p2.subtract(&p1);

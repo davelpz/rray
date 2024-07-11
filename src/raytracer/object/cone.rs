@@ -7,6 +7,21 @@ use crate::tuple::Tuple;
 use crate::EPSILON;
 use crate::raytracer::object::db::get_next_id;
 
+/// Represents a cone in a 3D ray tracing context.
+///
+/// A cone is defined by its minimum and maximum extents along the y-axis, which determine its height,
+/// and whether its ends are closed or open. It also includes a transformation matrix to position,
+/// rotate, and scale the cone in the 3D world, as well as a material that defines its surface appearance.
+///
+/// # Fields
+///
+/// * `id` - A unique identifier for the cone, used for tracking objects in the scene.
+/// * `parent_id` - An optional identifier for a parent object, allowing for hierarchical object composition.
+/// * `minimum` - The minimum y-coordinate of the cone, defining the lower bound of its height.
+/// * `maximum` - The maximum y-coordinate of the cone, defining the upper bound of its height.
+/// * `closed` - A boolean indicating whether the ends of the cone are closed (true) or open (false).
+/// * `transform` - A transformation matrix applied to the cone for positioning, rotation, and scaling.
+/// * `material` - The material of the cone, defining how it interacts with light in the scene.
 pub struct Cone {
     pub id: usize,
     pub parent_id: Option<usize>,
@@ -17,6 +32,18 @@ pub struct Cone {
     pub material: Material,
 }
 
+/// Implementation of the `Cone` struct, providing methods for creating cones,
+/// calculating intersections, normals, and managing transformations and materials.
+///
+/// This implementation includes methods for:
+/// - Creating a new cone with specified minimum and maximum y-coordinates, and whether it is closed.
+/// - Calculating intersections with rays, taking into account the cone's geometry and transformations.
+/// - Determining the normal at a given point on the cone.
+/// - Managing the cone's transformation matrix and material properties.
+///
+/// The `Cone` struct is part of a ray tracing system, designed to represent conical shapes within a 3D scene.
+/// It extends the generic `Object` trait, allowing it to interact seamlessly with the ray tracing engine,
+/// including support for hierarchical scene graphs through parent IDs.
 impl Cone {
     pub fn new(minimum: f64, maximum: f64, closed: bool) -> Cone {
         Cone {
@@ -137,6 +164,26 @@ impl Cone {
     }
 }
 
+/// Provides the `Object` trait implementations for `Cone`.
+///
+/// This implementation allows a `Cone` to interact with the ray tracing system by defining how rays intersect with it,
+/// how to calculate the normal at a point on the cone, and how to manage its transformation and material properties.
+/// It integrates the cone into the broader system, allowing it to be treated as any other object in the scene.
+///
+/// # Methods
+///
+/// - `intersect`: Calculates the intersections of a ray with the cone, considering the cone's transformation.
+/// - `normal_at`: Computes the normal vector at a given point on the cone, taking into account its transformation.
+/// - `get_transform`: Returns the transformation matrix of the cone.
+/// - `get_material`: Returns the material of the cone.
+/// - `set_transform`: Sets the transformation matrix of the cone.
+/// - `set_material`: Sets the material of the cone.
+/// - `debug_string`: Returns a string representation of the cone for debugging purposes.
+/// - `get_id`: Returns the unique identifier of the cone.
+/// - `get_parent_id`: Returns the optional parent identifier of the cone.
+/// - `set_parent_id`: Sets the parent identifier of the cone.
+/// - `get_aabb`: Calculates the axis-aligned bounding box (AABB) of the cone.
+/// - `includes`: Checks if the given object identifier matches the cone's identifier.
 impl Object for Cone {
     fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
         let trans_ray = ray.transform(&self.transform.inverse());

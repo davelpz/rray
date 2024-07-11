@@ -6,6 +6,22 @@ use crate::raytracer::object::{AABB, normal_to_world, Object, world_to_object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 
+/// Represents a sphere in a 3D scene.
+///
+/// A sphere is defined by its center, radius, and material properties. In this implementation,
+/// the sphere's center is assumed to be at the origin of its local coordinate system, and its
+/// radius is implicitly 1 unit (but can be scaled using the transform matrix). Material properties
+/// and transformations can be applied to simulate various effects and positions within the scene.
+///
+/// # Fields
+///
+/// * `id` - A unique identifier for the sphere, used for tracking and managing objects within the scene.
+/// * `parent_id` - An optional identifier for a parent object, allowing for hierarchical object composition.
+///   This can be `None` if the sphere does not have a parent.
+/// * `transform` - A transformation matrix that applies translation, rotation, and scaling to the sphere,
+///   positioning it within the 3D scene.
+/// * `material` - The material properties of the sphere, defining how it interacts with light and shadows
+///   within the scene.
 pub struct Sphere {
     pub id: usize,
     pub parent_id: Option<usize>,
@@ -13,6 +29,12 @@ pub struct Sphere {
     pub material: Material,
 }
 
+/// Implementation of `Sphere` functionalities.
+///
+/// Provides methods for creating new `Sphere` instances, including a default sphere and a glass sphere,
+/// calculating intersections with rays, determining the normal at a point of intersection, and managing
+/// the sphere's transformation and material properties. It implements the `Object` trait, enabling
+/// `Sphere` instances to be treated as first-class objects within the ray tracing system.
 impl Sphere {
     pub fn new() -> Sphere {
         Sphere {

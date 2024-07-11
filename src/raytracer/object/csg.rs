@@ -8,12 +8,48 @@ use crate::raytracer::object::{AABB, normal_to_world, Object, world_to_object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 
+/// Represents the operation to be performed in a Constructive Solid Geometry (CSG) context.
+///
+/// CSG allows for the creation of complex surfaces or objects by using boolean operations
+/// to combine simpler objects. This enum defines the types of operations that can be applied
+/// to combine objects in a CSG system.
+///
+/// Variants:
+/// - `Union`: Combines two objects into a single object that encompasses the volume of both.
+/// - `Intersection`: Creates a new object from the overlapping volume of two objects.
+/// - `Difference`: Subtracts the volume of the second object from the first, creating a new object.
 pub enum CsgOperation {
     Union,
     Intersection,
     Difference,
 }
 
+/// Implements the `FromStr` trait for `CsgOperation`.
+///
+/// This implementation allows for the creation of `CsgOperation` instances from string slices,
+/// enabling easy parsing and construction of CSG operations from textual representations.
+/// It supports parsing the strings "union", "intersection", and "difference" into their
+/// respective `CsgOperation` variants.
+///
+/// # Examples
+///
+/// ```
+/// use std::str::FromStr;
+/// use crate::CsgOperation;
+///
+/// let op = CsgOperation::from_str("union").unwrap();
+/// assert_eq!(op, CsgOperation::Union);
+///
+/// let op = CsgOperation::from_str("intersection").unwrap();
+/// assert_eq!(op, CsgOperation::Intersection);
+///
+/// let op = CsgOperation::from_str("difference").unwrap();
+/// assert_eq!(op, CsgOperation::Difference);
+/// ```
+///
+/// # Errors
+///
+/// Returns an error if the string does not match any of the CSG operation variants.
 impl FromStr for CsgOperation {
     type Err = ();
 
@@ -27,6 +63,22 @@ impl FromStr for CsgOperation {
     }
 }
 
+/// Represents a Constructive Solid Geometry (CSG) node in a ray tracing context.
+///
+/// A CSG node allows for the combination of two objects using boolean operations
+/// to create complex shapes. This struct holds the information necessary to perform
+/// these operations, including the operation type, references to the child objects,
+/// and a transformation matrix for positioning in the 3D world.
+///
+/// # Fields
+///
+/// * `id` - A unique identifier for the CSG node, used for tracking objects in the scene.
+/// * `parent_id` - An optional identifier for a parent object, allowing for hierarchical object composition.
+/// * `transform` - A transformation matrix applied to the CSG node for positioning, rotation, and scaling.
+/// * `operation` - The boolean operation (`Union`, `Intersection`, `Difference`) to be performed on the child objects.
+/// * `left` - The unique identifier of the left child object.
+/// * `right` - The unique identifier of the right child object.
+/// * `aabb_cache` - A cache for the axis-aligned bounding box (AABB) of the CSG node, wrapped in `RwLock` and `Arc` for thread safety.
 pub struct Csg {
     pub id: usize,
     pub parent_id: Option<usize>,
@@ -37,6 +89,39 @@ pub struct Csg {
     aabb_cache: Arc<RwLock<Option<AABB>>>,  // Cache for the AABB wrapped in RwLock and Arc for thread safety
 }
 
+/// The `Csg` struct represents a Constructive Solid Geometry (CSG) node within a ray tracing context.
+///
+/// CSG is a modeling technique that uses boolean operations like union, intersection, and difference
+/// to combine simpler objects into complex shapes. This struct encapsulates the logic for these operations,
+/// managing the combination of child objects, their transformations, and the resulting shape's bounding box.
+///
+/// # Fields
+///
+/// - `id`: Unique identifier for the CSG node, used for scene management.
+/// - `parent_id`: Optional identifier for a parent object, enabling hierarchical scene structures.
+/// - `transform`: Transformation matrix for positioning, rotating, and scaling the CSG node.
+/// - `operation`: Specifies the boolean operation (Union, Intersection, Difference) to apply.
+/// - `left`: Identifier for the left child object.
+/// - `right`: Identifier for the right child object.
+/// - `aabb_cache`: Cached axis-aligned bounding box (AABB) for the CSG node, enhancing performance.
+///
+/// # Methods
+///
+/// - `new`: Constructor that initializes a CSG node with a specific operation.
+/// - `get_aabb_cache`: Retrieves a read lock on the AABB cache.
+/// - `set_aabb_cache`: Updates the AABB cache with a new value.
+/// - `set_left`: Sets the left child object and updates its parent ID to this CSG node's ID.
+/// - `local_intersect`: Performs intersection tests with the child objects, filtering the results based on the CSG operation.
+/// - `local_normal_at`: CSG nodes do not have a normal vector; calling this method will panic.
+/// - `set_right`: Sets the right child object and updates its parent ID to this CSG node's ID.
+/// - `intersection_allowed`: Determines if an intersection is allowed based on the CSG operation and the hit statuses of child objects.
+/// - `filter_intersections`: Filters a list of intersections, returning only those that are allowed by the CSG operation.
+///
+/// # Implementations
+///
+/// Implements the `Object` trait, allowing CSG nodes to be treated as objects within the ray tracing system.
+/// This includes methods for intersection tests, normal vector calculations, and transformation management,
+/// adapted to the context of CSG operations.
 impl Csg {
     pub fn new(operation: CsgOperation) -> Csg {
         Csg {
@@ -123,6 +208,33 @@ impl Csg {
     }
 }
 
+/// Implementation of the `Object` trait for `Csg`.
+///
+/// This implementation allows `Csg` nodes to participate in the ray tracing system as first-class objects.
+/// It provides methods for intersection tests, normal vector calculations, and transformation management,
+/// adapted to the context of Constructive Solid Geometry (CSG) operations. Since CSG nodes represent
+/// composite objects, their behavior differs from simple geometric shapes, especially in how intersections
+/// and normals are calculated.
+///
+/// # Methods
+///
+/// - `intersect`: Overrides the trait method to perform intersection tests by transforming the ray into
+///   the CSG node's local space, then delegating to `local_intersect` which considers the CSG operation.
+/// - `normal_at`: Calculates the normal at a given point on the surface of the CSG node. This method
+///   panics because CSG nodes themselves do not have a normal vector; normals are derived from their child objects.
+/// - `get_transform`: Returns a reference to the transformation matrix of the CSG node, allowing it to be
+///   positioned, rotated, and scaled within the scene.
+/// - `get_material`: Panics when called because CSG nodes do not have a material. Materials are properties
+///   of the child objects.
+/// - `set_transform`: Sets the transformation matrix of the CSG node.
+/// - `set_material`: Intentionally left empty because CSG nodes do not have materials.
+/// - `debug_string`: Provides a debug string representation of the CSG node, primarily its transformation matrix.
+/// - `get_id`: Returns the unique identifier of the CSG node.
+/// - `get_parent_id`: Returns the optional parent identifier, allowing for hierarchical scene construction.
+/// - `set_parent_id`: Sets the parent identifier, establishing a parent-child relationship in the scene graph.
+/// - `get_aabb`: Calculates and returns the axis-aligned bounding box (AABB) of the CSG node, considering
+///   the bounds of its child objects and its own transformation.
+/// - `includes`: Checks if the given object identifier matches either of the CSG node's child objects.
 impl Object for Csg {
     fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
         let trans_ray = ray.transform(&self.transform.inverse());

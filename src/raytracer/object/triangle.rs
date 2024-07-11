@@ -6,6 +6,27 @@ use crate::raytracer::object::{AABB, normal_to_world, Object, world_to_object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 
+/// Represents a geometric triangle in a 3D scene.
+///
+/// A triangle is defined by three points in space (`p1`, `p2`, `p3`), which determine its vertices.
+/// It also includes edge vectors (`e1`, `e2`) calculated from these points, and a normal vector
+/// (`normal`) that is perpendicular to the triangle's surface. This structure is used within the
+/// ray tracing system to represent flat surfaces and is capable of calculating intersections with rays,
+/// determining surface normals at points of intersection, and supporting transformations and material
+/// properties.
+///
+/// # Fields
+///
+/// * `id`: A unique identifier for the triangle, used for tracking and managing objects within the scene.
+/// * `parent_id`: An optional identifier for a parent object, allowing for hierarchical object composition.
+///   This can be `None` if the triangle does not have a parent.
+/// * `transform`: A transformation matrix that applies translation, rotation, and scaling to the triangle,
+///   positioning it within the 3D scene.
+/// * `material`: The material properties of the triangle, defining how it interacts with light and shadows
+///   within the scene.
+/// * `p1`, `p2`, `p3`: The vertices of the triangle, represented as points in space.
+/// * `e1`, `e2`: Edge vectors of the triangle, calculated from the vertices.
+/// * `normal`: The normal vector of the triangle's plane, calculated from the cross product of `e2` and `e1`.
 #[derive(Debug, PartialEq)]
 pub struct Triangle {
     pub id: usize,
@@ -20,6 +41,13 @@ pub struct Triangle {
     pub normal: Tuple,
 }
 
+/// Implementation of `Triangle` functionalities.
+///
+/// This implementation provides the necessary methods to create and manipulate triangle objects within a 3D scene.
+/// It includes methods for constructing a new triangle, calculating intersections with rays, determining the normal
+/// at a point of intersection, and managing the triangle's transformation and material properties. By implementing
+/// the `Object` trait, `Triangle` instances can be treated as first-class objects within the ray tracing system,
+/// allowing them to interact with rays, lights, and other objects in a consistent manner.
 impl Triangle {
     pub fn new(p1: Tuple, p2: Tuple, p3: Tuple) -> Triangle {
         let e1 = p2.subtract(&p1);

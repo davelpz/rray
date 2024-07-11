@@ -7,6 +7,20 @@ use crate::EPSILON;
 use crate::raytracer::object::db::get_next_id;
 use crate::tuple::Tuple;
 
+/// Represents an infinite plane in a 3D scene.
+///
+/// This struct is part of a ray tracing system, defining a plane that extends infinitely in two dimensions.
+/// It is characterized by its position, orientation (through a transformation matrix), and material properties.
+///
+/// # Fields
+///
+/// * `id` - A unique identifier for the plane, used for tracking and managing objects within the scene.
+/// * `parent_id` - An optional identifier for a parent object, allowing for hierarchical object composition.
+///   This can be `None` if the plane does not have a parent.
+/// * `transform` - A transformation matrix that applies translation, rotation, and scaling to the plane,
+///   positioning it within the 3D scene.
+/// * `material` - The material properties of the plane, defining how it interacts with light and shadows
+///   within the scene.
 pub struct Plane {
     pub id: usize,
     pub parent_id: Option<usize>,
@@ -14,6 +28,13 @@ pub struct Plane {
     pub material: Material,
 }
 
+/// Implementation of `Plane` functionalities.
+///
+/// This implementation provides the necessary methods for a `Plane` object within the ray tracing system.
+/// It includes methods for creating a new plane, calculating intersections with rays in the plane's local space,
+/// determining the normal at a point of intersection, and managing the plane's transformation and material properties.
+/// Additionally, it implements the `Object` trait, enabling `Plane` instances to be treated as first-class objects
+/// within the ray tracing system.
 impl Plane {
     pub fn new() -> Plane {
         Plane {

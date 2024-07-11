@@ -7,6 +7,25 @@ use crate::tuple::Tuple;
 use crate::EPSILON;
 use crate::raytracer::object::db::get_next_id;
 
+/// Represents a cylinder in a ray tracing context.
+///
+/// This struct defines a cylinder by its unique identifier, optional parent identifier,
+/// minimum and maximum extents along the y-axis, a flag indicating whether the cylinder
+/// is closed at both ends, its transformation matrix, and material properties. It is used
+/// within the ray tracing system to represent cylinders as objects that can interact with rays.
+///
+/// # Fields
+///
+/// * `id` - A unique identifier for the cylinder, used for tracking objects within the scene.
+/// * `parent_id` - An optional identifier for a parent object, allowing for hierarchical
+///   object composition. This can be `None` if the cylinder does not have a parent.
+/// * `minimum` - The minimum extent of the cylinder along the y-axis.
+/// * `maximum` - The maximum extent of the cylinder along the y-axis.
+/// * `closed` - A boolean flag indicating whether the cylinder is closed at both ends.
+/// * `transform` - A transformation matrix that applies translation, rotation, and scaling
+///   to the cylinder, positioning it within the 3D scene.
+/// * `material` - The material properties of the cylinder, defining how it interacts with light
+///   and shadows within the scene.
 pub struct Cylinder {
     pub id: usize,
     pub parent_id: Option<usize>,
@@ -17,6 +36,12 @@ pub struct Cylinder {
     pub material: Material,
 }
 
+/// Implementation of `Cylinder` functionalities.
+///
+/// This implementation provides the necessary methods to integrate `Cylinder` objects into the ray tracing system,
+/// allowing them to be treated as first-class objects within the scene. It includes methods for calculating
+/// intersections with rays, determining surface normals at points of intersection, managing transformations
+/// and material properties of the cylinder, and handling end caps for closed cylinders.
 impl Cylinder {
     pub fn new(minimum: f64, maximum: f64, closed: bool) -> Cylinder {
         Cylinder {

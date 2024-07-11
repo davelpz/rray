@@ -9,6 +9,23 @@ use crate::raytracer::object::db::{add_object, get_next_id, get_object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 
+/// Represents a group of objects in a ray tracing context.
+///
+/// This struct is used to manage collections of objects in a scene, allowing for
+/// hierarchical composition of objects. It supports operations such as adding child objects,
+/// calculating intersections with rays, and managing transformations that apply to the entire group.
+///
+/// # Fields
+///
+/// * `id` - A unique identifier for the group, used for tracking objects within the scene.
+/// * `parent_id` - An optional identifier for a parent object, allowing for hierarchical
+///   object composition. This can be `None` if the group does not have a parent.
+/// * `transform` - A transformation matrix that applies translation, rotation, and scaling
+///   to the entire group, positioning it within the 3D scene.
+/// * `child_ids` - A vector of unique identifiers for the child objects contained within the group.
+///   These children can be other groups or individual objects.
+/// * `aabb_cache` - A cache for the axis-aligned bounding box (AABB) of the group, wrapped in `RwLock` and `Arc`
+///   for thread safety. This cache is used to optimize intersection tests by avoiding redundant calculations.
 pub struct Group {
     pub id: usize,
     pub parent_id: Option<usize>,
@@ -17,6 +34,13 @@ pub struct Group {
     aabb_cache: Arc<RwLock<Option<AABB>>>,  // Cache for the AABB wrapped in RwLock and Arc for thread safety
 }
 
+/// Implementation of `Group` functionalities.
+///
+/// This implementation provides the necessary methods to manage collections of objects within a scene,
+/// allowing for hierarchical composition and efficient ray intersection calculations. It includes methods
+/// for adding child objects, invalidating and managing an axis-aligned bounding box (AABB) cache for
+/// optimization, and performing local and global intersection tests. Additionally, it implements the `Object`
+/// trait, enabling `Group` instances to be treated as first-class objects within the ray tracing system.
 impl Group {
     pub fn new() -> Group {
         Group {

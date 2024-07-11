@@ -7,6 +7,21 @@ use crate::tuple::Tuple;
 use crate::EPSILON;
 use crate::raytracer::object::db::get_next_id;
 
+/// Represents a cube in a ray tracing context.
+///
+/// This struct defines a cube by its unique identifier, optional parent identifier,
+/// transformation matrix, and material properties. It is used within the ray tracing
+/// system to represent cubes as objects that can interact with rays.
+///
+/// # Fields
+///
+/// * `id` - A unique identifier for the cube, used for tracking objects within the scene.
+/// * `parent_id` - An optional identifier for a parent object, allowing for hierarchical
+///   object composition. This can be `None` if the cube does not have a parent.
+/// * `transform` - A transformation matrix that applies translation, rotation, and scaling
+///   to the cube, positioning it within the 3D scene.
+/// * `material` - The material properties of the cube, defining how it interacts with light
+///   and shadows within the scene.
 pub struct Cube {
     pub id: usize,
     pub parent_id: Option<usize>,
@@ -14,6 +29,12 @@ pub struct Cube {
     pub material: Material,
 }
 
+/// Implementation of `Cube` functionalities.
+///
+/// This implementation provides the necessary methods to integrate `Cube` objects into the ray tracing system,
+/// allowing them to be treated as first-class objects within the scene. It includes methods for calculating
+/// intersections with rays, determining surface normals at points of intersection, and managing transformations
+/// and material properties of the cube.
 impl Cube {
     pub fn new() -> Cube {
         Cube {
