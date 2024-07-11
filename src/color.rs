@@ -3,6 +3,13 @@
 use std::ops::Mul;
 use crate::EPSILON;
 
+/// Represents a color in the RGB color space.
+///
+/// # Fields
+///
+/// * `r` - Red component of the color.
+/// * `g` - Green component of the color.
+/// * `b` - Blue component of the color.
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
     pub r: f64,
@@ -10,6 +17,7 @@ pub struct Color {
     pub b: f64,
 }
 
+/// Implements equality comparison for `Color` with an epsilon to handle floating-point inaccuracies.
 impl PartialEq for Color {
     fn eq(&self, other: &Self) -> bool {
         (self.r - other.r).abs() < EPSILON
@@ -19,34 +27,88 @@ impl PartialEq for Color {
 }
 
 impl Color {
+    /// Creates a new `Color` instance.
+    ///
+    /// # Arguments
+    ///
+    /// * `r` - Red component.
+    /// * `g` - Green component.
+    /// * `b` - Blue component.
     pub fn new(r: f64, g: f64, b: f64) -> Color {
         Color { r, g, b }
     }
 
+    /// Returns a `Color` instance representing white.
     pub fn white() -> Color {
         Color::new(1.0, 1.0, 1.0)
     }
 
+    /// Adds the current color with another color.
+    ///
+    /// # Arguments
+    ///
+    /// * `other` - The other `Color` to add.
+    ///
+    /// # Returns
+    ///
+    /// A new `Color` representing the addition of the two colors.
     pub fn add(&self, other: &Color) -> Color {
         Color::new(self.r + other.r, self.g + other.g, self.b + other.b)
     }
 
+    /// Subtracts another color from the current color.
+    ///
+    /// # Arguments
+    ///
+    /// * `other` - The `Color` to subtract.
+    ///
+    /// # Returns
+    ///
+    /// A new `Color` representing the subtraction of the two colors.
     pub fn subtract(&self, other: &Color) -> Color {
         Color::new(self.r - other.r, self.g - other.g, self.b - other.b)
     }
 
+    /// Multiplies the color by a scalar value.
+    ///
+    /// # Arguments
+    ///
+    /// * `scalar` - The scalar value to multiply with.
+    ///
+    /// # Returns
+    ///
+    /// A new `Color` representing the scaled color.
     pub fn multiply(&self, scalar: f64) -> Color {
         Color::new(self.r * scalar, self.g * scalar, self.b * scalar)
     }
 
+    /// Multiplies the current color with another color, component-wise.
+    ///
+    /// # Arguments
+    ///
+    /// * `other` - The other `Color` to multiply with.
+    ///
+    /// # Returns
+    ///
+    /// A new `Color` representing the component-wise multiplication of the two colors.
     pub fn product(&self, other: &Color) -> Color {
         Color::new(self.r * other.r, self.g * other.g, self.b * other.b)
     }
 }
 
+/// Implements multiplication of a `Color` by a scalar value.
 impl Mul<f64> for Color {
     type Output = Color;
 
+    /// Multiplies a `Color` by a scalar value.
+    ///
+    /// # Arguments
+    ///
+    /// * `rhs` - The right-hand side scalar value to multiply with.
+    ///
+    /// # Returns
+    ///
+    /// A new `Color` representing the scaled color.
     fn mul(self, rhs: f64) -> Self::Output {
         Color::new(self.r * rhs, self.g * rhs, self.b * rhs)
     }
