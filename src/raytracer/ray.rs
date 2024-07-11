@@ -1,5 +1,4 @@
 use crate::matrix::Matrix;
-use crate::raytracer::intersection::Intersection;
 use crate::tuple::Tuple;
 
 /// Represents a ray in 3D space.
@@ -74,6 +73,7 @@ mod tests {
     use crate::raytracer::object::plane::Plane;
     use crate::raytracer::scene::Scene;
     use crate::raytracer::object::db::get_object;
+    use crate::raytracer::intersection::Intersection;
 
     #[test]
     fn test_ray() {
@@ -117,7 +117,7 @@ mod tests {
         s.transform = Matrix::translate(0.0, 0.0, 1.0);
         w.add_object(Arc::new(s));
         let id = w.ids[0];
-        let i = super::Intersection { t: 5.0, object: id, u: 0.0, v: 0.0};
+        let i = Intersection { t: 5.0, object: id, u: 0.0, v: 0.0};
         let xs = vec![i];
         let comps = xs[0].prepare_computations(&r, &xs);
         assert!(comps.over_point.z < -crate::EPSILON / 2.0);
@@ -211,7 +211,7 @@ mod tests {
         let s = Sphere::new();
         w.add_object(Arc::new(s));
         let id = w.ids[0];
-        let i = super::Intersection { t: 4.0, object: id, u: 0.0, v: 0.0};
+        let i = Intersection { t: 4.0, object: id, u: 0.0, v: 0.0};
         let xs = vec![i];
         let comps = xs[0].prepare_computations(&r, &xs);
         assert_eq!(comps.t, xs[0].t);
@@ -230,7 +230,7 @@ mod tests {
         let s = Sphere::new();
         w.add_object(Arc::new(s));
         let id = w.ids[0];
-        let xs = vec![super::Intersection { t: 1.0, object: id, u: 0.0, v: 0.0}];
+        let xs = vec![Intersection { t: 1.0, object: id, u: 0.0, v: 0.0}];
         let comps = xs[0].prepare_computations(&r, &xs);
         assert_eq!(comps.t, xs[0].t);
         assert_eq!(comps.object, xs[0].object);
@@ -248,7 +248,7 @@ mod tests {
         w.add_object(Arc::new(s));
         let id = w.ids[0];
         let r = Ray::new(Tuple::point(0.0, 1.0, -1.0), Tuple::vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0));
-        let xs = vec![super::Intersection { t: 2.0_f64.sqrt(), object: id, u: 0.0, v: 0.0}];
+        let xs = vec![Intersection { t: 2.0_f64.sqrt(), object: id, u: 0.0, v: 0.0}];
         let comps = xs[0].prepare_computations(&r, &xs);
         assert_eq!(comps.reflectv, Tuple::vector(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0));
     }
@@ -277,12 +277,12 @@ mod tests {
 
         let r = Ray::new(Tuple::point(0.0, 0.0, -4.0), Tuple::vector(0.0, 0.0, 1.0));
         let xs = vec![
-            super::Intersection { t: 2.0, object: aid, u: 0.0, v: 0.0},
-            super::Intersection { t: 2.75, object: bid, u: 0.0, v: 0.0},
-            super::Intersection { t: 3.25, object: cid, u: 0.0, v: 0.0},
-            super::Intersection { t: 4.75, object: bid, u: 0.0, v: 0.0},
-            super::Intersection { t: 5.25, object: cid, u: 0.0, v: 0.0},
-            super::Intersection { t: 6.0, object: aid, u: 0.0, v: 0.0},
+            Intersection { t: 2.0, object: aid, u: 0.0, v: 0.0},
+            Intersection { t: 2.75, object: bid, u: 0.0, v: 0.0},
+            Intersection { t: 3.25, object: cid, u: 0.0, v: 0.0},
+            Intersection { t: 4.75, object: bid, u: 0.0, v: 0.0},
+            Intersection { t: 5.25, object: cid, u: 0.0, v: 0.0},
+            Intersection { t: 6.0, object: aid, u: 0.0, v: 0.0},
         ];
 
         let expected_n1 = vec![1.0, 1.5, 2.0, 2.5, 2.5, 1.5];
@@ -304,7 +304,7 @@ mod tests {
         s.transform = Matrix::translate(0.0, 0.0, 1.0);
         w.add_object(Arc::new(s));
         let id = w.ids[0];
-        let i = super::Intersection { t: 5.0, object: id, u: 0.0, v: 0.0};
+        let i = Intersection { t: 5.0, object: id, u: 0.0, v: 0.0};
         let xs = vec![i];
         let comps = xs[0].prepare_computations(&r, &xs);
         assert!(comps.under_point.z > crate::EPSILON / 2.0);
