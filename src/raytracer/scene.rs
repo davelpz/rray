@@ -11,11 +11,46 @@ use crate::raytracer::object::sphere::Sphere;
 use crate::raytracer::ray::Ray;
 use crate::raytracer::object::db::{get_object, add_object};
 
+/// Represents a scene in a ray tracing engine.
+///
+/// A `Scene` is a collection of lights and objects that can be rendered. It stores references to lights
+/// and objects within the scene, allowing for operations such as adding new lights or objects, and
+/// performing ray intersections to determine color and shading at different points.
+///
+/// # Fields
+///
+/// * `light` - A vector of `Light` instances representing the light sources in the scene.
+/// * `ids` - A vector of `usize` values, each corresponding to the unique identifier of an object within the scene.
 pub struct Scene {
     pub light: Vec<Light>,
     pub ids: Vec<usize>,
 }
 
+/// The `Scene` struct implementation.
+///
+/// This implementation provides the functionality to manage a scene in a ray tracing engine.
+/// It includes methods for adding lights and objects to the scene, retrieving objects by index,
+/// creating a default scene setup, calculating intersections with rays, determining the color at a point,
+/// shading intersections, checking for shadows, and handling reflected and refracted colors.
+///
+/// # Examples
+///
+/// Creating a new scene and adding elements to it:
+///
+/// ```
+/// let mut scene = Scene::new();
+/// let light = Light::new_point_light(Tuple::point(-10, 10, -10), Color::new(1, 1, 1));
+/// scene.add_light(light);
+/// let sphere = Arc::new(Sphere::new());
+/// scene.add_object(sphere);
+/// ```
+///
+/// Calculating the color at a ray intersection:
+///
+/// ```
+/// let ray = Ray::new(Tuple::point(0, 0, -5), Tuple::vector(0, 0, 1));
+/// let color = scene.color_at(&ray, 5);
+/// ```
 impl Scene {
     pub fn new() -> Scene {
         Scene {
@@ -70,7 +105,26 @@ impl Scene {
         xs
     }
 
-    /// Returns the color of the object at the intersection point
+    /// Calculates the color at a given ray's intersection point within the scene.
+    ///
+    /// This function determines the color of the scene as seen from the ray's perspective. It first finds
+    /// all intersections of the ray with objects in the scene. If there are no intersections, the function
+    /// returns the color black, indicating that the ray does not hit anything and thus points to the background.
+    /// If there are intersections, it finds the closest one where the intersection point is in front of the ray
+    /// (i.e., has a positive `t` value). It then calculates the color at this intersection point by considering
+    /// various factors such as the object's material, the lighting, and whether the point is in shadow.
+    /// This function also accounts for recursive reflections by using the `remaining` parameter, which
+    /// decreases with each recursive call to prevent infinite recursion.
+    ///
+    /// # Arguments
+    ///
+    /// * `r` - The ray for which to calculate the color.
+    /// * `remaining` - The number of times the function can still be recursively called, used to limit
+    ///   the recursion depth for reflections and refractions.
+    ///
+    /// # Returns
+    ///
+    /// The color at the intersection point closest to the ray origin, or black if the ray intersects no objects.
     pub fn color_at(&self, r: &Ray, remaining: usize) -> Color {
         let xs = self.intersect(r);
         if let Some(hit) = xs.iter().find(|x| x.t >= 0.0) {
@@ -81,9 +135,27 @@ impl Scene {
         }
     }
 
-    /// Returns the color using the Phong reflection model
-    /// The color is calculated by summing the color of the light sources
-    /// and the color of the object
+    /// Calculates the color at a point of intersection in the scene, considering various lighting effects.
+    ///
+    /// This method combines the Phong reflection model with additional handling for reflective and
+    /// transparent materials. It first calculates the direct illumination from light sources using the
+    /// Phong model. Then, it adds the effects of reflection and refraction, if applicable, based on the
+    /// material properties of the intersected object. For materials that are both reflective and transparent,
+    /// the Fresnel effect is approximated using Schlick's approximation to blend the reflected and refracted
+    /// colors based on the viewing angle.
+    ///
+    /// # Arguments
+    ///
+    /// * `comps` - The precomputed information about the intersection, including the point of intersection,
+    ///   the normal at the intersection, and other relevant data for shading.
+    /// * `remaining` - The recursion limit for reflective and refractive color calculations. This prevents
+    ///   infinite recursion by gradually reducing the contribution of reflected and refracted light in
+    ///   successive reflections/refractions.
+    ///
+    /// # Returns
+    ///
+    /// Returns the color at the intersection point, which includes contributions from direct light sources,
+    /// reflected light, and refracted light, as determined by the material properties of the intersected object.
     pub fn shade_hit(&self, comps: &Computations, remaining: usize) -> Color {
         let mut surface = Color::new(0.0, 0.0, 0.0);
         for light in &self.light {
@@ -116,7 +188,24 @@ impl Scene {
             self.is_shadowed(&comps.over_point, light))
     }
 
-    /// Returns true if the point is in shadow
+    /// Determines if a given point is in shadow relative to a specific light source.
+    ///
+    /// This method checks if the point is shadowed by casting a ray from the point to the light source.
+    /// It calculates the vector from the point to the light's position, then normalizes this vector to
+    /// get the direction. A ray is then created from the point in this direction. The method finds all
+    /// intersections of this ray with objects in the scene. If there is an intersection between the point
+    /// and the light source (i.e., if the closest intersection's `t` value is less than the distance to the
+    /// light source), the point is considered to be in shadow, and the method returns `true`. Otherwise,
+    /// it returns `false`.
+    ///
+    /// # Arguments
+    ///
+    /// * `point` - A reference to the `Tuple` representing the point in space to check for shadow.
+    /// * `light` - A reference to the `Light` object representing the light source.
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` if the point is in shadow relative to the light source; otherwise, returns `false`.
     pub fn is_shadowed(&self, point: &Tuple, light: &Light) -> bool {
         let v = light.position - *point;
         let distance = v.magnitude();
@@ -144,7 +233,26 @@ impl Scene {
         result
     }
 
-    /// Returns the color contribution of reflected light
+    /// Calculates the color contribution from reflected light at a point of intersection.
+    ///
+    /// This function determines the color contribution from reflected light based on the material's
+    /// reflective property and the remaining number of allowed reflections. If the recursion limit
+    /// (`remaining`) is reached or the material is not reflective (`reflective == 0.0`), it returns black,
+    /// indicating no reflected light contribution. Otherwise, it calculates a reflection ray based on the
+    /// intersection's over point and the reflection vector, then recursively calls `color_at` to determine
+    /// the color seen in the reflection. This color is then scaled by the material's reflective property to
+    /// simulate the intensity of the reflected light.
+    ///
+    /// # Arguments
+    ///
+    /// * `comps` - The precomputed information about the intersection, including the point of intersection,
+    ///   the normal at the intersection, and other relevant data for shading.
+    /// * `remaining` - The recursion limit for reflective color calculations. This prevents infinite recursion
+    ///   by gradually reducing the contribution of reflected light in successive reflections.
+    ///
+    /// # Returns
+    ///
+    /// The color contribution from reflected light at the intersection point.
     pub fn reflected_color(&self, comps: &Computations, remaining: usize) -> Color {
         let object = get_object(comps.object);
         if remaining <= 0 || object.get_material().reflective == 0.0 {
@@ -156,8 +264,24 @@ impl Scene {
         color * object.get_material().reflective
     }
 
-    /// Returns the color contribution of refracted light
-    /// using Snell's Law to calculate the direction of the refracted ray
+    /// Calculates the color contribution from refracted light at an intersection point.
+    ///
+    /// This method applies Snell's Law to compute the direction of the refracted ray and then determines
+    /// the color seen through the transparent material. It accounts for the possibility of total internal
+    /// reflection and the material's transparency level. If the material is opaque or the recursion limit
+    /// for refracted color calculations is reached, it returns black, indicating no refracted light contribution.
+    ///
+    /// # Arguments
+    ///
+    /// * `comps` - The precomputed information about the intersection, including the point of intersection,
+    ///   the normal at the intersection, and other relevant data for shading, such as the indices of refraction.
+    /// * `remaining` - The recursion limit for refracted color calculations. This prevents infinite recursion
+    ///   by gradually reducing the contribution of refracted light in successive refractions.
+    ///
+    /// # Returns
+    ///
+    /// The color contribution from refracted light at the intersection point, or black if the material is opaque
+    /// or the recursion limit is reached.
     pub fn refracted_color(&self, comps: &Computations, remaining: usize) -> Color {
         let object = get_object(comps.object);
         if remaining <= 0 || object.get_material().transparency == 0.0 {

@@ -3,6 +3,23 @@ use crate::matrix::Matrix;
 use crate::raytracer::material::noise;
 use crate::tuple::Tuple;
 
+/// Represents the type of pattern to be applied to a surface in a ray tracing context.
+///
+/// This enum defines various types of patterns that can be used to texture objects within a ray tracing scene.
+/// Patterns can range from simple solid colors to more complex types like stripes, gradients, and procedural noise.
+/// Patterns can be combined or modified for more complex effects, such as blending two patterns or applying a perturbation.
+///
+/// # Variants
+///
+/// * `Test` - A test pattern, typically used for debugging.
+/// * `Solid(Color)` - A solid color pattern.
+/// * `Stripe(Box<Pattern>, Box<Pattern>)` - A stripe pattern alternating between two other patterns.
+/// * `Gradient(Box<Pattern>, Box<Pattern>)` - A gradient pattern smoothly transitioning between two patterns.
+/// * `Ring(Box<Pattern>, Box<Pattern>)` - A ring pattern alternating between two patterns in a radial fashion.
+/// * `Checker(Box<Pattern>, Box<Pattern>)` - A checkerboard pattern alternating between two patterns.
+/// * `Blend(Box<Pattern>, Box<Pattern>, f64)` - A blend of two patterns, with the blend ratio specified by a floating point value.
+/// * `Perturbed(Box<Pattern>, f64, usize, f64)` - A pattern perturbed by noise, with parameters for scale, octaves, and persistence.
+/// * `Noise(Box<Pattern>, Box<Pattern>, f64, usize, f64)` - A noise-based pattern, with parameters for scale, octaves, and persistence.
 #[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 pub enum PatternType {
@@ -17,6 +34,17 @@ pub enum PatternType {
     Noise(Box<Pattern>, Box<Pattern>, f64, usize, f64)
 }
 
+/// Represents a pattern with a specific type and transformation.
+///
+/// This struct encapsulates a pattern type, defined by the `PatternType` enum, and a transformation
+/// matrix. The pattern type determines the visual appearance of the pattern, such as solid color,
+/// stripes, gradients, etc. The transformation matrix allows the pattern to be scaled, rotated,
+/// or translated, enabling more complex and varied pattern applications on surfaces.
+///
+/// # Fields
+///
+/// * `pattern_type` - The specific type of the pattern, determining its visual appearance.
+/// * `transform` - A transformation matrix applied to the pattern for scaling, rotation, or translation.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Pattern {
     pub pattern_type: PatternType,
@@ -88,6 +116,23 @@ impl Pattern {
         }
     }
 
+    /// Calculates the color of the pattern at a given point on an object.
+    ///
+    /// This method computes the color of the pattern at a specific point on an object, taking into
+    /// account the pattern's type and its transformation. The method applies the pattern's transformation
+    /// to the given object point to determine the pattern's local point, and then calculates the color
+    /// based on the pattern's type (e.g., solid, stripe, gradient, etc.). For patterns involving noise
+    /// or perturbation, additional calculations are performed to adjust the point's coordinates before
+    /// determining the color.
+    ///
+    /// # Arguments
+    ///
+    /// * `object_point` - A reference to a `Tuple` representing the point on the object in world space
+    ///   where the color is to be calculated.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Color` representing the color of the pattern at the given point on the object.
     pub fn pattern_at(&self, object_point: &Tuple) -> Color {
         let pattern_point = self.transform.inverse().multiply_tuple(object_point);
         match &self.pattern_type {

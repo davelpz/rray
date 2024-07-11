@@ -100,6 +100,27 @@ fn create_group(mesh: &Mesh, material: Material) -> Group {
     group
 }
 
+/// Loads a 3D model from an OBJ file and returns a group containing the model's geometry.
+///
+/// This function reads a 3D model from an OBJ file specified by the `file` parameter, applying
+/// the provided `material` to all the geometry within the model. The function supports loading
+/// models that consist of multiple meshes by creating a group for each mesh and then adding these
+/// groups to a master group, which is returned. If the model file contains no meshes, the function
+/// panics with an error message indicating that no models were found in the file.
+///
+/// # Arguments
+///
+/// * `file` - A string slice that holds the path to the OBJ file to be loaded.
+/// * `material` - A `Material` instance to be applied to all the geometry within the loaded model.
+///
+/// # Returns
+///
+/// Returns a `Group` instance that contains all the geometry of the loaded model, with the specified
+/// material applied to each piece of geometry.
+///
+/// # Panics
+///
+/// Panics if no models are found in the specified file or if the file cannot be loaded.
 pub fn load_obj_file(file: &str, material: Material) -> Group {
     let (models, _materials) = tobj::load_obj(file, &tobj::LoadOptions::default())
        .expect(&format!("Failed to OBJ load file: {}", file));

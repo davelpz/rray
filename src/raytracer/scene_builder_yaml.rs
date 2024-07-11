@@ -341,6 +341,26 @@ fn create_shape(shape: &Yaml) -> Arc<dyn Object> {
     s
 }
 
+/// Renders a scene based on YAML string input.
+///
+/// This function takes a YAML string that defines a scene, including camera settings, lights, and objects,
+/// and renders it to an image file. The rendering process involves parsing the YAML to extract scene elements,
+/// setting up the camera with the specified field of view and transformations, adding lights to the scene,
+/// and creating objects with specified materials and transformations. Finally, it renders the scene using
+/// the camera and saves the rendered image to a file.
+///
+/// # Arguments
+///
+/// * `contents` - A string slice containing the YAML formatted scene description.
+/// * `width` - The width of the output image in pixels, before applying anti-aliasing.
+/// * `height` - The height of the output image in pixels, before applying anti-aliasing.
+/// * `png_file` - The path where the rendered image will be saved.
+/// * `aa` - The anti-aliasing factor to be used in rendering. A higher value results in smoother edges but increases rendering time.
+///
+/// # Panics
+///
+/// This function panics if the YAML content cannot be parsed, if required scene elements like the camera or lights
+/// are not found in the YAML, or if specified objects have unsupported types or missing properties.
 pub fn render_scene_from_str(contents: &str, width: usize, height: usize, png_file: &str, aa: usize) {
     let docs = YamlLoader::load_from_str(contents).unwrap();
     // Multi document support, doc is a yaml::Yaml
@@ -366,6 +386,23 @@ pub fn render_scene_from_str(contents: &str, width: usize, height: usize, png_fi
     image.write_to_file(png_file, aa);
 }
 
+/// Renders a scene from a YAML file.
+///
+/// This function reads a scene configuration from a YAML file specified by `path`, then renders
+/// the scene to an image file. The rendering process involves creating a camera, lights, and objects
+/// as defined in the YAML file, and then using the camera to render the scene to the specified PNG file.
+///
+/// # Arguments
+///
+/// * `path` - A string slice that holds the path to the YAML file containing the scene configuration.
+/// * `width` - The width of the output image in pixels.
+/// * `height` - The height of the output image in pixels.
+/// * `png_file` - The path where the rendered image will be saved.
+/// * `aa` - The anti-aliasing factor to be used in rendering. A higher value results in smoother edges but increases rendering time.
+///
+/// # Panics
+///
+/// Panics if the YAML file specified by `path` does not exist or cannot be read, or if the file does not contain a valid scene configuration.
 pub fn render_scene_from_file(path: &str, width: usize, height: usize, png_file: &str, aa: usize) {
     if Path::new(path).exists() {
         let contents = fs::read_to_string(path).expect("Something went wrong reading the file");

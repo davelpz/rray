@@ -6,6 +6,17 @@ use std::fs::File;
 use std::path::Path;
 use crate::color::Color;
 
+/// Represents a canvas for drawing in a ray tracing application.
+///
+/// This struct holds the dimensions of the canvas and a vector of pixels, where each pixel
+/// is represented by a `Color`. The canvas acts as the drawing surface for the ray tracing
+/// renderer, storing the color of each pixel as determined by the rendering process.
+///
+/// # Fields
+///
+/// * `width` - The width of the canvas in pixels.
+/// * `height` - The height of the canvas in pixels.
+/// * `pixels` - A vector of `Color` values representing the color of each pixel on the canvas.
 #[derive(Debug, PartialEq)]
 pub struct Canvas {
     pub width: usize,
@@ -14,16 +25,52 @@ pub struct Canvas {
 }
 
 impl Canvas {
+    /// Creates a new `Canvas` instance with a specified width and height.
+    ///
+    /// Initializes the canvas with a given width and height, and fills the pixel buffer
+    /// with black pixels (color value of 0.0 for red, green, and blue).
+    ///
+    /// # Arguments
+    ///
+    /// * `width` - The width of the canvas in pixels.
+    /// * `height` - The height of the canvas in pixels.
+    ///
+    /// # Returns
+    ///
+    /// Returns a new `Canvas` instance.
     pub fn new(width: usize, height: usize) -> Canvas {
         let pixels = vec![Color::new(0.0, 0.0, 0.0); width * height];
         Canvas { width, height, pixels }
     }
 
+    /// Writes a pixel with a specified color at the given coordinates.
+    ///
+    /// This method modifies the color of a single pixel in the canvas's pixel buffer.
+    /// The coordinates are zero-indexed, where (0, 0) is the top-left corner.
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - The x-coordinate of the pixel.
+    /// * `y` - The y-coordinate of the pixel.
+    /// * `color` - The `Color` to set the pixel to.
     pub fn write_pixel(&mut self, x: usize, y: usize, color: Color) {
         let index = y * self.width + x;
         self.pixels[index] = color;
     }
 
+    /// Retrieves the color of a pixel at the given coordinates.
+    ///
+    /// This method returns the color of the pixel located at the specified coordinates.
+    /// The coordinates are zero-indexed, where (0, 0) is the top-left corner.
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - The x-coordinate of the pixel.
+    /// * `y` - The y-coordinate of the pixel.
+    ///
+    /// # Returns
+    ///
+    /// Returns the `Color` of the specified pixel.
     pub fn pixel_at(&self, x: usize, y: usize) -> Color {
         let index = y * self.width + x;
         self.pixels[index]
@@ -61,6 +108,22 @@ impl Canvas {
     }
 
 
+    /// Writes the canvas content to a PNG file with anti-aliasing.
+    ///
+    /// This method saves the current state of the canvas to a PNG file, applying anti-aliasing
+    /// based on the `aa` (anti-aliasing factor) provided. The anti-aliasing process averages
+    /// the colors of `aa` x `aa` blocks of pixels to smooth out the transitions between colors.
+    /// The resulting image is saved to the specified filename.
+    ///
+    /// # Arguments
+    ///
+    /// * `filename` - The path and name of the file where the canvas should be saved.
+    /// * `aa` - The anti-aliasing factor, specifying the size of the pixel blocks to average
+    ///   for anti-aliasing. A higher value results in more smoothing but can lead to loss of detail.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the file cannot be created, or if there is an error writing the PNG data to the file.
     pub fn write_to_file(&self, filename: &str, aa: usize) {
         let path = Path::new(filename);
         let file = File::create(path).unwrap();

@@ -8,6 +8,28 @@ use crate::raytracer::object::world_to_object;
 pub(crate) mod pattern;
 mod noise;
 
+/// Represents the material properties of a surface in a ray tracing scene.
+///
+/// This struct encapsulates various physical properties that define how a surface interacts with light.
+/// These properties include the surface's pattern (texture), its ambient, diffuse, specular reflection
+/// characteristics, shininess, reflectivity, transparency, and refractive index. These properties are
+/// used in the lighting model to calculate the color of the surface under various lighting conditions.
+///
+/// # Fields
+///
+/// * `pattern` - The pattern applied to the surface, defining its texture.
+/// * `ambient` - The ambient light reflection coefficient. Represents the constant color of the object
+///   under ambient lighting.
+/// * `diffuse` - The diffuse reflection coefficient. Determines how matte or bright the surface appears
+///   under direct lighting.
+/// * `specular` - The specular reflection coefficient. Controls the strength of the specular highlight.
+/// * `shininess` - Affects the size of the specular highlight. Higher values result in smaller, sharper highlights.
+/// * `reflective` - The reflectivity of the surface. A value of 0 means the surface is not reflective,
+///   while 1 means it reflects light perfectly.
+/// * `transparency` - The transparency of the material. A value of 0 means the material is opaque,
+///   while 1 means it is completely transparent.
+/// * `refractive_index` - The refractive index of the material, used in calculating refraction through
+///   transparent materials.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Material {
     pub pattern: Pattern,
@@ -35,6 +57,22 @@ impl Material {
     }
 }
 
+/// Calculates the color of a pattern at a given point in world space for a specific object.
+///
+/// This function converts a point in world space to object space, then uses the object's material
+/// pattern to determine the color at that point. It's a crucial part of the rendering process,
+/// allowing patterns to be accurately applied to objects based on their world position and the
+/// object's transformation.
+///
+/// # Arguments
+///
+/// * `shape` - The unique identifier (usize) of the object within the scene.
+/// * `world_point` - A reference to a `Tuple` representing the point in world space where the color
+///   is to be calculated.
+///
+/// # Returns
+///
+/// Returns a `Color` representing the color of the pattern at the specified point on the object.
 pub fn pattern_at_object(shape: usize, world_point: &Tuple) -> Color {
     let object_point = world_to_object(shape, world_point);
     get_object(shape).get_material().pattern.pattern_at(&object_point)
