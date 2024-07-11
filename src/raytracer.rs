@@ -8,3 +8,4 @@ mod light;
 mod camera;
 mod load_obj;
 pub(crate) mod scene_builder_yaml;
+mod canvas;

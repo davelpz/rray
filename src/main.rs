@@ -5,7 +5,6 @@ use clap::Parser;
 
 mod tuple;
 mod color;
-mod canvas;
 mod matrix;
 mod raytracer;
 pub const EPSILON: f64 = 0.00001;

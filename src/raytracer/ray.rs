@@ -67,7 +67,7 @@ mod tests {
     use super::Ray;
     use crate::tuple::Tuple;
     use crate::color::Color;
-    use crate::canvas::Canvas;
+    use crate::raytracer::canvas::Canvas;
     use crate::raytracer::light::{Light, lighting};
     use crate::raytracer::material::pattern::Pattern;
     use crate::raytracer::object::sphere::Sphere;

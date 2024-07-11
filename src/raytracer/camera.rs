@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 use crate::matrix::Matrix;
 use crate::tuple::Tuple;
-use crate::canvas::Canvas;
+use crate::raytracer::canvas::Canvas;
 use indicatif::ProgressBar;
 use rayon::iter::ParallelBridge;
 use rayon::prelude::ParallelIterator;
