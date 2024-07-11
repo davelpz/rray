@@ -8,6 +8,7 @@ pub(crate) mod group;
 pub(crate) mod triangle;
 pub(crate) mod smooth_triangle;
 pub(crate) mod csg;
+pub(crate) mod torus;
 
 use std::fmt::{Debug, Formatter};
 use crate::EPSILON;
