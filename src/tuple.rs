@@ -1,22 +1,22 @@
 #![allow(dead_code)]
 
-// module for tuples
-use std::ops::Sub;
-use std::ops::Add;
-use std::ops::Mul;
-use std::ops::Div;
+// This module defines the `Tuple` struct and its associated operations. Tuples are used to represent points and vectors in 3D space.
+
+use std::ops::{Sub, Add, Mul, Div};
 use crate::EPSILON;
 
-// Tuple struct
+/// Represents a tuple in 3D space, which can be a point or a vector based on `w`.
+/// A `w` of 1.0 indicates a point, and 0.0 indicates a vector.
 #[derive(Debug, Clone, Copy)]
 pub struct Tuple {
     pub x: f64,
     pub y: f64,
     pub z: f64,
-    pub w: f64,
+    pub w: f64, // Determines whether the tuple is a point (w=1.0) or a vector (w=0.0)
 }
 
 impl PartialEq for Tuple {
+    /// Checks for equality between two `Tuple` instances, considering the floating-point precision defined by `EPSILON`.
     fn eq(&self, other: &Self) -> bool {
         (self.x - other.x).abs() < EPSILON
             && (self.y - other.y).abs() < EPSILON
@@ -26,63 +26,78 @@ impl PartialEq for Tuple {
 }
 
 impl Tuple {
+    /// Creates a new `Tuple`.
     pub fn new(x: f64, y: f64, z: f64, w: f64) -> Tuple {
         Tuple { x, y, z, w }
     }
 
+    /// Determines if the tuple is a point.
     pub fn is_point(&self) -> bool {
         self.w == 1.0
     }
 
+    /// Determines if the tuple is a vector.
     pub fn is_vector(&self) -> bool {
         self.w == 0.0
     }
 
+    /// Creates a new point `Tuple`.
     pub fn point(x: f64, y: f64, z: f64) -> Tuple {
         Tuple::new(x, y, z, 1.0)
     }
 
+    /// Creates a new vector `Tuple`.
     pub fn vector(x: f64, y: f64, z: f64) -> Tuple {
         Tuple::new(x, y, z, 0.0)
     }
 
+    /// Adds two tuples together, returning a new `Tuple`.
     pub fn add(&self, other: &Tuple) -> Tuple {
         Tuple::new(self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w)
     }
 
+    /// Adds a scalar to each component of the tuple, returning a new `Tuple`.
     pub fn add_float(&self, other: f64) -> Tuple {
         Tuple::new(self.x + other, self.y + other, self.z + other, self.w + other)
     }
 
+    /// Subtracts one tuple from another, returning a new `Tuple`.
     pub fn subtract(&self, other: &Tuple) -> Tuple {
         Tuple::new(self.x - other.x, self.y - other.y, self.z - other.z, self.w - other.w)
     }
 
+    /// Negates the tuple, returning a new `Tuple`.
     pub fn negate(&self) -> Tuple {
         Tuple::new(-self.x, -self.y, -self.z, -self.w)
     }
 
+    /// Multiplies each component of the tuple by a scalar, returning a new `Tuple`.
     pub fn multiply(&self, scalar: f64) -> Tuple {
         Tuple::new(self.x * scalar, self.y * scalar, self.z * scalar, self.w * scalar)
     }
 
+    /// Divides each component of the tuple by a scalar, returning a new `Tuple`.
     pub fn divide(&self, scalar: f64) -> Tuple {
         Tuple::new(self.x / scalar, self.y / scalar, self.z / scalar, self.w / scalar)
     }
 
+    /// Calculates the magnitude of the vector.
     pub fn magnitude(&self) -> f64 {
         (self.x.powi(2) + self.y.powi(2) + self.z.powi(2) + self.w.powi(2)).sqrt()
     }
 
+    /// Normalizes the vector, returning a unit vector in the same direction.
     pub fn normalize(&self) -> Tuple {
         let magnitude = self.magnitude();
         Tuple::new(self.x / magnitude, self.y / magnitude, self.z / magnitude, self.w / magnitude)
     }
 
+    /// Calculates the dot product of two vectors.
     pub fn dot(&self, other: &Tuple) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w
     }
 
+    /// Calculates the cross product of two vectors.
     pub fn cross(&self, other: &Tuple) -> Tuple {
         Tuple::vector(
             self.y * other.z - self.z * other.y,
@@ -91,11 +106,13 @@ impl Tuple {
         )
     }
 
+    /// Reflects a vector off a surface, given the surface's normal vector.
     pub fn reflect(&self, normal: &Tuple) -> Tuple {
         self.subtract(&normal.multiply(2.0 * self.dot(normal)))
     }
 }
 
+/// Operator overloads for `Tuple`.
 impl Sub for Tuple {
     type Output = Self;
 
