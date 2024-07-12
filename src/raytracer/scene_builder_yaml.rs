@@ -20,6 +20,7 @@ use crate::raytracer::object::group::Group;
 use crate::raytracer::object::Object;
 use crate::raytracer::object::plane::Plane;
 use crate::raytracer::object::sphere::Sphere;
+use crate::raytracer::object::torus::Torus;
 use crate::raytracer::object::triangle::Triangle;
 use crate::raytracer::scene::Scene;
 use crate::tuple::Tuple;
@@ -327,6 +328,10 @@ fn create_shape(shape: &Yaml) -> Arc<dyn Object> {
             let p2 = point_from_vec(&shape["p2"].as_vec().unwrap());
             let p3 = point_from_vec(&shape["p3"].as_vec().unwrap());
             Arc::new(Triangle::new(p1, p2, p3))
+        }
+        "torus" => {
+            let minor_radius = get_f64(&shape["minor_radius"]);
+            Arc::new(Torus::new(minor_radius))
         }
         "obj_file" => {
             let file = shape["obj_file"].as_str().unwrap();
