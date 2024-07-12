@@ -154,7 +154,7 @@ lights:
 The scene section is a list of scene objects.
 ### Scene objects
 Each scene object has the following properties:
-- type: Type of scene object (sphere, plane, cube, cylinder, cone, triangle, group, csg)
+- type: Type of scene object (sphere, plane, cube, cylinder, cone, triangle, torus, group, csg)
 - transforms: List of transformations to apply to the object
 - material: Material of the object
 - hidden: If the object is hidden (default false)
@@ -262,6 +262,29 @@ Example:
     minimum: 0
     maximum: 1
     closed: true
+    transforms:
+     - type: translate
+       amount: [0, 0, 0]
+    material:
+     pattern:
+       type: solid
+       color: [1, 0, 0]
+     ambient: 0.1
+     diffuse: 0.9
+     specular: 0.9
+     shininess: 200
+     reflective: 0.9
+     transparency: 0.1
+     refractive_index: 1.5
+```
+##### Torus
+The torus object has the following properties:
+- minor_radius: Minor radius of the torus
+
+Example:
+```yaml
+  - type: torus
+    minor_radius: 0.5
     transforms:
      - type: translate
        amount: [0, 0, 0]
