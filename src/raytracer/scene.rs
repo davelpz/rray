@@ -5,7 +5,7 @@ use crate::tuple::Tuple;
 use crate::raytracer::computations::Computations;
 use crate::raytracer::material::pattern::Pattern;
 use crate::raytracer::intersection::Intersection;
-use crate::raytracer::light::{Light, lighting};
+use crate::raytracer::light::{Light, lighting, LightType};
 use crate::raytracer::object::Object;
 use crate::raytracer::object::sphere::Sphere;
 use crate::raytracer::ray::Ray;
@@ -179,13 +179,37 @@ impl Scene {
 
     /// Returns the color of intersection point for a single light source
     fn shade_hit_light(&self, comps: &Computations, light: &Light) -> Color {
-        lighting(
-            comps.object,
-            light,
-            &comps.over_point,
-            &comps.eyev,
-            &comps.normalv,
-            self.is_shadowed(&comps.over_point, light))
+        match &light.light_type {
+            LightType::Point => {
+                let shadowed = self.is_shadowed(&comps.over_point, &light.position);
+                lighting(
+                    comps.object,
+                    light,
+                    &comps.over_point,
+                    &comps.eyev,
+                    &comps.normalv,
+                    if shadowed { 1.0 } else { 0.0 })
+            }
+            LightType::Area(_corner, _u, _v, samples) => {
+                let mut total = 0;
+                for _sample in 0..*samples {
+                    let light_position = light.sample_point();
+                    let shadowed = self.is_shadowed(&comps.over_point, &light_position);
+                    if shadowed {
+                        total += 1;
+                    }
+                }
+
+                let shadowed = total as f64 / *samples as f64;
+                lighting(
+                    comps.object,
+                    light,
+                    &comps.over_point,
+                    &comps.eyev,
+                    &comps.normalv,
+                    shadowed)
+            }
+        }
     }
 
     /// Determines if a given point is in shadow relative to a specific light source.
@@ -206,8 +230,8 @@ impl Scene {
     /// # Returns
     ///
     /// Returns `true` if the point is in shadow relative to the light source; otherwise, returns `false`.
-    pub fn is_shadowed(&self, point: &Tuple, light: &Light) -> bool {
-        let v = light.position - *point;
+    pub fn is_shadowed(&self, point: &Tuple, light_position: &Tuple) -> bool {
+        let v = *light_position - *point;
         let distance = v.magnitude();
         let direction = v.normalize();
         let r = Ray::new(*point, direction);
@@ -474,28 +498,28 @@ mod tests {
     fn there_is_no_shadow_when_nothing_is_collinear_with_point_and_light() {
         let w = Scene::default_scene();
         let p = Tuple::point(0.0, 10.0, 0.0);
-        assert_eq!(w.is_shadowed(&p, &w.light[0]), false);
+        assert_eq!(w.is_shadowed(&p, &w.light[0].position), false);
     }
 
     #[test]
     fn the_shadow_when_an_object_is_between_the_point_and_the_light() {
         let w = Scene::default_scene();
         let p = Tuple::point(10.0, -10.0, 10.0);
-        assert_eq!(w.is_shadowed(&p, &w.light[0]), true);
+        assert_eq!(w.is_shadowed(&p, &w.light[0].position), true);
     }
 
     #[test]
     fn there_is_no_shadow_when_an_object_is_behind_the_light() {
         let w = Scene::default_scene();
         let p = Tuple::point(-20.0, 20.0, -20.0);
-        assert_eq!(w.is_shadowed(&p, &w.light[0]), false);
+        assert_eq!(w.is_shadowed(&p, &w.light[0].position), false);
     }
 
     #[test]
     fn there_is_no_shadow_when_an_object_is_behind_the_point() {
         let w = Scene::default_scene();
         let p = Tuple::point(-2.0, 2.0, -2.0);
-        assert_eq!(w.is_shadowed(&p, &w.light[0]), false);
+        assert_eq!(w.is_shadowed(&p, &w.light[0].position), false);
     }
 
     #[test]

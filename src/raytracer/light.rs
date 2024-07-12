@@ -1,3 +1,4 @@
+use rand::{Rng, thread_rng};
 use crate::color::Color;
 use crate::tuple::Tuple;
 use crate::raytracer::object::db::get_object;
@@ -8,6 +9,7 @@ use crate::raytracer::material::pattern_at_object;
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum LightType {
     Point,
+    Area(Tuple, Tuple, Tuple, usize) // corner, u vector, v vector, number of samples
 }
 
 /// Represents a light source in the scene.
@@ -35,6 +37,35 @@ impl Light {
     pub fn new_point_light(position: Tuple, intensity: Color) -> Light {
         Light { light_type: LightType::Point, intensity, position }
     }
+
+    pub fn new_area_light(corner: Tuple, u: Tuple, v: Tuple, intensity: Color, samples: usize) -> Light {
+        //find the center of the area light
+        let center = corner.add(&u.multiply(0.5)).add(&v.multiply(0.5));
+        Light { light_type: LightType::Area(corner, u, v, samples), intensity, position: center }
+    }
+
+    pub fn sample_point(&self) -> Tuple {
+        match self.light_type {
+            LightType::Point => self.position,
+            LightType::Area(corner, u, v, _samples) => {
+                let mut rng = thread_rng();
+                let u_rand = rng.gen_range(0.0..1.0);
+                let v_rand = rng.gen_range(0.0..1.0);
+                corner.add(&u.multiply(u_rand)).add(&v.multiply(v_rand))
+            }
+        }
+    }
+}
+
+#[allow(dead_code)]
+fn random_in_unit_sphere() -> Tuple {
+    let mut rng = thread_rng();
+    loop {
+        let p = Tuple::vector(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0));
+        if p.magnitude() < 1.0 {
+            return p;
+        }
+    }
 }
 
 /// Computes the color at a point on an object, taking into account the light source,
@@ -51,12 +82,12 @@ impl Light {
 /// * `point` - The point on the object's surface being illuminated.
 /// * `eyev` - The vector from the point to the viewer's eye.
 /// * `normalv` - The normal vector at the point on the object's surface.
-/// * `in_shadow` - A boolean indicating whether the point is in shadow.
+/// * `in_shadow` - a f64 between 0.0 and 1.0 representing the amount of shadow.
 ///
 /// # Returns
 ///
 /// The computed color at the given point on the object.
-pub fn lighting(object_id: usize, light: &Light, point: &Tuple, eyev: &Tuple, normalv: &Tuple, in_shadow: bool) -> Color {
+pub fn lighting(object_id: usize, light: &Light, point: &Tuple, eyev: &Tuple, normalv: &Tuple, in_shadow: f64) -> Color {
     let object = get_object(object_id);
     let material = object.get_material();
     // Combine the surface color with the light's color/intensity
@@ -68,15 +99,10 @@ pub fn lighting(object_id: usize, light: &Light, point: &Tuple, eyev: &Tuple, no
     // Compute the ambient contribution
     let ambient = effective_color.multiply(material.ambient);
 
-    if in_shadow {
-        return ambient;
-    }
-
     // Light_dot_normal represents the cosine of the angle between
     // the light vector and the normal vector.
     // A negative number means the light is on the other side of the surface.
     let light_dot_normal = lightv.dot(normalv);
-
 
     let diffuse;
     let specular;
@@ -100,7 +126,9 @@ pub fn lighting(object_id: usize, light: &Light, point: &Tuple, eyev: &Tuple, no
         }
     }
     // Add the three contributions together to get the final shading
-    ambient.add(&diffuse).add(&specular)
+    // include the shadow factor
+    let diffuse_specular = diffuse.add(&specular).multiply(1.0 - in_shadow);
+    ambient.add(&diffuse_specular)
 }
 
 #[cfg(test)]
@@ -138,7 +166,7 @@ mod tests {
         shape.material = material;
         w.add_object(Arc::new(shape));
         let id = w.ids[0];
-        let result = lighting(id, &light, &position, &eyev, &normalv, false);
+        let result = lighting(id, &light, &position, &eyev, &normalv, 0.0);
         assert_eq!(result, Color::new(1.9, 1.9, 1.9));
     }
 
@@ -155,7 +183,7 @@ mod tests {
         shape.material = material;
         w.add_object(Arc::new(shape));
         let id = w.ids[0];
-        let result = lighting(id, &light, &position, &eyev, &normalv, false);
+        let result = lighting(id, &light, &position, &eyev, &normalv, 0.0);
         assert_eq!(result, Color::new(1.0, 1.0, 1.0));
     }
 
@@ -172,7 +200,7 @@ mod tests {
         shape.material = material;
         w.add_object(Arc::new(shape));
         let id = w.ids[0];
-        let result = lighting(id, &light, &position, &eyev, &normalv, false);
+        let result = lighting(id, &light, &position, &eyev, &normalv, 0.0);
         assert_eq!(result, Color::new(0.7364, 0.7364, 0.7364));
     }
 
@@ -189,7 +217,7 @@ mod tests {
         shape.material = material;
         w.add_object(Arc::new(shape));
         let id = w.ids[0];
-        let result = lighting(id, &light, &position, &eyev, &normalv, false);
+        let result = lighting(id, &light, &position, &eyev, &normalv, 0.0);
         assert_eq!(result, Color::new(1.6364, 1.6364, 1.6364));
     }
 
@@ -206,7 +234,7 @@ mod tests {
         shape.material = material;
         w.add_object(Arc::new(shape));
         let id = w.ids[0];
-        let result = lighting(id, &light, &position, &eyev, &normalv, false);
+        let result = lighting(id, &light, &position, &eyev, &normalv, 0.0);
         assert_eq!(result, Color::new(0.1, 0.1, 0.1));
     }
 
@@ -229,8 +257,8 @@ mod tests {
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let c1 = lighting(id, &light, &Tuple::point(0.9, 0.0, 0.0), &eyev, &normalv, false);
-        let c2 = lighting(id, &light, &Tuple::point(1.1, 0.0, 0.0), &eyev, &normalv, false);
+        let c1 = lighting(id, &light, &Tuple::point(0.9, 0.0, 0.0), &eyev, &normalv, 0.0);
+        let c2 = lighting(id, &light, &Tuple::point(1.1, 0.0, 0.0), &eyev, &normalv, 0.0);
         assert_eq!(c1, Color::new(1.0, 1.0, 1.0));
         assert_eq!(c2, Color::new(0.0, 0.0, 0.0));
     }

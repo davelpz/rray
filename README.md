@@ -139,9 +139,13 @@ camera:
 ``` 
 ## Lights
 The lights section is a list of light sources. Each light source has the following properties:
-- type: Type of light source (point only for now)
+- type: Type of light source (point or area only for now)
 - color: Color of the light source
 - position: Position of the light source (only for point lights)
+- corner: Corner of the area light source
+- uvec: U vector of the area light source
+- vvec: V vector of the area light source
+- samples: Number of samples for the area light source (default 50)
 
 Example:
 ```yaml
@@ -149,6 +153,16 @@ lights:
   - type: point
     color: [1,1,1]
     position: [-10,10,-10]
+```
+
+```yaml
+lights:
+  - type: area
+    color: [1,1,1]
+    corner: [-1, 10, -1]
+    uvec: [2, 0, 0]
+    vvec: [0, 0, 2]
+    samples: 20
 ```
 ## Scene
 The scene section is a list of scene objects.
@@ -280,6 +294,9 @@ Example:
 ##### Torus
 The torus object has the following properties:
 - minor_radius: Minor radius of the torus
+
+The torus is centered at the origin and has a major radius of 1. It faces
+the z-axis.
 
 Example:
 ```yaml

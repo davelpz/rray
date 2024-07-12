@@ -194,7 +194,7 @@ mod tests {
                     let hit_object = get_object(hit.object);
                     let normal = hit_object.normal_at(&point, hit);
                     let eye = r.direction.negate();
-                    let color = lighting(hit.object, &light, &point, &eye, &normal, false);
+                    let color = lighting(hit.object, &light, &point, &eye, &normal, 0.0);
                     canvas.write_pixel(x, y, color);
                 }
             }

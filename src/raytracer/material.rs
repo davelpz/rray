@@ -100,7 +100,7 @@ mod tests {
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
-        let in_shadow = true;
+        let in_shadow = 1.0;
         let mut shape = Sphere::new();
         shape.material = m;
         w.add_object(Arc::new(shape));

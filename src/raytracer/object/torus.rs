@@ -7,6 +7,11 @@ use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 use roots::{find_roots_quartic, Roots};
 
+/// A torus is a donut shape. It is defined by two radii: the major radius and the minor radius.
+/// The major radius is the distance from the center of the torus to the center of the tube.
+/// The minor radius is the radius of the tube itself.
+/// The torus is centered at the origin.
+/// The major radius is fixed at 1.0.
 pub struct Torus {
     pub id: usize,
     pub parent_id: Option<usize>,
