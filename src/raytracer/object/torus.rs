@@ -10,18 +10,16 @@ use roots::{find_roots_quartic, Roots};
 pub struct Torus {
     pub id: usize,
     pub parent_id: Option<usize>,
-    pub major_radius: f64,
     pub minor_radius: f64,
     pub transform: Matrix,
     pub material: Material,
 }
 
 impl Torus {
-    pub fn new(major_radius: f64, minor_radius: f64) -> Self {
+    pub fn new(minor_radius: f64) -> Self {
         Torus {
             id: get_next_id(),
             parent_id: None,
-            major_radius,
             minor_radius,
             transform: Matrix::identity(4),
             material: Material::default(),
@@ -37,18 +35,18 @@ impl Torus {
         let dz = ray.direction.z;
 
         let r = self.minor_radius;
-        let R = self.major_radius;
+        let r_sq = r * r;
 
         let sum_d_sq = dx * dx + dy * dy + dz * dz;
-        let e = ox * ox + oy * oy + oz * oz + R * R - r * r;
+        let e = ox * ox + oy * oy + oz * oz - r_sq + 1.0;  // R^2 is 1^2 = 1
         let f = ray.origin.dot(&ray.direction);
-        let four_R_sq = 4.0 * R * R;
+        let four = 4.0;  // 4 * 1^2 = 4
 
         let a4 = sum_d_sq * sum_d_sq;
         let a3 = 4.0 * sum_d_sq * f;
-        let a2 = 2.0 * sum_d_sq * e + 4.0 * f * f - four_R_sq * (dx * dx + dy * dy);
-        let a1 = 4.0 * e * f - 2.0 * four_R_sq * (ox * dx + oy * dy);
-        let a0 = e * e - four_R_sq * (ox * ox + oy * oy);
+        let a2 = 2.0 * sum_d_sq * e + 4.0 * f * f - four * (dx * dx + dy * dy);
+        let a1 = 4.0 * e * f - 2.0 * four * (ox * dx + oy * dy);
+        let a0 = e * e - four * (ox * ox + oy * oy);
 
         // Find the roots of the quartic equation
         let roots = find_roots_quartic(a4, a3, a2, a1, a0);
@@ -88,13 +86,13 @@ impl Torus {
     }
 
     pub fn local_normal_at(&self, local_point: &Tuple, _hit: &Intersection) -> Tuple {
-        let sum_squared = local_point.magnitude();
-        let param_squared = self.major_radius * self.major_radius + self.minor_radius * self.minor_radius;
+        let sum_squared = local_point.x * local_point.x + local_point.y * local_point.y + local_point.z * local_point.z;
+        let param_squared = 1.0 + self.minor_radius * self.minor_radius;  // Major radius is fixed at 1.0
 
         let normal = Tuple::vector(
             4.0 * local_point.x * (sum_squared - param_squared),
             4.0 * local_point.y * (sum_squared - param_squared),
-            4.0 * local_point.z * (sum_squared - param_squared + 2.0 * self.major_radius * self.major_radius),
+            4.0 * local_point.z * (sum_squared - param_squared + 2.0),
         );
         normal.normalize()
     }
@@ -145,8 +143,9 @@ impl Object for Torus {
     }
 
     fn get_aabb(&self) -> AABB {
-        let min = Tuple::point(-(self.major_radius + self.minor_radius), -(self.major_radius + self.minor_radius), -self.minor_radius);
-        let max = Tuple::point(self.major_radius + self.minor_radius, self.major_radius + self.minor_radius, self.minor_radius);
+        let r = self.minor_radius;
+        let min = Tuple::point(-1.0 - r, -1.0 - r, -r); // Major radius is 1.0
+        let max = Tuple::point(1.0 + r, 1.0 + r, r);    // Major radius is 1.0
         AABB { min, max }
     }
 
@@ -157,7 +156,6 @@ impl Object for Torus {
 
 #[cfg(test)]
 mod tests {
-    use std::fmt::format;
     use std::sync::Arc;
     use crate::matrix::Matrix;
     use crate::raytracer::camera::Camera;
@@ -182,14 +180,14 @@ mod tests {
         use crate::color::Color;
 
         let mut c = Camera::new(800, 400, std::f64::consts::PI / 3.0);
-        let from = Tuple::point(0.0, 0.0, -5.0);
+        let from = Tuple::point(0.0, 2.0, -5.0);
         let to = Tuple::point(0.0, 0.0, 0.0);
         let up = Tuple::vector(0.0, 1.0, 0.0);
         c.transform = Matrix::view_transform(from, to, up);
 
         let mut w = Scene::new();
-        //w.add_light(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(0.5, 0.5, 0.5)));
-        w.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(0.5, 0.5, 0.5) * 2.0));
+        w.add_light(Light::new_point_light(Tuple::point(-10.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0)));
+        //w.add_light(Light::new_point_light(Tuple::point(0.0, 0.0, -10.0), Color::new(0.5, 0.5, 0.5) * 2.0));
 
         let mut floor = Plane::new();
         floor.transform = Matrix::translate(0.0, 0.0, 0.0);
@@ -226,7 +224,7 @@ mod tests {
 
         let mut material = Material::default();
         material.pattern = Pattern::solid(Color::new(0.302, 0.71, 0.98), Matrix::identity(4));
-        let mut torus = Torus::new(1.0 * 1.0, 0.25 * 1.0);
+        let mut torus = Torus::new(0.25 * 1.0);
         torus.material = material.clone();
         torus.transform = Matrix::identity(4)
             .multiply(&Matrix::translate(0.0, 0.0, 0.0))
