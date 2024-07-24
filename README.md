@@ -145,7 +145,7 @@ The lights section is a list of light sources. Each light source has the followi
 - corner: Corner of the area light source
 - uvec: U vector of the area light source
 - vvec: V vector of the area light source
-- samples: Number of samples for the area light source (default 50)
+- level: sample level for the area light source (default 5), total number of samples will be level squared
 
 Example:
 ```yaml

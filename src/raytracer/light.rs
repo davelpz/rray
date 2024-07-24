@@ -9,7 +9,7 @@ use crate::raytracer::material::pattern_at_object;
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum LightType {
     Point,
-    Area(Tuple, Tuple, Tuple, usize) // corner, u vector, v vector, number of samples
+    Area(Tuple, Tuple, Tuple, usize) // corner, u vector, v vector, sample level
 }
 
 /// Represents a light source in the scene.
@@ -38,19 +38,27 @@ impl Light {
         Light { light_type: LightType::Point, intensity, position }
     }
 
-    pub fn new_area_light(corner: Tuple, u: Tuple, v: Tuple, intensity: Color, samples: usize) -> Light {
+    pub fn new_area_light(corner: Tuple, u: Tuple, v: Tuple, intensity: Color, level: usize) -> Light {
         //find the center of the area light
         let center = corner.add(&u.multiply(0.5)).add(&v.multiply(0.5));
-        Light { light_type: LightType::Area(corner, u, v, samples), intensity, position: center }
+        Light { light_type: LightType::Area(corner, u, v, level), intensity, position: center }
     }
 
-    pub fn sample_point(&self) -> Tuple {
+    pub fn sample_point(&self, sample: usize, amount: usize) -> Tuple {
         match self.light_type {
             LightType::Point => self.position,
             LightType::Area(corner, u, v, _samples) => {
+                //divide the light into a grid of samples, amount wide and amount high
+                //find the row and column of the sample using sample var which starts at 0
+                let row = sample / amount;
+                let col = sample % amount;
+
+                //find a random position in the grid square specified by row and col
                 let mut rng = thread_rng();
                 let u_rand = rng.gen_range(0.0..1.0);
                 let v_rand = rng.gen_range(0.0..1.0);
+                let u_rand = (col as f64 + u_rand) / amount as f64;
+                let v_rand = (row as f64 + v_rand) / amount as f64;
                 corner.add(&u.multiply(u_rand)).add(&v.multiply(v_rand))
             }
         }

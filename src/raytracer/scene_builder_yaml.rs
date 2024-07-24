@@ -134,13 +134,13 @@ fn create_lights(doc: &Yaml) -> Vec<Light> {
                 let corner = point_from_vec(&light["corner"].as_vec().unwrap());
                 let uvec = vector_from_vec(&light["uvec"].as_vec().unwrap());
                 let vvec = vector_from_vec(&light["vvec"].as_vec().unwrap());
-                let samples = light["samples"].as_i64().unwrap_or(50) as usize;
+                let level = light["level"].as_i64().unwrap_or(5) as usize;
                 created_lights.push(Light::new_area_light(
                     corner,
                     uvec,
                     vvec,
                     color_from_vec(color),
-                    samples,
+                    level,
                 ));
             }
             _ => panic!("Unknown light type: {}", light_type),

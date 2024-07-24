@@ -190,17 +190,18 @@ impl Scene {
                     &comps.normalv,
                     if shadowed { 1.0 } else { 0.0 })
             }
-            LightType::Area(_corner, _u, _v, samples) => {
+            LightType::Area(_corner, _u, _v, level) => {
                 let mut total = 0;
-                for _sample in 0..*samples {
-                    let light_position = light.sample_point();
+                let amount = *level * *level;
+                for sample in 0..amount  {
+                    let light_position = light.sample_point(sample, *level);
                     let shadowed = self.is_shadowed(&comps.over_point, &light_position);
                     if shadowed {
                         total += 1;
                     }
                 }
 
-                let shadowed = total as f64 / *samples as f64;
+                let shadowed = total as f64 / amount as f64;
                 lighting(
                     comps.object,
                     light,
