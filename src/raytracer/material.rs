@@ -7,6 +7,7 @@ use crate::raytracer::object::world_to_object;
 
 pub(crate) mod pattern;
 mod noise;
+mod texture;
 
 /// Represents the material properties of a surface in a ray tracing scene.
 ///
