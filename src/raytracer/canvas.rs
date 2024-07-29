@@ -1,10 +1,7 @@
 #![allow(dead_code)]
 
-use std::io::BufWriter;
-use png::Encoder;
-use std::fs::File;
-use std::path::Path;
 use crate::color::Color;
+use image::{ImageBuffer, Rgba};
 
 /// Represents a canvas for drawing in a ray tracing application.
 ///
@@ -125,17 +122,12 @@ impl Canvas {
     ///
     /// Panics if the file cannot be created, or if there is an error writing the PNG data to the file.
     pub fn write_to_file(&self, filename: &str, aa: usize) {
-        let path = Path::new(filename);
-        let file = File::create(path).unwrap();
-        let ref mut w = BufWriter::new(file);
         let width = (self.width / aa) as u32;
         let height = (self.height / aa) as u32;
-        let mut encoder = Encoder::new(w, width, height);
-        encoder.set_color(png::ColorType::Rgba);
-        encoder.set_depth(png::BitDepth::Eight);
-        let mut writer = encoder.write_header().unwrap();
         let data = self.get_u8_colors(aa);
-        writer.write_image_data(&data).unwrap();
+
+        let img_buffer = ImageBuffer::<Rgba<u8>, _>::from_raw(width, height, data).unwrap();
+        img_buffer.save(filename).unwrap();
     }
 }
 
