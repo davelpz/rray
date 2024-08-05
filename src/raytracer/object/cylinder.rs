@@ -189,4 +189,20 @@ impl Object for Cylinder {
         self.id == object_id
     }
 
+    fn uv_mapping(&self, point: &Tuple) -> (f64, f64) {
+        if self.closed && (point.y <= self.minimum || point.y >= self.maximum) {
+            let u = (point.x + 1.0) / 2.0;
+            let v = (point.z + 1.0) / 2.0;
+            (u, v)
+        } else {
+            let theta = point.z.atan2(point.x);
+            let u = (theta + std::f64::consts::PI) / (2.0 * std::f64::consts::PI);
+
+            // Wrap the v coordinate to repeat this texture along the y-axis
+            let v = point.y % 1.0;
+            let v = if v < 0.0 { 1.0 + v } else { v };
+
+            (u, v)
+        }
+    }
 }
