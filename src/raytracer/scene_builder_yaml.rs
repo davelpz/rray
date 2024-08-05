@@ -290,6 +290,10 @@ fn create_pattern(pattern: &Yaml) -> Pattern {
                            persistence,
                            transform.clone())
         }
+        "image" => {
+            let file = pattern["file"].as_str().expect("file not found");
+            Pattern::texture(file, transform.clone())
+        }
         _ => Pattern::solid(Color::new(0.0, 0.0, 0.0), transform.clone()),
     }
 }

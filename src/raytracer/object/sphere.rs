@@ -134,4 +134,11 @@ impl Object for Sphere {
         self.id == object_id
     }
 
+    fn uv_mapping(&self, point: &Tuple) -> (f64, f64) {
+        let theta = point.z.atan2(point.x);
+        let phi = (point.y / point.length_squared().sqrt()).acos();
+        let u = (theta + std::f64::consts::PI) / (2.0 * std::f64::consts::PI);
+        let v = 1.0 - (phi / std::f64::consts::PI);
+        (u, v)
+    }
 }

@@ -54,6 +54,9 @@ pub trait Object: Sync + Send {
     fn set_parent_id(&mut self, id: usize);
     fn get_aabb(&self) -> AABB;
     fn includes(&self, object_id: usize) -> bool;
+    fn uv_mapping(&self, _point: &Tuple) -> (f64, f64) {
+        (0.0, 0.0)
+    }
 }
 
 impl PartialEq for dyn Object {

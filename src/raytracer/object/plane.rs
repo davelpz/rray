@@ -112,4 +112,13 @@ impl Object for Plane {
         self.id == object_id
     }
 
+    fn uv_mapping(&self, point: &Tuple) -> (f64, f64) {
+        let u = point.x % 1.0;
+        let v = point.z % 1.0;
+
+        let u = if u < 0.0 { 1.0 + u } else { u };
+        let v = if v < 0.0 { 1.0 + v } else { v };
+
+        (u, v)
+    }
 }

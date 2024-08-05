@@ -74,26 +74,19 @@ scene:
     transforms:
       - type: rotate
         axis: x
-        angle: 90
+        angle: -90
       - type: translate
-        amount: [0, 0, 5]
+        amount: [4, -5, 5]
       - type: rotate
         axis: 'y'
         angle: 45
     material:
       pattern:
-        type: ring
-        pattern_a:
-          type: checker
-          color_a: [0.25, 0.25, 1]
-          color_b: [0.5, 0.5, 1]
-        pattern_b:
-          type: checker
-          color_a: [0.5, 0.5, 1]
-          color_b: [0.25, 0.25, 1]
-          transforms:
-            - type: scale
-              amount: [0.25, 0.25, 0.25]
+        type: image
+        file: 'examples/earthmap.png'
+        transforms:
+          - type: scale
+            amount: [10, 10, 10]
       ambient: 0.1
       diffuse: 0.9
       specular: 0

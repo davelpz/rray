@@ -76,7 +76,7 @@ impl Material {
 /// Returns a `Color` representing the color of the pattern at the specified point on the object.
 pub fn pattern_at_object(shape: usize, world_point: &Tuple) -> Color {
     let object_point = world_to_object(shape, world_point);
-    get_object(shape).get_material().pattern.pattern_at(&object_point)
+    get_object(shape).get_material().pattern.pattern_at(&object_point, shape)
 }
 
 #[cfg(test)]

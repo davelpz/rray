@@ -86,6 +86,11 @@ impl Tuple {
         (self.x.powi(2) + self.y.powi(2) + self.z.powi(2) + self.w.powi(2)).sqrt()
     }
 
+    /// Calculates the squared length of a point
+    pub fn length_squared(&self) -> f64 {
+        self.x.powi(2) + self.y.powi(2) + self.z.powi(2)
+    }
+
     /// Normalizes the vector, returning a unit vector in the same direction.
     pub fn normalize(&self) -> Tuple {
         let magnitude = self.magnitude();

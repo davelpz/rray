@@ -1,6 +1,7 @@
 use crate::color::Color;
 use crate::matrix::Matrix;
 use crate::raytracer::material::noise;
+use crate::raytracer::material::texture::Texture;
 use crate::tuple::Tuple;
 
 /// Represents the type of pattern to be applied to a surface in a ray tracing context.
@@ -31,7 +32,8 @@ pub enum PatternType {
     Checker(Box<Pattern>, Box<Pattern>),
     Blend(Box<Pattern>, Box<Pattern>, f64),
     Perturbed(Box<Pattern>, f64, usize, f64),
-    Noise(Box<Pattern>, Box<Pattern>, f64, usize, f64)
+    Noise(Box<Pattern>, Box<Pattern>, f64, usize, f64),
+    Texture(Texture)
 }
 
 /// Represents a pattern with a specific type and transformation.
@@ -116,6 +118,13 @@ impl Pattern {
         }
     }
 
+    pub fn texture(file_name: &str, transform: Matrix) -> Pattern {
+        Pattern {
+            pattern_type: PatternType::Texture(Texture::new(file_name)),
+            transform,
+        }
+    }
+
     /// Calculates the color of the pattern at a given point on an object.
     ///
     /// This method computes the color of the pattern at a specific point on an object, taking into
@@ -133,7 +142,7 @@ impl Pattern {
     /// # Returns
     ///
     /// Returns a `Color` representing the color of the pattern at the given point on the object.
-    pub fn pattern_at(&self, object_point: &Tuple) -> Color {
+    pub fn pattern_at(&self, object_point: &Tuple, shape: usize) -> Color {
         let pattern_point = self.transform.inverse().multiply_tuple(object_point);
         match &self.pattern_type {
             PatternType::Test => {
@@ -144,35 +153,35 @@ impl Pattern {
             },
             PatternType::Stripe(a, b) => {
                 if (pattern_point.x.floor() as i32) % 2 == 0 {
-                    a.pattern_at(&pattern_point)
+                    a.pattern_at(&pattern_point, shape)
                 } else {
-                    b.pattern_at(&pattern_point)
+                    b.pattern_at(&pattern_point, shape)
                 }
             },
             PatternType::Gradient(a, b) => {
-                let a = a.pattern_at(&pattern_point);
-                let b = b.pattern_at(&pattern_point);
+                let a = a.pattern_at(&pattern_point, shape);
+                let b = b.pattern_at(&pattern_point, shape);
                 let distance = b.subtract(&a);
                 let fraction = pattern_point.x - pattern_point.x.floor();
                 a.add(&distance.multiply(fraction))
             },
             PatternType::Ring(a, b) => {
                 if (pattern_point.x.powi(2) + pattern_point.z.powi(2)).sqrt().floor() as i32 % 2 == 0 {
-                    a.pattern_at(&pattern_point)
+                    a.pattern_at(&pattern_point, shape)
                 } else {
-                    b.pattern_at(&pattern_point)
+                    b.pattern_at(&pattern_point, shape)
                 }
             },
             PatternType::Checker(a, b) => {
                 if (pattern_point.x.floor() + pattern_point.y.floor() + pattern_point.z.floor()) as i32 % 2 == 0 {
-                    a.pattern_at(&pattern_point)
+                    a.pattern_at(&pattern_point, shape)
                 } else {
-                    b.pattern_at(&pattern_point)
+                    b.pattern_at(&pattern_point, shape)
                 }
             },
             PatternType::Blend(a, b, scale) => {
-                let a = a.pattern_at(&pattern_point);
-                let b = b.pattern_at(&pattern_point);
+                let a = a.pattern_at(&pattern_point, shape);
+                let b = b.pattern_at(&pattern_point, shape);
                 a.multiply(1.0-scale).add(&b.multiply(*scale))
             },
             PatternType::Perturbed(a, scale, octaves, persistence) => {
@@ -186,16 +195,21 @@ impl Pattern {
                 let new_y = pattern_point.y + noise_y;
                 let new_z = pattern_point.z + noise_z;
                 let new_point = Tuple::new(new_x, new_y, new_z, pattern_point.w);
-                a.pattern_at(&new_point)
+                a.pattern_at(&new_point, shape)
             },
             PatternType::Noise(a, b, scale, octaves, persistence) => {
                 let noise = noise::octave_perlin(pattern_point.x, pattern_point.y, pattern_point.z, *octaves, *persistence);
                 let noise = noise * scale;
                 if noise <= 0.0 {
-                    a.pattern_at(&pattern_point).multiply(-noise)
+                    a.pattern_at(&pattern_point, shape).multiply(-noise)
                 } else {
-                    b.pattern_at(&pattern_point).multiply(noise)
+                    b.pattern_at(&pattern_point, shape).multiply(noise)
                 }
+            },
+            PatternType::Texture(texture) => {
+                let object = crate::raytracer::object::db::get_object(shape);
+                let (u,v) = object.uv_mapping(&pattern_point);
+                texture.sample_texture(u, v)
             }
         }
     }
@@ -220,9 +234,9 @@ mod tests {
         let p = Pattern::stripe(Pattern::solid(Color::new(1.0,1.0,1.0), Matrix::identity(4)),
                                 Pattern::solid(Color::new(0.0,0.0,0.0), Matrix::identity(4)),
                                 Matrix::identity(4));
-        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
-        assert_eq!(p.pattern_at(&Tuple::point(0.0, 1.0, 0.0)), Color::new(1.0, 1.0, 1.0));
-        assert_eq!(p.pattern_at(&Tuple::point(0.0, 2.0, 0.0)), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0), 0), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 1.0, 0.0), 0), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 2.0, 0.0), 0), Color::new(1.0, 1.0, 1.0));
     }
 
     #[test]
@@ -230,9 +244,9 @@ mod tests {
         let p = Pattern::stripe(Pattern::solid(Color::new(1.0,1.0,1.0), Matrix::identity(4)),
                                 Pattern::solid(Color::new(0.0,0.0,0.0), Matrix::identity(4)),
                                 Matrix::identity(4));
-        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
-        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 1.0)), Color::new(1.0, 1.0, 1.0));
-        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 2.0)), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0), 0), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 1.0), 0), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 2.0), 0), Color::new(1.0, 1.0, 1.0));
     }
 
     #[test]
@@ -240,12 +254,12 @@ mod tests {
         let p = Pattern::stripe(Pattern::solid(Color::new(1.0,1.0,1.0), Matrix::identity(4)),
                                 Pattern::solid(Color::new(0.0,0.0,0.0), Matrix::identity(4)),
                                 Matrix::identity(4));
-        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
-        assert_eq!(p.pattern_at(&Tuple::point(0.9, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
-        assert_eq!(p.pattern_at(&Tuple::point(1.0, 0.0, 0.0)), Color::new(0.0, 0.0, 0.0));
-        assert_eq!(p.pattern_at(&Tuple::point(-0.1, 0.0, 0.0)), Color::new(0.0, 0.0, 0.0));
-        assert_eq!(p.pattern_at(&Tuple::point(-1.0, 0.0, 0.0)), Color::new(0.0, 0.0, 0.0));
-        assert_eq!(p.pattern_at(&Tuple::point(-1.1, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0), 0), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.9, 0.0, 0.0), 0), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(1.0, 0.0, 0.0), 0), Color::new(0.0, 0.0, 0.0));
+        assert_eq!(p.pattern_at(&Tuple::point(-0.1, 0.0, 0.0), 0), Color::new(0.0, 0.0, 0.0));
+        assert_eq!(p.pattern_at(&Tuple::point(-1.0, 0.0, 0.0), 0), Color::new(0.0, 0.0, 0.0));
+        assert_eq!(p.pattern_at(&Tuple::point(-1.1, 0.0, 0.0), 0), Color::new(1.0, 1.0, 1.0));
     }
 
     #[test]
@@ -253,10 +267,10 @@ mod tests {
         let p = Pattern::gradient(Pattern::solid(Color::new(1.0,1.0,1.0), Matrix::identity(4)),
                                   Pattern::solid(Color::new(0.0,0.0,0.0), Matrix::identity(4)),
                                   Matrix::identity(4));
-        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
-        assert_eq!(p.pattern_at(&Tuple::point(0.25, 0.0, 0.0)), Color::new(0.75, 0.75, 0.75));
-        assert_eq!(p.pattern_at(&Tuple::point(0.5, 0.0, 0.0)), Color::new(0.5, 0.5, 0.5));
-        assert_eq!(p.pattern_at(&Tuple::point(0.75, 0.0, 0.0)), Color::new(0.25, 0.25, 0.25));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0), 0), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.25, 0.0, 0.0), 0), Color::new(0.75, 0.75, 0.75));
+        assert_eq!(p.pattern_at(&Tuple::point(0.5, 0.0, 0.0), 0), Color::new(0.5, 0.5, 0.5));
+        assert_eq!(p.pattern_at(&Tuple::point(0.75, 0.0, 0.0), 0), Color::new(0.25, 0.25, 0.25));
     }
 
     #[test]
@@ -264,10 +278,10 @@ mod tests {
         let p = Pattern::ring(Pattern::solid(Color::new(1.0,1.0,1.0), Matrix::identity(4)),
                               Pattern::solid(Color::new(0.0,0.0,0.0), Matrix::identity(4)),
                               Matrix::identity(4));
-        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
-        assert_eq!(p.pattern_at(&Tuple::point(1.0, 0.0, 0.0)), Color::new(0.0, 0.0, 0.0));
-        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 1.0)), Color::new(0.0, 0.0, 0.0));
-        assert_eq!(p.pattern_at(&Tuple::point(0.708, 0.0, 0.708)), Color::new(0.0, 0.0, 0.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0), 0), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(1.0, 0.0, 0.0), 0), Color::new(0.0, 0.0, 0.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 1.0), 0), Color::new(0.0, 0.0, 0.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.708, 0.0, 0.708), 0), Color::new(0.0, 0.0, 0.0));
     }
 
     #[test]
@@ -275,9 +289,9 @@ mod tests {
         let p = Pattern::checker(Pattern::solid(Color::new(1.0,1.0,1.0), Matrix::identity(4)),
                                  Pattern::solid(Color::new(0.0,0.0,0.0), Matrix::identity(4)),
                                  Matrix::identity(4));
-        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
-        assert_eq!(p.pattern_at(&Tuple::point(0.99, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
-        assert_eq!(p.pattern_at(&Tuple::point(1.01, 0.0, 0.0)), Color::new(0.0, 0.0, 0.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0), 0), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.99, 0.0, 0.0), 0), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(1.01, 0.0, 0.0), 0), Color::new(0.0, 0.0, 0.0));
     }
 
     #[test]
@@ -285,9 +299,9 @@ mod tests {
         let p = Pattern::checker(Pattern::solid(Color::new(1.0,1.0,1.0), Matrix::identity(4)),
                                  Pattern::solid(Color::new(0.0,0.0,0.0), Matrix::identity(4)),
                                  Matrix::identity(4));
-        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
-        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.99, 0.0)), Color::new(1.0, 1.0, 1.0));
-        assert_eq!(p.pattern_at(&Tuple::point(0.0, 1.01, 0.0)), Color::new(0.0, 0.0, 0.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0), 0), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.99, 0.0), 0), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 1.01, 0.0), 0), Color::new(0.0, 0.0, 0.0));
     }
 
     #[test]
@@ -295,9 +309,9 @@ mod tests {
         let p = Pattern::checker(Pattern::solid(Color::new(1.0,1.0,1.0), Matrix::identity(4)),
                                  Pattern::solid(Color::new(0.0,0.0,0.0), Matrix::identity(4)),
                                  Matrix::identity(4));
-        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0)), Color::new(1.0, 1.0, 1.0));
-        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.99)), Color::new(1.0, 1.0, 1.0));
-        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 1.01)), Color::new(0.0, 0.0, 0.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.0), 0), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 0.99), 0), Color::new(1.0, 1.0, 1.0));
+        assert_eq!(p.pattern_at(&Tuple::point(0.0, 0.0, 1.01), 0), Color::new(0.0, 0.0, 0.0));
     }
 
     #[test]

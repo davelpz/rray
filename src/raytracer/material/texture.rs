@@ -1,8 +1,10 @@
 
 use image::ImageReader;
-use image::GenericImageView;
 use image::RgbaImage;
+use crate::color::Color;
 
+/// Represents a texture for use in texturing 3D objects.
+#[derive(Clone, Debug, PartialEq)]
 pub struct Texture {
     pub width: u32,
     pub height: u32,
@@ -10,6 +12,7 @@ pub struct Texture {
 }
 
 impl Texture {
+    /// Creates a new `Texture` instance from an image file.
     pub fn new(path: &str) -> Texture {
         let image = ImageReader::open(path).unwrap().decode().unwrap().to_rgba8();
         let (width, height) = image.dimensions();
@@ -41,6 +44,13 @@ impl Texture {
         // Get pixel color
         let pixel = self.image.get_pixel(x, y);
         [pixel[0], pixel[1], pixel[2], pixel[3]]
+    }
+
+    pub fn sample_texture(&self, u: f64, v: f64) -> Color {
+        let color = self.get_color(u, v);
+        Color::new(color[0] as f64 / 255.0,
+                     color[1] as f64 / 255.0,
+                     color[2] as f64 / 255.0)
     }
 }
 
