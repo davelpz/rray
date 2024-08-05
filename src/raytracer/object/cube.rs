@@ -140,6 +140,49 @@ impl Object for Cube {
         self.id == object_id
     }
 
+    fn uv_mapping(&self, point: &Tuple) -> (f64, f64) {
+        let abs_x = point.x.abs();
+        let abs_y = point.y.abs();
+        let abs_z = point.z.abs();
+
+        if abs_x >= abs_y && abs_x >= abs_z {
+            if point.x > 0.0 {
+                // Right face
+                let u = (point.z + 1.0) * 0.5;
+                let v = (point.y + 1.0) * 0.5;
+                (u, v)
+            } else {
+                // Left face
+                let u = (1.0 - point.z) * 0.5;
+                let v = (point.y + 1.0) * 0.5;
+                (u, v)
+            }
+        } else if abs_y >= abs_x && abs_y >= abs_z {
+            if point.y > 0.0 {
+                // Top face
+                let u = (point.x + 1.0) * 0.5;
+                let v = (1.0 - point.z) * 0.5;
+                (u, v)
+            } else {
+                // Bottom face
+                let u = (point.x + 1.0) * 0.5;
+                let v = (point.z + 1.0) * 0.5;
+                (u, v)
+            }
+        } else {
+            if point.z > 0.0 {
+                // Front face
+                let u = (point.x + 1.0) * 0.5;
+                let v = (point.y + 1.0) * 0.5;
+                (u, v)
+            } else {
+                // Back face
+                let u = (1.0 - point.x) * 0.5;
+                let v = (point.y + 1.0) * 0.5;
+                (u, v)
+            }
+        }
+    }
 }
 
 #[cfg(test)]
