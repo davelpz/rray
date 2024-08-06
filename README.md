@@ -465,6 +465,7 @@ The pattern object has the following properties:
   - blend
   - perturbed
   - noise
+  - image
 - color: Color of the pattern (used by solid pattern)
 - color_a: color A
 - color_b: color B
@@ -473,6 +474,7 @@ The pattern object has the following properties:
 - scale: Scale of the pattern (used by perturbed, noise)
 - octaves: Number of octaves (used by perturbed, noise)
 - persistence: Persistence (used by perturbed, noise)
+- image: Image file (used by image pattern)
 - transforms: List of transformations to apply to the pattern
 
 Examples:
@@ -571,6 +573,18 @@ noise pattern:
          - type: scale
            amount: [0.1, 0.1, 0.1]
 ```
+
+image pattern:
+```yaml
+     pattern:
+       type: image
+       image: "image.png"
+       transforms:
+         - type: scale
+           amount: [1, 1, 1]
+```
+
+
 #### Transformations
 Each transformation has the following properties:
 - type: Type of transformation
