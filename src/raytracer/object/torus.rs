@@ -157,6 +157,19 @@ impl Object for Torus {
     fn includes(&self, object_id: usize) -> bool {
         self.id == object_id
     }
+
+    fn uv_mapping(&self, point: &Tuple) -> (f64, f64) {
+        // Calculate the angle u around the major radius
+        let u = (point.y.atan2(point.x) + std::f64::consts::PI) / (2.0 * std::f64::consts::PI);
+
+        // Calculate the distance to the center of the torus tube
+        let dist_to_center = (point.x * point.x + point.y * point.y).sqrt() - 1.0;
+
+        // Calculate the angle v around the minor radius
+        let v = (point.z.atan2(dist_to_center) + std::f64::consts::PI) / (2.0 * std::f64::consts::PI);
+
+        (u, v)
+    }
 }
 
 #[cfg(test)]
