@@ -2,7 +2,7 @@ use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
 use crate::raytracer::object::db::get_next_id;
-use crate::raytracer::object::{AABB, normal_to_world, Object, world_to_object};
+use crate::raytracer::object::{AABB, Object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 
@@ -56,8 +56,12 @@ impl Sphere {
             material: m,
         }
     }
+}
 
-    pub fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
+const ORIGIN: Tuple = Tuple { x: 0.0, y: 0.0, z: 0.0, w: 1.0 };
+
+impl Object for Sphere {
+    fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
         let sphere_to_ray = ray.origin.subtract(&ORIGIN);
         let a = ray.direction.dot(&ray.direction);
         let b = 2.0 * ray.direction.dot(&sphere_to_ray);
@@ -73,23 +77,8 @@ impl Sphere {
         }
     }
 
-    pub fn local_normal_at(&self, local_point: &Tuple, _hit: &Intersection) -> Tuple {
+    fn local_normal_at(&self, local_point: &Tuple, _hit: &Intersection) -> Tuple {
         local_point.subtract(&Tuple::point(0.0, 0.0, 0.0))
-    }
-}
-
-const ORIGIN: Tuple = Tuple { x: 0.0, y: 0.0, z: 0.0, w: 1.0 };
-
-impl Object for Sphere {
-    fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
-        let trans_ray = ray.transform(&self.transform.inverse());
-        self.local_intersect(&trans_ray)
-    }
-
-    fn normal_at(&self, world_point: &Tuple, _hit: &Intersection) -> Tuple {
-        let local_point = world_to_object(self.id, world_point);
-        let local_normal = self.local_normal_at(&local_point, _hit);
-        normal_to_world(self.id, &local_normal)
     }
 
     fn get_transform(&self) -> &Matrix {

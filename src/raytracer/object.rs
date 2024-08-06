@@ -42,8 +42,21 @@ use crate::tuple::Tuple;
 /// * `get_aabb` - Computes the axis-aligned bounding box (AABB) of the object for spatial partitioning optimizations.
 /// * `includes` - Checks if the object includes another object by ID, useful for CSG operations and scene graph management.
 pub trait Object: Sync + Send {
-    fn intersect(&self, ray: &Ray) -> Vec<Intersection>;
-    fn normal_at(&self, point: &Tuple, hit: &Intersection) -> Tuple;
+    fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
+        let trans_ray = ray.transform(&self.get_transform().inverse());
+        self.local_intersect(&trans_ray)
+    }
+
+    fn local_intersect(&self, ray: &Ray) -> Vec<Intersection>;
+
+    fn normal_at(&self, world_point: &Tuple, hit: &Intersection) -> Tuple {
+        let local_point = world_to_object(self.get_id(), world_point);
+        let local_normal = self.local_normal_at(&local_point, hit);
+        normal_to_world(self.get_id(), &local_normal)
+    }
+
+    fn local_normal_at(&self, local_point: &Tuple, _hit: &Intersection) -> Tuple;
+
     fn get_transform(&self) -> &Matrix;
     fn get_material(&self) -> &Material;
     fn set_transform(&mut self, transform: Matrix);

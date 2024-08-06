@@ -1,7 +1,7 @@
 use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
-use crate::raytracer::object::{AABB, normal_to_world, Object, world_to_object};
+use crate::raytracer::object::{AABB, Object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 use crate::EPSILON;
@@ -45,20 +45,6 @@ impl Cube {
         }
     }
 
-    pub fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
-        let (xtmin, xtmax) = Cube::check_axis(ray.origin.x, ray.direction.x);
-        let (ytmin, ytmax) = Cube::check_axis(ray.origin.y, ray.direction.y);
-        let (ztmin, ztmax) = Cube::check_axis(ray.origin.z, ray.direction.z);
-        let tmin = xtmin.max(ytmin).max(ztmin);
-        let tmax = xtmax.min(ytmax).min(ztmax);
-        if tmin > tmax {
-            vec![]
-        } else {
-            vec![Intersection::new(tmin, self.id, 0.0, 0.0),
-                 Intersection::new(tmax, self.id, 0.0, 0.0)]
-        }
-    }
-
     fn check_axis(origin: f64, direction: f64) -> (f64, f64) {
         let tmin_numerator = -1.0 - origin;
         let tmax_numerator = 1.0 - origin;
@@ -73,8 +59,24 @@ impl Cube {
             (tmin, tmax)
         }
     }
+}
 
-    pub fn local_normal_at(&self, local_point: &Tuple, _hit: &Intersection) -> Tuple {
+impl Object for Cube {
+    fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
+        let (xtmin, xtmax) = Cube::check_axis(ray.origin.x, ray.direction.x);
+        let (ytmin, ytmax) = Cube::check_axis(ray.origin.y, ray.direction.y);
+        let (ztmin, ztmax) = Cube::check_axis(ray.origin.z, ray.direction.z);
+        let tmin = xtmin.max(ytmin).max(ztmin);
+        let tmax = xtmax.min(ytmax).min(ztmax);
+        if tmin > tmax {
+            vec![]
+        } else {
+            vec![Intersection::new(tmin, self.id, 0.0, 0.0),
+                 Intersection::new(tmax, self.id, 0.0, 0.0)]
+        }
+    }
+
+    fn local_normal_at(&self, local_point: &Tuple, _hit: &Intersection) -> Tuple {
         let maxc = local_point.x.abs().max(local_point.y.abs()).max(local_point.z.abs());
         if maxc == local_point.x.abs() {
             Tuple::vector(local_point.x, 0.0, 0.0)
@@ -83,19 +85,6 @@ impl Cube {
         } else {
             Tuple::vector(0.0, 0.0, local_point.z)
         }
-    }
-}
-
-impl Object for Cube {
-    fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
-        let trans_ray = ray.transform(&self.transform.inverse());
-        self.local_intersect(&trans_ray)
-    }
-
-    fn normal_at(&self, world_point: &Tuple, _hit: &Intersection) -> Tuple {
-        let local_point = world_to_object(self.id, world_point);
-        let local_normal = self.local_normal_at(&local_point, _hit);
-        normal_to_world(self.id, &local_normal)
     }
 
     fn get_transform(&self) -> &Matrix {
@@ -188,6 +177,7 @@ impl Object for Cube {
 #[cfg(test)]
 mod tests {
     use crate::raytracer::intersection::Intersection;
+    use crate::raytracer::object::Object;
     use crate::raytracer::ray::Ray;
     use crate::tuple::Tuple;
     use super::Cube;

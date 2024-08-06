@@ -1,7 +1,7 @@
 use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
-use crate::raytracer::object::{AABB, normal_to_world, Object, world_to_object};
+use crate::raytracer::object::{AABB, Object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 use crate::EPSILON;
@@ -56,7 +56,68 @@ impl Cone {
             closed,
         }
     }
-    pub fn local_intersect(&self, trans_ray: &Ray) -> Vec<Intersection> {
+
+    // Check if the intersection at `t` is within the radius of the cone
+// at the end caps
+    fn check_cap(ray: &Ray, t: f64) -> bool {
+        let x = ray.origin.x + t * ray.direction.x;
+        let y = ray.origin.y + t * ray.direction.y;
+        let z = ray.origin.z + t * ray.direction.z;
+        (x * x + z * z) <= y * y
+    }
+
+    fn intersect_caps(&self, ray: &Ray) -> Vec<Intersection> {
+        let minimum = self.minimum;
+        let maximum = self.maximum;
+        let closed = self.closed;
+        let mut xs: Vec<Intersection> = vec![];
+
+        // Caps only matter if the cone is closed, and might be
+        // intersected by the ray
+        if !closed || ray.direction.y.abs() < EPSILON {
+            return xs;
+        }
+
+        // Check for an intersection with the lower end cap by intersecting
+        // the ray with the plane at y = minimum
+        let t = (minimum - ray.origin.y) / ray.direction.y;
+        if Cone::check_cap(ray, t) {
+            xs.push(Intersection::new(t, self.id, 0.0, 0.0));
+        }
+
+        // Check for an intersection with the upper end cap by intersecting
+        // the ray with the plane at y = maximum
+        let t = (maximum - ray.origin.y) / ray.direction.y;
+        if Cone::check_cap(ray, t) {
+            xs.push(Intersection::new(t, self.id, 0.0, 0.0));
+        }
+
+        xs
+    }
+}
+
+/// Provides the `Object` trait implementations for `Cone`.
+///
+/// This implementation allows a `Cone` to interact with the ray tracing system by defining how rays intersect with it,
+/// how to calculate the normal at a point on the cone, and how to manage its transformation and material properties.
+/// It integrates the cone into the broader system, allowing it to be treated as any other object in the scene.
+///
+/// # Methods
+///
+/// - `local_intersect`: Calculates the intersections of a ray with the cone, considering the cone's transformation.
+/// - `local_normal_at`: Computes the normal vector at a given point on the cone, taking into account its transformation.
+/// - `get_transform`: Returns the transformation matrix of the cone.
+/// - `get_material`: Returns the material of the cone.
+/// - `set_transform`: Sets the transformation matrix of the cone.
+/// - `set_material`: Sets the material of the cone.
+/// - `debug_string`: Returns a string representation of the cone for debugging purposes.
+/// - `get_id`: Returns the unique identifier of the cone.
+/// - `get_parent_id`: Returns the optional parent identifier of the cone.
+/// - `set_parent_id`: Sets the parent identifier of the cone.
+/// - `get_aabb`: Calculates the axis-aligned bounding box (AABB) of the cone.
+/// - `includes`: Checks if the given object identifier matches the cone's identifier.
+impl Object for Cone {
+    fn local_intersect(&self, trans_ray: &Ray) -> Vec<Intersection> {
         let mut xs: Vec<Intersection> = vec![];
         let minimum = self.minimum;
         let maximum = self.maximum;
@@ -104,45 +165,7 @@ impl Cone {
         xs
     }
 
-    // Check if the intersection at `t` is within the radius of the cone
-// at the end caps
-    fn check_cap(ray: &Ray, t: f64) -> bool {
-        let x = ray.origin.x + t * ray.direction.x;
-        let y = ray.origin.y + t * ray.direction.y;
-        let z = ray.origin.z + t * ray.direction.z;
-        (x * x + z * z) <= y * y
-    }
-
-    fn intersect_caps(&self, ray: &Ray) -> Vec<Intersection> {
-        let minimum = self.minimum;
-        let maximum = self.maximum;
-        let closed = self.closed;
-        let mut xs: Vec<Intersection> = vec![];
-
-        // Caps only matter if the cone is closed, and might be
-        // intersected by the ray
-        if !closed || ray.direction.y.abs() < EPSILON {
-            return xs;
-        }
-
-        // Check for an intersection with the lower end cap by intersecting
-        // the ray with the plane at y = minimum
-        let t = (minimum - ray.origin.y) / ray.direction.y;
-        if Cone::check_cap(ray, t) {
-            xs.push(Intersection::new(t, self.id, 0.0, 0.0));
-        }
-
-        // Check for an intersection with the upper end cap by intersecting
-        // the ray with the plane at y = maximum
-        let t = (maximum - ray.origin.y) / ray.direction.y;
-        if Cone::check_cap(ray, t) {
-            xs.push(Intersection::new(t, self.id, 0.0, 0.0));
-        }
-
-        xs
-    }
-
-    pub fn local_normal_at(&self, local_point: &Tuple, _hit: &Intersection) -> Tuple {
+    fn local_normal_at(&self, local_point: &Tuple, _hit: &Intersection) -> Tuple {
         let minimum = self.minimum;
         let maximum = self.maximum;
 
@@ -161,39 +184,6 @@ impl Cone {
 
             Tuple::vector(local_point.x, y, local_point.z)
         }
-    }
-}
-
-/// Provides the `Object` trait implementations for `Cone`.
-///
-/// This implementation allows a `Cone` to interact with the ray tracing system by defining how rays intersect with it,
-/// how to calculate the normal at a point on the cone, and how to manage its transformation and material properties.
-/// It integrates the cone into the broader system, allowing it to be treated as any other object in the scene.
-///
-/// # Methods
-///
-/// - `intersect`: Calculates the intersections of a ray with the cone, considering the cone's transformation.
-/// - `normal_at`: Computes the normal vector at a given point on the cone, taking into account its transformation.
-/// - `get_transform`: Returns the transformation matrix of the cone.
-/// - `get_material`: Returns the material of the cone.
-/// - `set_transform`: Sets the transformation matrix of the cone.
-/// - `set_material`: Sets the material of the cone.
-/// - `debug_string`: Returns a string representation of the cone for debugging purposes.
-/// - `get_id`: Returns the unique identifier of the cone.
-/// - `get_parent_id`: Returns the optional parent identifier of the cone.
-/// - `set_parent_id`: Sets the parent identifier of the cone.
-/// - `get_aabb`: Calculates the axis-aligned bounding box (AABB) of the cone.
-/// - `includes`: Checks if the given object identifier matches the cone's identifier.
-impl Object for Cone {
-    fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
-        let trans_ray = ray.transform(&self.transform.inverse());
-        self.local_intersect(&trans_ray)
-    }
-
-    fn normal_at(&self, world_point: &Tuple, _hit: &Intersection) -> Tuple {
-        let local_point = world_to_object(self.id, world_point);
-        let local_normal = self.local_normal_at(&local_point, _hit);
-        normal_to_world(self.id, &local_normal)
     }
 
     fn get_transform(&self) -> &Matrix {

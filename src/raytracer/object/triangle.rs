@@ -2,7 +2,7 @@ use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
 use crate::raytracer::object::db::get_next_id;
-use crate::raytracer::object::{AABB, normal_to_world, Object, world_to_object};
+use crate::raytracer::object::{AABB, Object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 
@@ -66,12 +66,10 @@ impl Triangle {
             normal,
         }
     }
+}
 
-    pub fn local_normal_at(&self, _local_point: &Tuple, _hit: &Intersection) -> Tuple {
-        self.normal
-    }
-
-    pub fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
+impl Object for Triangle {
+    fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
         let dir_cross_e2 = ray.direction.cross(&self.e2);
         let det = self.e1.dot(&dir_cross_e2);
         if det.abs() < crate::EPSILON {
@@ -94,18 +92,9 @@ impl Triangle {
         let t = f * self.e2.dot(&origin_cross_e1);
         vec![Intersection { t, object: self.id, u, v}]
     }
-}
 
-impl Object for Triangle {
-    fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
-        let trans_ray = ray.transform(&self.transform.inverse());
-        self.local_intersect(&trans_ray)
-    }
-
-    fn normal_at(&self, world_point: &Tuple, _hit: &Intersection) -> Tuple {
-        let local_point = world_to_object(self.id, world_point);
-        let local_normal = self.local_normal_at(&local_point, _hit);
-        normal_to_world(self.id, &local_normal)
+    fn local_normal_at(&self, _local_point: &Tuple, _hit: &Intersection) -> Tuple {
+        self.normal
     }
 
     fn get_transform(&self) -> &Matrix {
@@ -184,6 +173,7 @@ impl Object for Triangle {
 
 #[cfg(test)]
 mod tests {
+    use crate::raytracer::object::Object;
     use crate::raytracer::object::triangle::Triangle;
     use crate::raytracer::ray::Ray;
     use crate::tuple::Tuple;

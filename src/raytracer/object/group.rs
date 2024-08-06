@@ -4,7 +4,6 @@ use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
 use crate::raytracer::object::{AABB, Object};
-use crate::raytracer::object::{normal_to_world, world_to_object};
 use crate::raytracer::object::db::{add_object, get_next_id, get_object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
@@ -75,8 +74,10 @@ impl Group {
         self.child_ids.push(child_id);
         child_id
     }
+}
 
-    pub fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
+impl Object for Group {
+    fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
         let mut xs: Vec<Intersection> = Vec::new();
         if self.get_aabb().intersect(ray) {
             for child_id in &self.child_ids {
@@ -89,23 +90,8 @@ impl Group {
         xs
     }
 
-    pub fn local_normal_at(&self, _vector: &Tuple, _hit: &Intersection) -> Tuple {
+    fn local_normal_at(&self, _vector: &Tuple, _hit: &Intersection) -> Tuple {
         panic!("Groups do not have normals")
-    }
-
-
-}
-
-impl Object for Group {
-    fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
-        let trans_ray = ray.transform(&self.transform.inverse());
-        self.local_intersect(&trans_ray)
-    }
-
-    fn normal_at(&self, world_point: &Tuple, _hit: &Intersection) -> Tuple {
-        let local_point = world_to_object(self.id, world_point);
-        let local_normal = self.local_normal_at(&local_point, _hit);
-        normal_to_world(self.id, &local_normal)
     }
 
     fn get_transform(&self) -> &Matrix {

@@ -1,7 +1,7 @@
 use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
-use crate::raytracer::object::{AABB, normal_to_world, Object, world_to_object};
+use crate::raytracer::object::{AABB, Object};
 use crate::raytracer::ray::Ray;
 use crate::EPSILON;
 use crate::raytracer::object::db::get_next_id;
@@ -45,7 +45,10 @@ impl Plane {
         }
     }
 
-    pub fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
+}
+
+impl Object for Plane {
+    fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
         if ray.direction.y.abs() < EPSILON {
             vec![]
         } else {
@@ -53,21 +56,8 @@ impl Plane {
             vec![Intersection { t, object: self.id, u: 0.0, v: 0.0}]
         }
     }
-    pub fn local_normal_at(&self, _local_point: &Tuple, _hit: &Intersection) -> Tuple {
+    fn local_normal_at(&self, _local_point: &Tuple, _hit: &Intersection) -> Tuple {
         Tuple::vector(0.0, 1.0, 0.0)
-    }
-}
-
-impl Object for Plane {
-    fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
-        let trans_ray = ray.transform(&self.transform.inverse());
-        self.local_intersect(&trans_ray)
-    }
-
-    fn normal_at(&self, world_point: &Tuple, _hit: &Intersection) -> Tuple {
-        let local_point = world_to_object(self.id, world_point);
-        let local_normal = self.local_normal_at(&local_point, _hit);
-        normal_to_world(self.id, &local_normal)
     }
 
     fn get_transform(&self) -> &Matrix {

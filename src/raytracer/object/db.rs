@@ -87,8 +87,16 @@ impl Object for Sentinel {
         vec![]
     }
 
+    fn local_intersect(&self, _ray: &Ray) -> Vec<Intersection> {
+        panic!("Sentinel should not be intersected")
+    }
+
     fn normal_at(&self, _point: &Tuple, _hit: &Intersection) -> Tuple {
         Tuple::vector(0.0, 0.0, 0.0)
+    }
+
+    fn local_normal_at(&self, _local_point: &Tuple, _hit: &Intersection) -> Tuple {
+        panic!("Sentinel has no local normal")
     }
 
     fn get_transform(&self) -> &Matrix {

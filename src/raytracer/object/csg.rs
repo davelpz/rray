@@ -4,7 +4,7 @@ use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
 use crate::raytracer::object::db::{add_object, get_next_id, get_object};
-use crate::raytracer::object::{AABB, normal_to_world, Object, world_to_object};
+use crate::raytracer::object::{AABB, Object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 
@@ -152,19 +152,6 @@ impl Csg {
         child_id
     }
 
-    pub fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
-        let left = get_object(self.left);
-        let right = get_object(self.right);
-        let mut xs = left.intersect(ray);
-        xs.append(&mut right.intersect(ray));
-        xs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
-        self.filter_intersections(&xs)
-    }
-
-    pub fn local_normal_at(&self, _vector: &Tuple, _hit: &Intersection) -> Tuple {
-        panic!("CSG do not have normals")
-    }
-
     pub fn set_right(&mut self, mut object: Arc<dyn Object + Send>) -> usize {
         Arc::get_mut(&mut object).unwrap().set_parent_id(self.id);
         let child_id = object.get_id();
@@ -236,15 +223,17 @@ impl Csg {
 ///   the bounds of its child objects and its own transformation.
 /// - `includes`: Checks if the given object identifier matches either of the CSG node's child objects.
 impl Object for Csg {
-    fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
-        let trans_ray = ray.transform(&self.transform.inverse());
-        self.local_intersect(&trans_ray)
+    fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
+        let left = get_object(self.left);
+        let right = get_object(self.right);
+        let mut xs = left.intersect(ray);
+        xs.append(&mut right.intersect(ray));
+        xs.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
+        self.filter_intersections(&xs)
     }
 
-    fn normal_at(&self, world_point: &Tuple, _hit: &Intersection) -> Tuple {
-        let local_point = world_to_object(self.id, world_point);
-        let local_normal = self.local_normal_at(&local_point, _hit);
-        normal_to_world(self.id, &local_normal)
+    fn local_normal_at(&self, _vector: &Tuple, _hit: &Intersection) -> Tuple {
+        panic!("CSG do not have normals")
     }
 
     fn get_transform(&self) -> &Matrix {

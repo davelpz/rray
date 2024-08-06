@@ -2,7 +2,7 @@ use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
 use crate::raytracer::object::db::get_next_id;
-use crate::raytracer::object::{AABB, normal_to_world, Object, world_to_object};
+use crate::raytracer::object::{AABB, Object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 use roots::{find_roots_quartic, Roots};
@@ -30,7 +30,9 @@ impl Torus {
             material: Material::default(),
         }
     }
+}
 
+impl Object for Torus {
     fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
         let ox = ray.origin.x;
         let oy = ray.origin.y;
@@ -90,7 +92,7 @@ impl Torus {
         intersections
     }
 
-    pub fn local_normal_at(&self, local_point: &Tuple, _hit: &Intersection) -> Tuple {
+    fn local_normal_at(&self, local_point: &Tuple, _hit: &Intersection) -> Tuple {
         let sum_squared = local_point.x * local_point.x + local_point.y * local_point.y + local_point.z * local_point.z;
         let param_squared = 1.0 + self.minor_radius * self.minor_radius;  // Major radius is fixed at 1.0
 
@@ -100,19 +102,6 @@ impl Torus {
             4.0 * local_point.z * (sum_squared - param_squared + 2.0),
         );
         normal.normalize()
-    }
-}
-
-impl Object for Torus {
-    fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
-        let trans_ray = ray.transform(&self.transform.inverse());
-        self.local_intersect(&trans_ray)
-    }
-
-    fn normal_at(&self, world_point: &Tuple, _hit: &Intersection) -> Tuple {
-        let local_point = world_to_object(self.id, world_point);
-        let local_normal = self.local_normal_at(&local_point, _hit);
-        normal_to_world(self.id, &local_normal)
     }
 
     fn get_transform(&self) -> &Matrix {

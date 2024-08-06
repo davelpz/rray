@@ -1,7 +1,7 @@
 use crate::matrix::Matrix;
 use crate::raytracer::intersection::Intersection;
 use crate::raytracer::material::Material;
-use crate::raytracer::object::{AABB, normal_to_world, Object, world_to_object};
+use crate::raytracer::object::{AABB, Object};
 use crate::raytracer::ray::Ray;
 use crate::tuple::Tuple;
 use crate::EPSILON;
@@ -55,37 +55,6 @@ impl Cylinder {
         }
     }
 
-    pub fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
-        let mut xs: Vec<Intersection> = vec![];
-        let a = ray.direction.x * ray.direction.x + ray.direction.z * ray.direction.z;
-        if a.abs() > EPSILON {
-            let b = 2.0 * ray.origin.x * ray.direction.x + 2.0 * ray.origin.z * ray.direction.z;
-            let c = ray.origin.x * ray.origin.x + ray.origin.z * ray.origin.z - 1.0;
-            let discriminant = b * b - 4.0 * a * c;
-            if discriminant < 0.0 {
-                return vec![];
-            }
-            let mut t0 = (-b - discriminant.sqrt()) / (2.0 * a);
-            let mut t1 = (-b + discriminant.sqrt()) / (2.0 * a);
-            if t0 > t1 {
-                std::mem::swap(&mut t0, &mut t1);
-            }
-
-            let y0 = ray.origin.y + t0 * ray.direction.y;
-            if self.minimum < y0 && y0 < self.maximum {
-                xs.push(Intersection::new(t0, self.id, 0.0, 0.0));
-            }
-            let y1 = ray.origin.y + t1 * ray.direction.y;
-            if self.minimum < y1 && y1 < self.maximum {
-                xs.push(Intersection::new(t1, self.id, 0.0, 0.0));
-            }
-        }
-
-        self.intersect_caps(ray).iter().for_each(|i| xs.push(i.clone()));
-
-        xs
-    }
-
     // Check if the intersection at `t` is within the radius of the cylinder
     // at the end caps
     fn check_cap(ray: &Ray, t: f64) -> bool {
@@ -119,8 +88,41 @@ impl Cylinder {
 
         xs
     }
+}
 
-    pub fn local_normal_at(&self, local_point: &Tuple, _hit: &Intersection) -> Tuple {
+impl Object for Cylinder {
+    fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
+        let mut xs: Vec<Intersection> = vec![];
+        let a = ray.direction.x * ray.direction.x + ray.direction.z * ray.direction.z;
+        if a.abs() > EPSILON {
+            let b = 2.0 * ray.origin.x * ray.direction.x + 2.0 * ray.origin.z * ray.direction.z;
+            let c = ray.origin.x * ray.origin.x + ray.origin.z * ray.origin.z - 1.0;
+            let discriminant = b * b - 4.0 * a * c;
+            if discriminant < 0.0 {
+                return vec![];
+            }
+            let mut t0 = (-b - discriminant.sqrt()) / (2.0 * a);
+            let mut t1 = (-b + discriminant.sqrt()) / (2.0 * a);
+            if t0 > t1 {
+                std::mem::swap(&mut t0, &mut t1);
+            }
+
+            let y0 = ray.origin.y + t0 * ray.direction.y;
+            if self.minimum < y0 && y0 < self.maximum {
+                xs.push(Intersection::new(t0, self.id, 0.0, 0.0));
+            }
+            let y1 = ray.origin.y + t1 * ray.direction.y;
+            if self.minimum < y1 && y1 < self.maximum {
+                xs.push(Intersection::new(t1, self.id, 0.0, 0.0));
+            }
+        }
+
+        self.intersect_caps(ray).iter().for_each(|i| xs.push(i.clone()));
+
+        xs
+    }
+
+    fn local_normal_at(&self, local_point: &Tuple, _hit: &Intersection) -> Tuple {
         // Compute the square of the distance from the y-axis
         let dist = local_point.x * local_point.x + local_point.z * local_point.z;
 
@@ -131,19 +133,6 @@ impl Cylinder {
         } else {
             Tuple::vector(local_point.x, 0.0, local_point.z)
         }
-    }
-}
-
-impl Object for Cylinder {
-    fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
-        let trans_ray = ray.transform(&self.transform.inverse());
-        self.local_intersect(&trans_ray)
-    }
-
-    fn normal_at(&self, world_point: &Tuple, _hit: &Intersection) -> Tuple {
-        let local_point = world_to_object(self.id, world_point);
-        let local_normal = self.local_normal_at(&local_point, _hit);
-        normal_to_world(self.id, &local_normal)
     }
 
     fn get_transform(&self) -> &Matrix {
