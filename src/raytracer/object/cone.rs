@@ -238,4 +238,29 @@ impl Object for Cone {
     fn includes(&self, object_id: usize) -> bool {
         self.id == object_id
     }
+
+    fn uv_mapping(&self, point: &Tuple) -> (f64, f64) {
+        let y_min_dist = (point.y - self.minimum).abs();
+        let y_max_dist = (point.y - self.maximum).abs();
+
+        if self.closed && (y_min_dist <= EPSILON || y_max_dist <= EPSILON) {
+            // Point on the cap
+            let radius = point.y.abs();
+            let u = (point.x / radius + 1.0) / 2.0;
+            let v = (point.z / radius + 1.0) / 2.0;
+            (u, v)
+        } else {
+            // Calculate the angle theta around the y-axis
+            let theta = (point.z.atan2(point.x) + std::f64::consts::PI) / (2.0 * std::f64::consts::PI);
+
+            // Point on the conical surface
+            let height_range = self.maximum - self.minimum;
+            let normalized_y = (point.y - self.minimum) / height_range;
+
+            // Normalize u for better texture mapping
+            let u = normalized_y;
+
+            (u, theta)
+        }
+    }
 }
