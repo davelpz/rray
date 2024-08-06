@@ -156,6 +156,29 @@ impl Object for Triangle {
         self.id == object_id
     }
 
+    fn uv_mapping(&self, point: &Tuple) -> (f64, f64) {
+        let v0 = self.p2.subtract(&self.p1);
+        let v1 = self.p3.subtract(&self.p1);
+        let v2 = point.subtract(&self.p1);
+
+        let d00 = v0.dot(&v0);
+        let d01 = v0.dot(&v1);
+        let d11 = v1.dot(&v1);
+        let d20 = v2.dot(&v0);
+        let d21 = v2.dot(&v1);
+
+        let denom = d00 * d11 - d01 * d01;
+
+        let lambda1 = (d11 * d20 - d01 * d21) / denom;
+        let lambda2 = (d00 * d21 - d01 * d20) / denom;
+        let _lambda0 = 1.0 - lambda1 - lambda2;
+
+        // Implicit UV mapping: p0 -> (0, 0), p1 -> (1, 0), p2 -> (0, 1)
+        let u = lambda1; // Interpolate u using barycentric coordinates
+        let v = lambda2; // Interpolate v using barycentric coordinates
+
+        (u, v)
+    }
 }
 
 
