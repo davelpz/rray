@@ -3,4 +3,3 @@
 Cargo.lock
 zig-src/.zig-cache/
 zig-src/zig-out/
-zig-src/deps/
