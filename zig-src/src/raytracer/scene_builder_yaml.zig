@@ -18,6 +18,12 @@ const loadObj = @import("load_obj.zig").loadObj;
 const Value = zig_yaml.Yaml.Value;
 const Map = zig_yaml.Yaml.Map;
 
+// Resolve a path from the YAML relative to the scene file's directory.
+fn resolvePath(allocator: std.mem.Allocator, base_dir: []const u8, path: []const u8) ![]u8 {
+    if (std.fs.path.isAbsolute(path)) return allocator.dupe(u8, path);
+    return std.fs.path.join(allocator, &.{ base_dir, path });
+}
+
 pub fn renderSceneFromFile(
     path: []const u8,
     width: usize,
@@ -27,12 +33,13 @@ pub fn renderSceneFromFile(
     io: std.Io,
     allocator: std.mem.Allocator,
 ) !void {
+    const base_dir = std.fs.path.dirname(path) orelse ".";
     const raw = try std.Io.Dir.cwd().readFileAlloc(io, path, allocator, .unlimited);
     defer allocator.free(raw);
     // Normalize CR-only or CRLF line endings to LF for zig-yaml compatibility
     const contents = try normalizeCr(raw, allocator);
     defer allocator.free(contents);
-    try renderSceneFromStr(contents, width, height, png_file, aa, io, allocator);
+    try renderSceneFromStr(contents, width, height, png_file, aa, io, allocator, base_dir);
 }
 
 fn normalizeCr(input: []const u8, allocator: std.mem.Allocator) ![]u8 {
@@ -62,6 +69,7 @@ pub fn renderSceneFromStr(
     aa: usize,
     io: std.Io,
     allocator: std.mem.Allocator,
+    base_dir: []const u8,
 ) !void {
     var yaml: zig_yaml.Yaml = .{ .source = contents };
     try yaml.load(allocator);
@@ -98,7 +106,7 @@ pub fn renderSceneFromStr(
     for (scene_list) |obj_val| {
         const obj_map = obj_val.asMap() orelse continue;
         if (getBool(obj_map.get("hidden"), false)) continue;
-        const id = try buildShape(obj_val, pat_alloc, io, allocator, &db);
+        const id = try buildShape(obj_val, pat_alloc, io, allocator, &db, base_dir);
         try scene.addObjectId(id);
     }
 
@@ -151,6 +159,7 @@ fn buildShape(
     io: std.Io,
     allocator: std.mem.Allocator,
     db: *ObjectDB,
+    base_dir: []const u8,
 ) anyerror!usize {
     const map = val.asMap() orelse return error.InvalidShape;
     const type_str = (map.get("type") orelse return error.ShapeTypeMissing).asScalar() orelse return error.ShapeTypeMissing;
@@ -160,14 +169,16 @@ fn buildShape(
     var group_id: usize = 0;
 
     if (std.mem.eql(u8, type_str, "group")) {
-        group_id = try buildGroup(val, pat_alloc, io, allocator, db);
+        group_id = try buildGroup(val, pat_alloc, io, allocator, db, base_dir);
         is_group_like = true;
     } else if (std.mem.eql(u8, type_str, "csg")) {
-        group_id = try buildCsg(val, pat_alloc, io, allocator, db);
+        group_id = try buildCsg(val, pat_alloc, io, allocator, db, base_dir);
         is_group_like = true;
     } else if (std.mem.eql(u8, type_str, "obj_file")) {
-        const file_path = (map.get("obj_file") orelse return error.ObjFileMissing).asScalar() orelse return error.ObjFileMissing;
-        const mat = buildMaterial(map.get("material"), pat_alloc, io, allocator);
+        const rel_path = (map.get("obj_file") orelse return error.ObjFileMissing).asScalar() orelse return error.ObjFileMissing;
+        const file_path = try resolvePath(allocator, base_dir, rel_path);
+        defer allocator.free(file_path);
+        const mat = buildMaterial(map.get("material"), pat_alloc, io, allocator, base_dir);
         group_id = try loadObj(allocator, io, file_path, mat, db);
         is_group_like = true;
     } else {
@@ -184,7 +195,7 @@ fn buildShape(
                 db.getMut(group_id).recomputeInverse();
             }
         }
-        const mat = buildMaterial(map.get("material"), pat_alloc, io, allocator);
+        const mat = buildMaterial(map.get("material"), pat_alloc, io, allocator, base_dir);
         db.getMut(group_id).material = mat;
         return group_id;
     }
@@ -198,7 +209,7 @@ fn buildShape(
         }
     }
     // Apply material
-    base_obj.material = buildMaterial(map.get("material"), pat_alloc, io, allocator);
+    base_obj.material = buildMaterial(map.get("material"), pat_alloc, io, allocator, base_dir);
 
     return db.add(base_obj);
 }
@@ -262,6 +273,7 @@ fn buildGroup(
     io: std.Io,
     allocator: std.mem.Allocator,
     db: *ObjectDB,
+    base_dir: []const u8,
 ) anyerror!usize {
     const map = val.asMap() orelse return error.InvalidGroup;
     const children_val = map.get("children") orelse return error.MissingChildren;
@@ -273,7 +285,7 @@ fn buildGroup(
     for (children_list) |child_val| {
         const child_map = child_val.asMap() orelse continue;
         if (getBool(child_map.get("hidden"), false)) continue;
-        const cid = try buildShape(child_val, pat_alloc, io, allocator, db);
+        const cid = try buildShape(child_val, pat_alloc, io, allocator, db, base_dir);
         try child_ids.append(allocator, cid);
     }
 
@@ -297,6 +309,7 @@ fn buildCsg(
     io: std.Io,
     allocator: std.mem.Allocator,
     db: *ObjectDB,
+    base_dir: []const u8,
 ) anyerror!usize {
     const map = val.asMap() orelse return error.InvalidCsg;
     const op_str = (map.get("operation") orelse return error.MissingCsgOp).asScalar() orelse return error.InvalidCsgOp;
@@ -305,8 +318,8 @@ fn buildCsg(
     const left_val = map.get("left") orelse return error.MissingCsgLeft;
     const right_val = map.get("right") orelse return error.MissingCsgRight;
 
-    const left_id = try buildShape(left_val, pat_alloc, io, allocator, db);
-    const right_id = try buildShape(right_val, pat_alloc, io, allocator, db);
+    const left_id = try buildShape(left_val, pat_alloc, io, allocator, db, base_dir);
+    const right_id = try buildShape(right_val, pat_alloc, io, allocator, db, base_dir);
 
     const csg_obj = Object{
         .transform = Matrix.identity(),
@@ -377,7 +390,7 @@ fn buildSingleTransform(val: Value) Matrix {
     return Matrix.identity();
 }
 
-fn buildMaterial(val: ?Value, pat_alloc: std.mem.Allocator, io: std.Io, allocator: std.mem.Allocator) Material {
+fn buildMaterial(val: ?Value, pat_alloc: std.mem.Allocator, io: std.Io, allocator: std.mem.Allocator, base_dir: []const u8) Material {
     var m = Material.default();
     const v = val orelse return m;
     const map = v.asMap() orelse return m;
@@ -391,12 +404,12 @@ fn buildMaterial(val: ?Value, pat_alloc: std.mem.Allocator, io: std.Io, allocato
     m.refractive_index = getF64Default(map.get("refractive_index"), 1.0);
 
     if (map.get("pattern")) |pv| {
-        m.pattern = buildPattern(pv, pat_alloc, io, allocator);
+        m.pattern = buildPattern(pv, pat_alloc, io, allocator, base_dir);
     }
     return m;
 }
 
-fn buildPattern(val: Value, pat_alloc: std.mem.Allocator, io: std.Io, allocator: std.mem.Allocator) Pattern {
+fn buildPattern(val: Value, pat_alloc: std.mem.Allocator, io: std.Io, allocator: std.mem.Allocator, base_dir: []const u8) Pattern {
     const map = val.asMap() orelse return Pattern.solid(Color.white());
     const type_str = (map.get("type") orelse return Pattern.solid(Color.black())).asScalar() orelse return Pattern.solid(Color.black());
 
@@ -410,32 +423,32 @@ fn buildPattern(val: Value, pat_alloc: std.mem.Allocator, io: std.Io, allocator:
         const color = buildPatternColor(map.get("color"), Color.black());
         return Pattern.solid(color).withTransform(transform);
     } else if (std.mem.eql(u8, type_str, "stripe")) {
-        const a = allocSubPattern(map.get("color_a"), map.get("pattern_a"), transform, pat_alloc, io, allocator);
-        const b = allocSubPattern(map.get("color_b"), map.get("pattern_b"), transform, pat_alloc, io, allocator);
+        const a = allocSubPattern(map.get("color_a"), map.get("pattern_a"), transform, pat_alloc, io, allocator, base_dir);
+        const b = allocSubPattern(map.get("color_b"), map.get("pattern_b"), transform, pat_alloc, io, allocator, base_dir);
         const pa = pat_alloc.create(Pattern) catch return Pattern.solid(Color.black());
         const pb = pat_alloc.create(Pattern) catch return Pattern.solid(Color.black());
         pa.* = a;
         pb.* = b;
         return Pattern{ .kind = .{ .stripe = .{ .a = pa, .b = pb } }, .transform = transform, .transform_inv = transform.inverse() };
     } else if (std.mem.eql(u8, type_str, "gradient")) {
-        const a = allocSubPattern(map.get("color_a"), map.get("pattern_a"), transform, pat_alloc, io, allocator);
-        const b = allocSubPattern(map.get("color_b"), map.get("pattern_b"), transform, pat_alloc, io, allocator);
+        const a = allocSubPattern(map.get("color_a"), map.get("pattern_a"), transform, pat_alloc, io, allocator, base_dir);
+        const b = allocSubPattern(map.get("color_b"), map.get("pattern_b"), transform, pat_alloc, io, allocator, base_dir);
         const pa = pat_alloc.create(Pattern) catch return Pattern.solid(Color.black());
         const pb = pat_alloc.create(Pattern) catch return Pattern.solid(Color.black());
         pa.* = a;
         pb.* = b;
         return Pattern{ .kind = .{ .gradient = .{ .a = pa, .b = pb } }, .transform = transform, .transform_inv = transform.inverse() };
     } else if (std.mem.eql(u8, type_str, "ring")) {
-        const a = allocSubPattern(map.get("color_a"), map.get("pattern_a"), transform, pat_alloc, io, allocator);
-        const b = allocSubPattern(map.get("color_b"), map.get("pattern_b"), transform, pat_alloc, io, allocator);
+        const a = allocSubPattern(map.get("color_a"), map.get("pattern_a"), transform, pat_alloc, io, allocator, base_dir);
+        const b = allocSubPattern(map.get("color_b"), map.get("pattern_b"), transform, pat_alloc, io, allocator, base_dir);
         const pa = pat_alloc.create(Pattern) catch return Pattern.solid(Color.black());
         const pb = pat_alloc.create(Pattern) catch return Pattern.solid(Color.black());
         pa.* = a;
         pb.* = b;
         return Pattern{ .kind = .{ .ring = .{ .a = pa, .b = pb } }, .transform = transform, .transform_inv = transform.inverse() };
     } else if (std.mem.eql(u8, type_str, "checker")) {
-        const a = allocSubPattern(map.get("color_a"), map.get("pattern_a"), transform, pat_alloc, io, allocator);
-        const b = allocSubPattern(map.get("color_b"), map.get("pattern_b"), transform, pat_alloc, io, allocator);
+        const a = allocSubPattern(map.get("color_a"), map.get("pattern_a"), transform, pat_alloc, io, allocator, base_dir);
+        const b = allocSubPattern(map.get("color_b"), map.get("pattern_b"), transform, pat_alloc, io, allocator, base_dir);
         const pa = pat_alloc.create(Pattern) catch return Pattern.solid(Color.black());
         const pb = pat_alloc.create(Pattern) catch return Pattern.solid(Color.black());
         pa.* = a;
@@ -443,8 +456,8 @@ fn buildPattern(val: Value, pat_alloc: std.mem.Allocator, io: std.Io, allocator:
         return Pattern{ .kind = .{ .checker = .{ .a = pa, .b = pb } }, .transform = transform, .transform_inv = transform.inverse() };
     } else if (std.mem.eql(u8, type_str, "blend")) {
         const scale = getF64Default(map.get("scale"), 0.5);
-        const a = allocSubPattern(map.get("color_a"), map.get("pattern_a"), transform, pat_alloc, io, allocator);
-        const b = allocSubPattern(map.get("color_b"), map.get("pattern_b"), transform, pat_alloc, io, allocator);
+        const a = allocSubPattern(map.get("color_a"), map.get("pattern_a"), transform, pat_alloc, io, allocator, base_dir);
+        const b = allocSubPattern(map.get("color_b"), map.get("pattern_b"), transform, pat_alloc, io, allocator, base_dir);
         const pa = pat_alloc.create(Pattern) catch return Pattern.solid(Color.black());
         const pb = pat_alloc.create(Pattern) catch return Pattern.solid(Color.black());
         pa.* = a;
@@ -454,7 +467,7 @@ fn buildPattern(val: Value, pat_alloc: std.mem.Allocator, io: std.Io, allocator:
         const scale = getF64Default(map.get("scale"), 0.2);
         const octaves: usize = @intFromFloat(getF64Default(map.get("octaves"), 3.0));
         const persistence = getF64Default(map.get("persistence"), 0.5);
-        const a = allocSubPattern(map.get("color_a"), map.get("pattern_a"), transform, pat_alloc, io, allocator);
+        const a = allocSubPattern(map.get("color_a"), map.get("pattern_a"), transform, pat_alloc, io, allocator, base_dir);
         const pa = pat_alloc.create(Pattern) catch return Pattern.solid(Color.black());
         pa.* = a;
         return Pattern{ .kind = .{ .perturbed = .{ .inner = pa, .scale = scale, .octaves = octaves, .persistence = persistence } }, .transform = transform, .transform_inv = transform.inverse() };
@@ -462,8 +475,8 @@ fn buildPattern(val: Value, pat_alloc: std.mem.Allocator, io: std.Io, allocator:
         const scale = getF64Default(map.get("scale"), 1.0);
         const octaves: usize = @intFromFloat(getF64Default(map.get("octaves"), 1.0));
         const persistence = getF64Default(map.get("persistence"), 1.0);
-        const a = allocSubPattern(map.get("color_a"), map.get("pattern_a"), transform, pat_alloc, io, allocator);
-        const b = allocSubPattern(map.get("color_b"), map.get("pattern_b"), transform, pat_alloc, io, allocator);
+        const a = allocSubPattern(map.get("color_a"), map.get("pattern_a"), transform, pat_alloc, io, allocator, base_dir);
+        const b = allocSubPattern(map.get("color_b"), map.get("pattern_b"), transform, pat_alloc, io, allocator, base_dir);
         const pa = pat_alloc.create(Pattern) catch return Pattern.solid(Color.black());
         const pb = pat_alloc.create(Pattern) catch return Pattern.solid(Color.black());
         pa.* = a;
@@ -471,7 +484,9 @@ fn buildPattern(val: Value, pat_alloc: std.mem.Allocator, io: std.Io, allocator:
         return Pattern{ .kind = .{ .noise_pat = .{ .a = pa, .b = pb, .scale = scale, .octaves = octaves, .persistence = persistence } }, .transform = transform, .transform_inv = transform.inverse() };
     } else if (std.mem.eql(u8, type_str, "image")) {
         const file_val = map.get("file") orelse return Pattern.solid(Color.black());
-        const file_path = file_val.asScalar() orelse return Pattern.solid(Color.black());
+        const rel_path = file_val.asScalar() orelse return Pattern.solid(Color.black());
+        const file_path = resolvePath(allocator, base_dir, rel_path) catch return Pattern.solid(Color.black());
+        defer allocator.free(file_path);
         const texture = Texture.load(allocator, io, file_path) catch return Pattern.solid(Color.black());
         return Pattern{ .kind = .{ .texture = texture }, .transform = transform, .transform_inv = transform.inverse() };
     }
@@ -486,6 +501,7 @@ fn allocSubPattern(
     pat_alloc: std.mem.Allocator,
     io: std.Io,
     allocator: std.mem.Allocator,
+    base_dir: []const u8,
 ) Pattern {
     if (color_val) |cv| {
         if (cv.asList()) |_| {
@@ -495,7 +511,7 @@ fn allocSubPattern(
     }
     if (pattern_val) |pv| {
         if (pv.asMap()) |_| {
-            return buildPattern(pv, pat_alloc, io, allocator);
+            return buildPattern(pv, pat_alloc, io, allocator, base_dir);
         }
     }
     return Pattern.solid(Color.black());
