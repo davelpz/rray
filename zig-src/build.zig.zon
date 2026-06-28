@@ -1,0 +1,15 @@
+.{
+    .name = .rray,
+    .fingerprint = 0xe238984bb7303d0c,
+    .version = "0.1.0",
+    .minimum_zig_version = "0.16.0",
+    .dependencies = .{
+        .zigimg = .{
+            .path = "deps/zigimg-096115a3eeae1a4c477496d575f1f1f74865387c",
+        },
+        .yaml = .{
+            .path = "deps/zig-yaml-84d747bc80937a08ea1cf76a63fee12c5fb1dd61",
+        },
+    },
+    .paths = .{""},
+}
